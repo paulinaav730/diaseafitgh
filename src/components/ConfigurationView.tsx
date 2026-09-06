@@ -80,6 +80,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
   const [eventFilter, setEventFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [subTeamFilter, setSubTeamFilter] = useState<string>('all');
+  const [baseEventFilter, setBaseEventFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals state
@@ -330,7 +331,6 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
   };
 
   // Bases Filter
-  const [baseEventFilter, setBaseEventFilter] = useState<string>('all');
   const filteredBases = useMemo(() => {
     return bases.filter((b) => {
       if (baseEventFilter !== 'all' && b.eventId !== baseEventFilter) return false;

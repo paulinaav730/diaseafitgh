@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Person, PersonType, GroupFunction, GtSubTeam, ConfigurableShift, AvailabilityRecord } from '../types';
-import { addPerson, updatePerson, deletePerson } from '../services/storageService';
+import { addPerson, updatePerson, deletePerson, getAssignments, getAvailabilities, getPeople } from '../services/storageService';
 import { exportPeopleToOfficialExcel, downloadOfficialExcelMaestroTemplate } from '../services/excelService';
 import { ExcelImportModal } from './ExcelImportModal';
 import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
+import { isSupabaseConfigured, getSupabase } from '../services/supabaseClient';
+import { syncAllToSupabase, pushPeopleToSupabase } from '../services/supabaseSync';
 import {
   Users,
   UserPlus,
@@ -31,6 +33,8 @@ import {
   FilterX,
   ChevronDown,
   SlidersHorizontal,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react';
 
 interface PeopleViewProps {
@@ -56,6 +60,36 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [sortOption, setSortOption] = useState<'name-asc' | 'name-desc' | 'doc-asc' | 'doc-desc' | 'gt-asc' | 'recent'>('name-asc');
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [cloudBanner, setCloudBanner] = useState<{ message: string; isError: boolean } | null>(null);
+
+  const handleCloudSync = async () => {
+    if (!isSupabaseConfigured()) {
+      setCloudBanner({
+        message: 'Supabase no está configurado en las variables de entorno.',
+        isError: true,
+      });
+      setTimeout(() => setCloudBanner(null), 5000);
+      return;
+    }
+    setIsSyncingCloud(true);
+    try {
+      const res = await syncAllToSupabase(getPeople(), getAssignments(), getAvailabilities());
+      setCloudBanner({
+        message: res.message,
+        isError: !res.success,
+      });
+      setTimeout(() => setCloudBanner(null), 5000);
+    } catch (e: any) {
+      setCloudBanner({
+        message: e?.message || 'Error al conectar con Supabase',
+        isError: true,
+      });
+      setTimeout(() => setCloudBanner(null), 5000);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
 
   // Column-specific filter states (Persona, Cédula/User, Tipo, GT/Funciones, Contacto)
   const [colFilterName, setColFilterName] = useState('');
@@ -223,6 +257,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       }
       setIsAddModalOpen(false);
       setEditingPerson(null);
+
+      // Sincronizar automáticamente con Supabase en segundo plano si está configurado
+      if (isSupabaseConfigured()) {
+        pushPeopleToSupabase(getPeople()).catch((err) =>
+          console.warn('Background sync to Supabase failed:', err)
+        );
+      }
     } catch (err) {
       console.error(err);
       setFormError('Error al guardar la persona.');
@@ -238,6 +279,21 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       )
     ) {
       await deletePerson(id);
+      if (isSupabaseConfigured()) {
+        const client = getSupabase();
+        if (client) {
+          client
+            .from('people')
+            .delete()
+            .eq('id', id)
+            .then(
+              ({ error }) => {
+                if (error) console.warn('Error deleting from Supabase:', error);
+              },
+              (err) => console.warn('Exception deleting from Supabase:', err)
+            );
+        }
+      }
     }
   };
 
@@ -399,6 +455,21 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Botón Sincronizar Supabase (si está configurado) */}
+          {isSupabaseConfigured() && (
+            <button
+              onClick={handleCloudSync}
+              disabled={isSyncingCloud}
+              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors font-montserrat shadow-2xs cursor-pointer disabled:opacity-50"
+              title="Sincronizar base de datos con Supabase en la nube"
+            >
+              <Cloud className={`w-4 h-4 text-emerald-600 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">
+                {isSyncingCloud ? 'Sincronizando...' : 'Sincronizar Supabase'}
+              </span>
+            </button>
+          )}
+
           {/* Botón IMPORTAR EXCEL */}
           <button
             onClick={() => setIsExcelModalOpen(true)}
@@ -429,6 +500,28 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Cloud Sync Notification Banner */}
+      {cloudBanner && (
+        <div
+          className={`p-4 rounded-2xl text-xs flex items-center justify-between border animate-in fade-in duration-200 ${
+            cloudBanner.isError
+              ? 'bg-amber-50 border-amber-200 text-amber-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Cloud className={`w-4 h-4 shrink-0 ${cloudBanner.isError ? 'text-amber-600' : 'text-emerald-600'}`} />
+            <span className="font-semibold">{cloudBanner.message}</span>
+          </div>
+          <button
+            onClick={() => setCloudBanner(null)}
+            className="text-xs p-1 hover:opacity-75 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filters, Sort & Search */}
       <div className="space-y-3">

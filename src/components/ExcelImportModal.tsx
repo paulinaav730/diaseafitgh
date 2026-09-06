@@ -11,7 +11,12 @@ import {
   getShifts,
   importExcelMaestroBatch,
   ExcelMaestroImportResult,
+  getPeople,
+  getAssignments,
+  getAvailabilities,
 } from '../services/storageService';
+import { isSupabaseConfigured } from '../services/supabaseClient';
+import { syncAllToSupabase } from '../services/supabaseSync';
 import {
   FileSpreadsheet,
   UploadCloud,
@@ -29,6 +34,7 @@ import {
   HelpCircle,
   ShieldCheck,
   Search,
+  Cloud,
 } from 'lucide-react';
 
 interface ExcelImportModalProps {
@@ -51,6 +57,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
   const [preview, setPreview] = useState<ExcelMaestroPreview | null>(null);
   const [updateExisting, setUpdateExisting] = useState(true);
   const [importResult, setImportResult] = useState<ExcelMaestroImportResult | null>(null);
+  const [cloudSyncResult, setCloudSyncResult] = useState<{ synced: boolean; message: string } | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [filterTab, setFilterTab] = useState<'ALL' | 'NEW' | 'EXISTING' | 'ERROR' | 'UNRECOGNIZED'>('ALL');
   const [tableSearch, setTableSearch] = useState('');
@@ -67,6 +74,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     setFile(selectedFile);
     setIsLoading(true);
     setImportResult(null);
+    setCloudSyncResult(null);
 
     try {
       const parsedPreview = await parseExcelMaestroFile(
@@ -101,6 +109,23 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     try {
       const result = await importExcelMaestroBatch(preview.rows, { updateExisting });
       setImportResult(result);
+
+      // Auto-synchronize to Supabase if configured
+      if (isSupabaseConfigured()) {
+        try {
+          const syncRes = await syncAllToSupabase(getPeople(), getAssignments(), getAvailabilities());
+          setCloudSyncResult({
+            synced: syncRes.success,
+            message: syncRes.message,
+          });
+        } catch (syncErr: any) {
+          setCloudSyncResult({
+            synced: false,
+            message: syncErr?.message || 'Error al conectar con la base de datos de Supabase',
+          });
+        }
+      }
+
       if (onImportComplete) onImportComplete();
     } catch (err) {
       console.error('Error importing excel maestro batch:', err);
@@ -114,6 +139,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     setFile(null);
     setPreview(null);
     setImportResult(null);
+    setCloudSyncResult(null);
     setFilterTab('ALL');
     setTableSearch('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -233,6 +259,36 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* CLOUD SUPABASE STATUS INDICATOR */}
+              {isSupabaseConfigured() ? (
+                <div
+                  className={`p-4 rounded-2xl text-xs space-y-1.5 border ${
+                    cloudSyncResult?.synced
+                      ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                      : cloudSyncResult && !cloudSyncResult.synced
+                      ? 'bg-amber-50/80 border-amber-200 text-amber-900'
+                      : 'bg-[#FAF6EC] border-[#EADDC7] text-[#182535]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold">
+                    <Cloud className={`w-4 h-4 ${cloudSyncResult?.synced ? 'text-emerald-600' : 'text-[#C87F17]'}`} />
+                    <span>Sincronización con Supabase (Nube PostgreSQL):</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    {cloudSyncResult
+                      ? cloudSyncResult.message
+                      : 'Sincronizando automáticamente con la base de datos de Supabase en segundo plano...'}
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>
+                    <b>Nota:</b> Los datos se guardaron localmente en este navegador. Para compartirlos en tiempo real con los teléfonos del Staff mediante Supabase, configure las credenciales en el proyecto.
+                  </span>
+                </div>
+              )}
 
               <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] text-left text-xs text-[#64748B] space-y-2">
                 <div className="flex items-center gap-2 text-[#182535] font-bold">
