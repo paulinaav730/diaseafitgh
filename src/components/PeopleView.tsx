@@ -28,6 +28,9 @@ import {
   ArrowDown,
   ArrowDownAZ,
   ArrowUpZA,
+  FilterX,
+  ChevronDown,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface PeopleViewProps {
@@ -53,6 +56,36 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [sortOption, setSortOption] = useState<'name-asc' | 'name-desc' | 'doc-asc' | 'doc-desc' | 'gt-asc' | 'recent'>('name-asc');
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+
+  // Column-specific filter states (Persona, Cédula/User, Tipo, GT/Funciones, Contacto)
+  const [colFilterName, setColFilterName] = useState('');
+  const [colFilterDoc, setColFilterDoc] = useState('');
+  const [colFilterType, setColFilterType] = useState<PersonType | 'ALL'>('ALL');
+  const [colFilterGt, setColFilterGt] = useState<GtSubTeam | 'ALL'>('ALL');
+  const [colFilterContact, setColFilterContact] = useState('');
+  const [showColumnFilters, setShowColumnFilters] = useState(true);
+
+  // Count of active column-level filters
+  const activeColFiltersCount = [
+    colFilterName.trim() !== '',
+    colFilterDoc.trim() !== '',
+    colFilterType !== 'ALL',
+    colFilterGt !== 'ALL',
+    colFilterContact.trim() !== '',
+  ].filter(Boolean).length;
+
+  // Handler to reset all filters
+  const handleResetAllFilters = () => {
+    setSearchTerm('');
+    setSelectedTypeFilter('ALL');
+    setSelectedGtSubTeamFilter('ALL');
+    setColFilterName('');
+    setColFilterDoc('');
+    setColFilterType('ALL');
+    setColFilterGt('ALL');
+    setColFilterContact('');
+    setSortOption('name-asc');
+  };
 
   // Form State
   const [formName, setFormName] = useState('');
@@ -224,9 +257,21 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   // Filtered and Sorted people
   const filteredPeople = useMemo(() => {
     const query = searchTerm.toLowerCase().trim();
+    const nameQuery = colFilterName.toLowerCase().trim();
+    const docQuery = colFilterDoc.toLowerCase().trim();
+    const contactQuery = colFilterContact.toLowerCase().trim();
+
+    // Determine effective type and GT subteam filters
+    const effectiveType = colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter;
+    const effectiveGt =
+      colFilterGt !== 'ALL'
+        ? colFilterGt
+        : effectiveType === 'GT'
+        ? selectedGtSubTeamFilter
+        : 'ALL';
 
     const filtered = people.filter((p) => {
-      // 1. Search Query
+      // 1. Global Search Query
       if (query) {
         const matchesName = p.name.toLowerCase().includes(query);
         const matchesDoc = p.documentId.toLowerCase().includes(query);
@@ -256,23 +301,42 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         }
       }
 
-      // 2. Category / Type Filter (ALL, GT, GAP, MESA)
-      if (selectedTypeFilter !== 'ALL' && p.primaryType !== selectedTypeFilter) {
+      // 2. Persona / Nombre Column Filter
+      if (nameQuery && !p.name.toLowerCase().includes(nameQuery)) {
         return false;
       }
 
-      // 3. GT Sub-Team Filter
-      if (selectedTypeFilter === 'GT' && selectedGtSubTeamFilter !== 'ALL') {
+      // 3. Cédula & Usuario Column Filter
+      if (docQuery) {
+        const matchDoc = p.documentId.toLowerCase().includes(docQuery);
+        const matchUser = !!(p.username && p.username.toLowerCase().includes(docQuery));
+        if (!matchDoc && !matchUser) return false;
+      }
+
+      // 4. Category / Type Filter (ALL, GT, GAP, MESA)
+      if (effectiveType !== 'ALL' && p.primaryType !== effectiveType) {
+        return false;
+      }
+
+      // 5. GT Sub-Team Filter
+      if (effectiveGt !== 'ALL') {
         const hasSubTeam =
-          p.gtSubTeam === selectedGtSubTeamFilter ||
-          (p.gtTeams && p.gtTeams.includes(selectedGtSubTeamFilter));
+          p.gtSubTeam === effectiveGt ||
+          (p.gtTeams && p.gtTeams.includes(effectiveGt));
         if (!hasSubTeam) return false;
+      }
+
+      // 6. Contacto Column Filter (email, phone)
+      if (contactQuery) {
+        const matchEmail = p.email.toLowerCase().includes(contactQuery);
+        const matchPhone = !!(p.phone && p.phone.toLowerCase().includes(contactQuery));
+        if (!matchEmail && !matchPhone) return false;
       }
 
       return true;
     });
 
-    // 4. Sorting
+    // Sorting
     return [...filtered].sort((a, b) => {
       switch (sortOption) {
         case 'name-asc':
@@ -299,7 +363,18 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           return a.name.localeCompare(b.name, 'es');
       }
     });
-  }, [people, searchTerm, selectedTypeFilter, selectedGtSubTeamFilter, sortOption]);
+  }, [
+    people,
+    searchTerm,
+    selectedTypeFilter,
+    selectedGtSubTeamFilter,
+    colFilterName,
+    colFilterDoc,
+    colFilterType,
+    colFilterGt,
+    colFilterContact,
+    sortOption,
+  ]);
 
   const gtCount = people.filter((p) => p.primaryType === 'GT').length;
   const gapCount = people.filter((p) => p.primaryType === 'GAP').length;
@@ -548,67 +623,381 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         </div>
       ) : (
         <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl overflow-hidden shadow-2xs">
+          {/* Active Filter Chips Bar */}
+          {(activeColFiltersCount > 0 || searchTerm || selectedTypeFilter !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
+            <div className="bg-[#FAF6EC] border-b border-[#EADDC7] px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap text-xs font-montserrat">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-[#182535] text-[11px] flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
+                  Filtros aplicados:
+                </span>
+
+                {searchTerm && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                    <span>Búsqueda: "{searchTerm}"</span>
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+
+                {colFilterName && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#B83A24]/40 text-[#B83A24] text-[11px] font-bold shadow-2xs">
+                    <span>Nombre: "{colFilterName}"</span>
+                    <button
+                      onClick={() => setColFilterName('')}
+                      className="text-[#B83A24]/60 hover:text-[#B83A24] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+
+                {colFilterDoc && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#E5A12E]/50 text-[#C87F17] text-[11px] font-bold shadow-2xs">
+                    <span>Cédula/@: "{colFilterDoc}"</span>
+                    <button
+                      onClick={() => setColFilterDoc('')}
+                      className="text-[#C87F17]/60 hover:text-[#C87F17] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+
+                {(colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL') && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                    <span>Tipo: {colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter}</span>
+                    <button
+                      onClick={() => {
+                        setColFilterType('ALL');
+                        setSelectedTypeFilter('ALL');
+                      }}
+                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+
+                {(colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#B83A24]/40 text-[#B83A24] text-[11px] font-bold shadow-2xs">
+                    <span>GT: {colFilterGt !== 'ALL' ? colFilterGt : selectedGtSubTeamFilter}</span>
+                    <button
+                      onClick={() => {
+                        setColFilterGt('ALL');
+                        setSelectedGtSubTeamFilter('ALL');
+                      }}
+                      className="text-[#B83A24]/60 hover:text-[#B83A24] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+
+                {colFilterContact && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                    <span>Contacto: "{colFilterContact}"</span>
+                    <button
+                      onClick={() => setColFilterContact('')}
+                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={handleResetAllFilters}
+                className="text-[11px] font-bold text-[#B83A24] hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <FilterX className="w-3.5 h-3.5" />
+                <span>Restablecer todo</span>
+              </button>
+            </div>
+          )}
+
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF6EC] text-[#64748B] font-bold border-b border-[#EADDC7]">
+                {/* Row 1: Column Titles with Sort & Indicators */}
                 <tr>
-                  <th className="p-4">
-                    <button
-                      onClick={() =>
-                        setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
-                      }
-                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
-                      title="Clic para ordenar de A-Z o Z-A"
-                    >
-                      <span>Persona</span>
-                      {sortOption === 'name-asc' ? (
-                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
-                      ) : sortOption === 'name-desc' ? (
-                        <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
-                      ) : (
-                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                  {/* Persona */}
+                  <th className="p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() =>
+                          setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
+                        }
+                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        title="Ordenar por Nombre (clic para A-Z o Z-A)"
+                      >
+                        <span className="font-montserrat text-xs text-[#182535]">Persona</span>
+                        {sortOption === 'name-asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                        ) : sortOption === 'name-desc' ? (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                        ) : (
+                          <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                        )}
+                      </button>
+                      {colFilterName && (
+                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de nombre activo" />
                       )}
+                    </div>
+                  </th>
+
+                  {/* Cédula & Usuario */}
+                  <th className="p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() =>
+                          setSortOption((prev) => (prev === 'doc-asc' ? 'doc-desc' : 'doc-asc'))
+                        }
+                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        title="Ordenar por Cédula (clic para 0-9 o 9-0)"
+                      >
+                        <span className="font-montserrat text-xs text-[#182535]">Cédula & Usuario</span>
+                        {sortOption === 'doc-asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                        ) : sortOption === 'doc-desc' ? (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                        ) : (
+                          <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                        )}
+                      </button>
+                      {colFilterDoc && (
+                        <span className="w-2 h-2 rounded-full bg-[#C87F17]" title="Filtro de documento activo" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* Tipo Principal */}
+                  <th className="p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-montserrat text-xs text-[#182535]">Tipo Principal</span>
+                      {(colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL') && (
+                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de tipo activo" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* GT / Funciones */}
+                  <th className="p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() =>
+                          setSortOption((prev) => (prev === 'gt-asc' ? 'name-asc' : 'gt-asc'))
+                        }
+                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        title="Ordenar por Sub-Equipo GT"
+                      >
+                        <span className="font-montserrat text-xs text-[#182535]">GT / Funciones</span>
+                        {sortOption === 'gt-asc' ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                        ) : (
+                          <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                        )}
+                      </button>
+                      {(colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
+                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de GT activo" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* Contacto */}
+                  <th className="p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-montserrat text-xs text-[#182535]">Contacto</span>
+                      {colFilterContact && (
+                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de contacto activo" />
+                      )}
+                    </div>
+                  </th>
+
+                  {/* Acciones & Toggle Filtros */}
+                  <th className="p-3.5 text-right">
+                    <button
+                      onClick={() => setShowColumnFilters(!showColumnFilters)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold font-montserrat transition-all cursor-pointer border ${
+                        showColumnFilters
+                          ? 'bg-[#FEF8EC] text-[#C87F17] border-[#E5A12E]/60 shadow-2xs'
+                          : 'bg-white text-[#64748B] border-[#EADDC7] hover:text-[#182535]'
+                      }`}
+                      title={showColumnFilters ? 'Ocultar campos de filtro' : 'Mostrar campos de filtro por columna'}
+                    >
+                      <Filter className="w-3 h-3 text-[#B83A24]" />
+                      <span>{showColumnFilters ? 'Filtros ON' : 'Filtrar'}</span>
                     </button>
                   </th>
-                  <th className="p-4">
-                    <button
-                      onClick={() =>
-                        setSortOption((prev) => (prev === 'doc-asc' ? 'doc-desc' : 'doc-asc'))
-                      }
-                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
-                      title="Clic para ordenar por documento"
-                    >
-                      <span>Cédula & Usuario</span>
-                      {sortOption === 'doc-asc' ? (
-                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
-                      ) : sortOption === 'doc-desc' ? (
-                        <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
-                      ) : (
-                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="p-4">Tipo Principal</th>
-                  <th className="p-4">
-                    <button
-                      onClick={() =>
-                        setSortOption((prev) => (prev === 'gt-asc' ? 'name-asc' : 'gt-asc'))
-                      }
-                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
-                      title="Clic para ordenar por GT"
-                    >
-                      <span>GT / Funciones</span>
-                      {sortOption === 'gt-asc' ? (
-                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
-                      ) : (
-                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="p-4">Contacto</th>
-                  <th className="p-4 text-right">Acciones</th>
                 </tr>
+
+                {/* Row 2: Direct Column Filter Inputs & Selects */}
+                {showColumnFilters && (
+                  <tr className="bg-[#FEF8EC]/60 border-t border-[#EADDC7]">
+                    {/* Filtro Nombre */}
+                    <th className="p-2.5 font-normal">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={colFilterName}
+                          onChange={(e) => setColFilterName(e.target.value)}
+                          placeholder="Filtrar nombre..."
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
+                            colFilterName ? 'border-[#B83A24] font-semibold ring-1 ring-[#B83A24]/20' : 'border-[#EADDC7]'
+                          }`}
+                        />
+                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        {colFilterName && (
+                          <button
+                            onClick={() => setColFilterName('')}
+                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            title="Borrar filtro"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+
+                    {/* Filtro Cédula / Usuario */}
+                    <th className="p-2.5 font-normal">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={colFilterDoc}
+                          onChange={(e) => setColFilterDoc(e.target.value)}
+                          placeholder="Cédula o @user..."
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
+                            colFilterDoc ? 'border-[#C87F17] font-semibold ring-1 ring-[#C87F17]/20' : 'border-[#EADDC7]'
+                          }`}
+                        />
+                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        {colFilterDoc && (
+                          <button
+                            onClick={() => setColFilterDoc('')}
+                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            title="Borrar filtro"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+
+                    {/* Filtro Tipo Principal */}
+                    <th className="p-2.5 font-normal">
+                      <div className="relative">
+                        <select
+                          value={colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setColFilterType(val);
+                            setSelectedTypeFilter(val);
+                            if (val !== 'GT') {
+                              setColFilterGt('ALL');
+                              setSelectedGtSubTeamFilter('ALL');
+                            }
+                          }}
+                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs appearance-none cursor-pointer ${
+                            (colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL')
+                              ? 'border-[#B83A24] font-bold text-[#B83A24]'
+                              : 'border-[#EADDC7]'
+                          }`}
+                        >
+                          <option value="ALL">Todos los tipos ({people.length})</option>
+                          <option value="GT">GT ({gtCount})</option>
+                          <option value="GAP">GAP ({gapCount})</option>
+                          <option value="MESA">MESA ({mesaCount})</option>
+                        </select>
+                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-[#64748B]">
+                          ▼
+                        </div>
+                      </div>
+                    </th>
+
+                    {/* Filtro GT / Sub-Equipos */}
+                    <th className="p-2.5 font-normal">
+                      <div className="relative">
+                        <select
+                          value={colFilterGt !== 'ALL' ? colFilterGt : selectedGtSubTeamFilter}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setColFilterGt(val);
+                            setSelectedGtSubTeamFilter(val);
+                            if (val !== 'ALL') {
+                              setColFilterType('GT');
+                              setSelectedTypeFilter('GT');
+                            }
+                          }}
+                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs appearance-none cursor-pointer ${
+                            (colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL')
+                              ? 'border-[#B83A24] font-bold text-[#B83A24]'
+                              : 'border-[#EADDC7]'
+                          }`}
+                        >
+                          <option value="ALL">Todos los GT ({gtCount})</option>
+                          {GT_SUBTEAMS.map((sub) => (
+                            <option key={sub} value={sub}>
+                              {sub} ({subTeamCounts[sub] || 0})
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-[#64748B]">
+                          ▼
+                        </div>
+                      </div>
+                    </th>
+
+                    {/* Filtro Contacto */}
+                    <th className="p-2.5 font-normal">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={colFilterContact}
+                          onChange={(e) => setColFilterContact(e.target.value)}
+                          placeholder="Email o tel..."
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
+                            colFilterContact ? 'border-[#B83A24] font-semibold ring-1 ring-[#B83A24]/20' : 'border-[#EADDC7]'
+                          }`}
+                        />
+                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        {colFilterContact && (
+                          <button
+                            onClick={() => setColFilterContact('')}
+                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            title="Borrar filtro"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+
+                    {/* Acciones: Limpiar filtros */}
+                    <th className="p-2.5 text-right font-normal">
+                      {activeColFiltersCount > 0 ? (
+                        <button
+                          onClick={handleResetAllFilters}
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-[#FDF2EE] hover:bg-[#FBE4DD] text-[#B83A24] border border-[#F6C7BA] font-bold text-[11px] flex items-center justify-center gap-1 font-montserrat cursor-pointer transition-colors shadow-2xs"
+                          title="Limpiar filtros de columna"
+                        >
+                          <FilterX className="w-3 h-3" />
+                          <span>Limpiar</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-[#94A3B8] block text-center font-montserrat">
+                          —
+                        </span>
+                      )}
+                    </th>
+                  </tr>
+                )}
               </thead>
               <tbody className="divide-y divide-[#EADDC7]/60">
                 {filteredPeople.map((person) => (
@@ -724,6 +1113,157 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
           {/* Mobile Card View */}
           <div className="md:hidden divide-y divide-[#EADDC7]/70">
+            {/* Mobile Filters Toggle & Panel */}
+            <div className="p-3 bg-[#FAF6EC] border-b border-[#EADDC7]">
+              <button
+                onClick={() => setShowColumnFilters(!showColumnFilters)}
+                className="w-full py-2.5 px-3 rounded-xl bg-white border border-[#EADDC7] text-xs font-bold text-[#182535] flex items-center justify-between shadow-2xs cursor-pointer font-montserrat"
+              >
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#B83A24]" />
+                  <span>Filtros por Columna (Nombre, Cédula, GT...)</span>
+                  {activeColFiltersCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-[#B83A24] text-white text-[10px] flex items-center justify-center font-bold">
+                      {activeColFiltersCount}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${
+                    showColumnFilters ? 'rotate-180 text-[#B83A24]' : ''
+                  }`}
+                />
+              </button>
+
+              {showColumnFilters && (
+                <div className="mt-2.5 space-y-2.5 p-3.5 bg-white rounded-2xl border border-[#EADDC7] shadow-2xs font-montserrat">
+                  <div>
+                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Nombre de la Persona</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={colFilterName}
+                        onChange={(e) => setColFilterName(e.target.value)}
+                        placeholder="Filtrar por nombre..."
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      />
+                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      {colFilterName && (
+                        <button
+                          onClick={() => setColFilterName('')}
+                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Cédula o Usuario (@)</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={colFilterDoc}
+                        onChange={(e) => setColFilterDoc(e.target.value)}
+                        placeholder="Cédula o @usuario..."
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      />
+                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      {colFilterDoc && (
+                        <button
+                          onClick={() => setColFilterDoc('')}
+                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#64748B] block mb-1">Tipo</label>
+                      <select
+                        value={colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter}
+                        onChange={(e) => {
+                          const val = e.target.value as any;
+                          setColFilterType(val);
+                          setSelectedTypeFilter(val);
+                          if (val !== 'GT') {
+                            setColFilterGt('ALL');
+                            setSelectedGtSubTeamFilter('ALL');
+                          }
+                        }}
+                        className="w-full px-2 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      >
+                        <option value="ALL">Todos los tipos</option>
+                        <option value="GT">GT</option>
+                        <option value="GAP">GAP</option>
+                        <option value="MESA">MESA</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-[#64748B] block mb-1">Sub-Equipo GT</label>
+                      <select
+                        value={colFilterGt !== 'ALL' ? colFilterGt : selectedGtSubTeamFilter}
+                        onChange={(e) => {
+                          const val = e.target.value as any;
+                          setColFilterGt(val);
+                          setSelectedGtSubTeamFilter(val);
+                          if (val !== 'ALL') {
+                            setColFilterType('GT');
+                            setSelectedTypeFilter('GT');
+                          }
+                        }}
+                        className="w-full px-2 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      >
+                        <option value="ALL">Todos los GT</option>
+                        {GT_SUBTEAMS.map((sub) => (
+                          <option key={sub} value={sub}>
+                            {sub}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Contacto (Email / Teléfono)</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={colFilterContact}
+                        onChange={(e) => setColFilterContact(e.target.value)}
+                        placeholder="Email o teléfono..."
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      />
+                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      {colFilterContact && (
+                        <button
+                          onClick={() => setColFilterContact('')}
+                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {activeColFiltersCount > 0 && (
+                    <button
+                      onClick={handleResetAllFilters}
+                      className="w-full py-2 rounded-xl bg-[#FDF2EE] text-[#B83A24] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#F6C7BA] cursor-pointer"
+                    >
+                      <FilterX className="w-3.5 h-3.5" />
+                      <span>Limpiar filtros de columna</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {filteredPeople.map((person) => (
               <div key={person.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">

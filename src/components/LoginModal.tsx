@@ -6,7 +6,7 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose?: () => void;
   people: Person[];
-  onLoginSuccess: (user: CurrentUser) => void;
+  onLoginSuccess: (user: CurrentUser, remember?: boolean) => void;
   currentAuthUser: CurrentUser | null;
 }
 
@@ -17,7 +17,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onLoginSuccess,
   currentAuthUser,
 }) => {
-  const [activeTab, setActiveTab] = useState<'admin' | 'staff'>('admin');
+  const [activeTab, setActiveTab] = useState<'staff' | 'admin'>('staff');
 
   // Admin form state
   const [adminUser, setAdminUser] = useState('');
@@ -26,6 +26,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   // Staff form state
   const [staffUsername, setStaffUsername] = useState('');
   const [staffPassword, setStaffPassword] = useState(''); // Cédula
+
+  // Session persistence preference (default true as requested)
+  const [rememberMe, setRememberMe] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -43,70 +46,92 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       (cleanUser === 'DIAS2026' && cleanPass === '2580DIAS') ||
       (cleanUser === 'DIAS' && cleanPass === '2580DIAS')
     ) {
-      onLoginSuccess({
-        role: 'admin',
-        adminData: {
-          id: 'admin_master',
-          username: cleanUser,
-          name: 'Dirección General DÍAS EAFIT',
+      onLoginSuccess(
+        {
           role: 'admin',
+          adminData: {
+            id: 'admin_master',
+            username: cleanUser,
+            name: 'Dirección General DÍAS EAFIT',
+            role: 'admin',
+          },
         },
-      });
+        rememberMe
+      );
       return;
     }
 
-    setErrorMessage('Credenciales de Administrador incorrectas. Usuario: DIAS2026 / Contraseña: ***');
+    setErrorMessage('Credenciales de Administrador incorrectas. Usuario: DIAS2026 / Contraseña requerida.');
   };
 
   const handleStaffSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const userQuery = staffUsername.trim().toLowerCase();
+    const rawQuery = staffUsername.trim().toLowerCase();
+    const queryWithoutAt = rawQuery.startsWith('@') ? rawQuery.slice(1) : rawQuery;
     const passQuery = staffPassword.trim().replace(/\D/g, ''); // Cédula numbers only
+    const passRaw = staffPassword.trim();
 
-    if (!userQuery || !staffPassword.trim()) {
-      setErrorMessage('Por favor ingrese tanto su usuario como su contraseña (cédula).');
+    if (!rawQuery || !passRaw) {
+      setErrorMessage('Por favor ingresa tu usuario (o cédula/correo) y tu contraseña (cédula).');
       return;
     }
 
-    // Lookup person by username, email or documentId
+    // Lookup person by username, email, documentId or full name
     const foundPerson = people.find((p) => {
-      const matchUsername = p.username && p.username.toLowerCase().trim() === userQuery;
-      const matchEmail = p.email && p.email.toLowerCase().trim() === userQuery;
       const cleanDoc = p.documentId.trim().replace(/\D/g, '');
-      const matchDoc = cleanDoc === userQuery.replace(/\D/g, '') || p.documentId.trim() === userQuery;
+      const pUser = (p.username || '').toLowerCase().trim();
+      const pUserWithoutAt = pUser.startsWith('@') ? pUser.slice(1) : pUser;
+      const pEmail = (p.email || '').toLowerCase().trim();
+      const pName = (p.name || '').toLowerCase().trim();
 
-      if (!matchUsername && !matchEmail && !matchDoc) return false;
+      const matchUser = pUser === rawQuery || pUserWithoutAt === queryWithoutAt;
+      const matchEmail = pEmail === rawQuery;
+      const matchDoc = cleanDoc === passQuery || p.documentId.trim() === rawQuery;
+      const matchName = pName === rawQuery || pName.includes(rawQuery);
+
+      if (!matchUser && !matchEmail && !matchDoc && !matchName) return false;
 
       // Validate password against documentId (cédula)
-      const personDocClean = p.documentId.trim().replace(/\D/g, '');
       const isPassCorrect =
-        passQuery === personDocClean || staffPassword.trim() === p.documentId.trim();
+        (passQuery && cleanDoc === passQuery) ||
+        passRaw === p.documentId.trim();
 
       return isPassCorrect;
     });
 
     if (foundPerson) {
-      onLoginSuccess({
-        role: 'staff',
-        staffData: foundPerson,
-      });
+      onLoginSuccess(
+        {
+          role: 'staff',
+          staffData: foundPerson,
+        },
+        rememberMe
+      );
       return;
     }
 
     setErrorMessage(
-      'Usuario o contraseña incorrectos. Recuerda que tu contraseña inicial es tu número de cédula.'
+      'Usuario o contraseña incorrectos. Verifica que tu usuario esté registrado y que la contraseña sea tu número de cédula.'
     );
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose && currentAuthUser) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-[#182535]">
         {onClose && currentAuthUser && (
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] transition-colors"
+            className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] transition-colors cursor-pointer"
+            title="Cerrar ventana"
           >
             <X className="w-5 h-5" />
           </button>
@@ -121,39 +146,41 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             ACCESO DÍAS EAFIT
           </h2>
           <p className="text-xs text-[#64748B] font-montserrat">
-            Selecciona tu perfil de acceso para continuar
+            Ingresa a tu perfil como Staff o Administrador
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 gap-1 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('admin');
-              setErrorMessage(null);
-            }}
-            className={`min-h-[44px] py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'admin'
-                ? 'bg-[#B83A24] text-white shadow-xs font-dalek tracking-wide'
-                : 'text-[#64748B] hover:text-[#182535] font-montserrat'
-            }`}
-          >
-            ADMINISTRADOR
-          </button>
+        <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] mb-6">
           <button
             type="button"
             onClick={() => {
               setActiveTab('staff');
               setErrorMessage(null);
             }}
-            className={`min-h-[44px] py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'staff'
                 ? 'bg-[#B83A24] text-white shadow-xs font-dalek tracking-wide'
                 : 'text-[#64748B] hover:text-[#182535] font-montserrat'
             }`}
           >
-            STAFF / MI DÍAS
+            <User className="w-4 h-4" />
+            <span>STAFF / MI DÍAS</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('admin');
+              setErrorMessage(null);
+            }}
+            className={`min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'admin'
+                ? 'bg-[#B83A24] text-white shadow-xs font-dalek tracking-wide'
+                : 'text-[#64748B] hover:text-[#182535] font-montserrat'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>ADMINISTRADOR</span>
           </button>
         </div>
 
@@ -165,17 +192,81 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         )}
 
-        {/* Form: Administrator */}
-        {activeTab === 'admin' && (
-          <form onSubmit={handleAdminSubmit} className="space-y-4">
+        {/* Form: Staff */}
+        {activeTab === 'staff' && (
+          <form onSubmit={handleStaffSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                Usuario Maestro
+                Usuario, Correo o Cédula
               </label>
               <div className="relative">
                 <input
                   type="text"
                   required
+                  autoComplete="username"
+                  value={staffUsername}
+                  onChange={(e) => setStaffUsername(e.target.value)}
+                  placeholder="Ej: @usuario, correo o cédula"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat"
+                />
+                <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                Contraseña (Número de Cédula)
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={staffPassword}
+                  onChange={(e) => setStaffPassword(e.target.value)}
+                  placeholder="Tu número de documento de identidad"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat"
+                />
+                <Key className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
+              </div>
+              <p className="text-[11px] text-[#64748B] font-montserrat mt-1">
+                Tu contraseña de acceso es tu número de cédula registrado en el sistema.
+              </p>
+            </div>
+
+            {/* Remember me option */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none text-xs text-[#475569] font-montserrat pt-1">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded-md text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] accent-[#B83A24] cursor-pointer"
+              />
+              <span className="font-medium text-[#182535]">Recordar mi sesión en este dispositivo</span>
+            </label>
+
+            <button
+              type="submit"
+              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs sm:text-sm font-dalek tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <span>INGRESAR A MI DÍAS</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+        )}
+
+        {/* Form: Administrator */}
+        {activeTab === 'admin' && (
+          <form onSubmit={handleAdminSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                Usuario Maestro de Dirección
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  autoComplete="username"
                   value={adminUser}
                   onChange={(e) => setAdminUser(e.target.value)}
                   placeholder="DIAS2026"
@@ -193,6 +284,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={adminPass}
                   onChange={(e) => setAdminPass(e.target.value)}
                   placeholder="••••••••"
@@ -202,61 +294,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </div>
 
+            {/* Remember me option */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none text-xs text-[#475569] font-montserrat pt-1">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded-md text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] accent-[#B83A24] cursor-pointer"
+              />
+              <span className="font-medium text-[#182535]">Recordar mi sesión en este dispositivo</span>
+            </label>
+
             <button
               type="submit"
-              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs sm:text-sm font-dalek tracking-wider flex items-center justify-center gap-2 shadow-md transition-all"
+              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs sm:text-sm font-dalek tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               <span>INGRESAR COMO ADMINISTRADOR</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-        )}
-
-        {/* Form: Staff */}
-        {activeTab === 'staff' && (
-          <form onSubmit={handleStaffSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                Usuario Staff
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={staffUsername}
-                  onChange={(e) => setStaffUsername(e.target.value)}
-                  placeholder="Tu usuario asignado o correo"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat"
-                />
-                <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                Contraseña (Número de Cédula)
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  value={staffPassword}
-                  onChange={(e) => setStaffPassword(e.target.value)}
-                  placeholder="Ingresa tu número de cédula"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat"
-                />
-                <Key className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
-              </div>
-              <p className="text-[11px] text-[#64748B] font-montserrat mt-1">
-                Tu contraseña inicial es tu número de documento de identidad registrado.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs sm:text-sm font-dalek tracking-wider flex items-center justify-center gap-2 shadow-md transition-all"
-            >
-              <span>INGRESAR A MI DÍAS</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

@@ -51,26 +51,40 @@ export default function App() {
   const [events, setEvents] = useState<AppEvent[]>([]);
   const [bases, setBases] = useState<ConfigurableBase[]>([]);
 
-  // Current session user: defaults to Admin (DIAS2026) or stored session
+  // Current session user: restored from localStorage/sessionStorage, or null if no session
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => {
     try {
       const stored = localStorage.getItem(INITIAL_USER_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && (parsed.role === 'admin' || parsed.role === 'staff')) {
+          return parsed;
+        }
+      }
+      const sessionStored = sessionStorage.getItem(INITIAL_USER_STORAGE_KEY);
+      if (sessionStored) {
+        const parsed = JSON.parse(sessionStored);
+        if (parsed && (parsed.role === 'admin' || parsed.role === 'staff')) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.error('Error reading stored session:', err);
     }
-    return {
-      role: 'admin',
-      adminData: {
-        id: 'admin_master',
-        username: 'DIAS2026',
-        name: 'Dirección General DÍAS EAFIT',
-        role: 'admin',
-      },
-    };
+    return null;
   });
 
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  // Automatically show login modal if no active session is found
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
+    try {
+      const stored =
+        localStorage.getItem(INITIAL_USER_STORAGE_KEY) ||
+        sessionStorage.getItem(INITIAL_USER_STORAGE_KEY);
+      return !stored;
+    } catch {
+      return true;
+    }
+  });
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -99,12 +113,45 @@ export default function App() {
     };
   }, []);
 
-  const handleLoginSuccess = (user: CurrentUser) => {
+  // Keep staff data synchronized if database updates in real-time
+  useEffect(() => {
+    if (currentUser?.role === 'staff' && currentUser.staffData && people.length > 0) {
+      const updatedPerson = people.find((p) => p.id === currentUser.staffData?.id);
+      if (updatedPerson && JSON.stringify(updatedPerson) !== JSON.stringify(currentUser.staffData)) {
+        const updatedUser: CurrentUser = {
+          ...currentUser,
+          staffData: updatedPerson,
+        };
+        setCurrentUser(updatedUser);
+        try {
+          if (localStorage.getItem(INITIAL_USER_STORAGE_KEY)) {
+            localStorage.setItem(INITIAL_USER_STORAGE_KEY, JSON.stringify(updatedUser));
+          } else if (sessionStorage.getItem(INITIAL_USER_STORAGE_KEY)) {
+            sessionStorage.setItem(INITIAL_USER_STORAGE_KEY, JSON.stringify(updatedUser));
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [people, currentUser]);
+
+  const handleLoginSuccess = (user: CurrentUser, remember: boolean = true) => {
     setCurrentUser(user);
-    try {
-      localStorage.setItem(INITIAL_USER_STORAGE_KEY, JSON.stringify(user));
-    } catch {
-      // ignore
+    if (remember) {
+      try {
+        localStorage.setItem(INITIAL_USER_STORAGE_KEY, JSON.stringify(user));
+        sessionStorage.removeItem(INITIAL_USER_STORAGE_KEY);
+      } catch (err) {
+        console.error('Failed to save session to localStorage:', err);
+      }
+    } else {
+      try {
+        sessionStorage.setItem(INITIAL_USER_STORAGE_KEY, JSON.stringify(user));
+        localStorage.removeItem(INITIAL_USER_STORAGE_KEY);
+      } catch (err) {
+        console.error('Failed to save session to sessionStorage:', err);
+      }
     }
     setIsAuthModalOpen(false);
   };
@@ -113,6 +160,7 @@ export default function App() {
     setCurrentUser(null);
     try {
       localStorage.removeItem(INITIAL_USER_STORAGE_KEY);
+      sessionStorage.removeItem(INITIAL_USER_STORAGE_KEY);
     } catch {
       // ignore
     }
@@ -225,26 +273,29 @@ export default function App() {
           </>
         ) : (
           /* If not logged in */
-          <div className="max-w-lg mx-auto my-12 p-8 bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 rounded-3xl bg-[#FEF8EC] border-2 border-[#E5A12E]/40 text-[#B83A24] flex items-center justify-center mx-auto shadow-2xs">
+          <div className="max-w-md mx-auto my-12 p-8 sm:p-10 bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl text-center space-y-5 shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-[#FEF8EC] border-2 border-[#E5A12E]/40 text-[#B83A24] flex items-center justify-center mx-auto shadow-2xs">
               <ShieldCheck className="w-8 h-8" />
             </div>
 
-            <h2 className="text-2xl font-extrabold font-dalek text-[#182535] tracking-wider">
-              SESIÓN NO INICIADA
-            </h2>
+            <div className="space-y-1.5">
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-dalek text-[#182535] tracking-wider">
+                PORTAL DÍAS EAFIT 2026
+              </h2>
+              <p className="text-[#64748B] text-xs sm:text-sm font-montserrat leading-relaxed">
+                Ingresa con tus credenciales como <b>Staff (Mi DÍAS)</b> o como <b>Administrador</b> para acceder al sistema.
+              </p>
+            </div>
 
-            <p className="text-[#64748B] text-xs sm:text-sm font-montserrat leading-relaxed">
-              Por favor inicia sesión como <b>Administrador (DIAS2026)</b> o como integrante de <b>Staff (con tu usuario y cédula)</b> para acceder al sistema.
-            </p>
-
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="mt-4 px-8 py-3 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] font-dalek text-white font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 mx-auto text-sm"
-            >
-              <UserCheck className="w-4 h-4" />
-              <span>INGRESAR AHORA</span>
-            </button>
+            <div className="pt-2">
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="w-full px-8 py-3.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] font-dalek text-white font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 mx-auto text-sm cursor-pointer"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>INGRESAR AHORA</span>
+              </button>
+            </div>
           </div>
         )}
       </main>
@@ -261,7 +312,9 @@ export default function App() {
           <span className="font-mono text-[11px] text-[#94A3B8]">
             {currentUser?.role === 'staff'
               ? `Sesión Staff: ${currentUser.staffData?.name}`
-              : 'Sesión Administrador (DIAS2026) • Base de Datos Sincronizada'}
+              : currentUser?.role === 'admin'
+              ? 'Sesión Administrador (DIAS2026) • Base de Datos Sincronizada'
+              : 'Acceso Seguro • Requiere Autenticación'}
           </span>
         </div>
       </footer>
