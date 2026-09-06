@@ -117,7 +117,8 @@ export interface ConfigurableShift {
   dayId: string; // 'lunes', 'martes', 'miercoles', 'jueves', 'viernes' or custom
   eventId: string; // linked to AppEvent id, e.g. 'the-show', 'carnival'
   category: PersonType; // 'GT' (GRUPO DE TRABAJO), 'GAP' (GRUPO DE APOYO), 'MESA'
-  gtSubTeam?: GtSubTeam | string; // e.g. 'Logística', 'RRPP', 'Seguridad'
+  gtSubTeam?: GtSubTeam | string; // Primary GT sub-team (e.g. 'Logística')
+  gtSubTeams?: (GtSubTeam | string)[]; // Multiple GT sub-teams supported (e.g. ['Logística', 'Seguridad'])
   startTime: string; // '06:00' (24h)
   endTime: string; // '08:00' (24h)
   label: string; // '6:00 AM – 8:00 AM'

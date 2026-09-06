@@ -55,6 +55,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [formPhone, setFormPhone] = useState('');
   const [formType, setFormType] = useState<PersonType>('GT');
   const [formGtSubTeam, setFormGtSubTeam] = useState<GtSubTeam>('Logística');
+  const [formGtSubTeams, setFormGtSubTeams] = useState<GtSubTeam[]>(['Logística']);
   const [formSelectedFunctions, setFormSelectedFunctions] = useState<string[]>([]);
   const [customFunctionInput, setCustomFunctionInput] = useState('');
   const [formRole, setFormRole] = useState('Staff');
@@ -74,6 +75,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setFormPhone('');
     setFormType('GT');
     setFormGtSubTeam('Logística');
+    setFormGtSubTeams(['Logística']);
     setFormSelectedFunctions([]);
     setCustomFunctionInput('');
     setFormRole('Staff');
@@ -96,7 +98,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     const mainSub = (person.gtSubTeam ||
       (person.gtTeams && person.gtTeams[0]) ||
       'Logística') as GtSubTeam;
+    const initialTeams =
+      person.gtTeams && person.gtTeams.length > 0
+        ? (person.gtTeams.filter((t) => GT_SUBTEAMS.includes(t as GtSubTeam)) as GtSubTeam[])
+        : [GT_SUBTEAMS.includes(mainSub) ? mainSub : 'Logística'];
+
     setFormGtSubTeam(GT_SUBTEAMS.includes(mainSub) ? mainSub : 'Logística');
+    setFormGtSubTeams(initialTeams.length > 0 ? initialTeams : ['Logística']);
     setFormSelectedFunctions(person.functions || []);
     setCustomFunctionInput('');
     setFormRole(person.roleTitle || 'Staff');
@@ -130,7 +138,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     }
 
     const cleanUser = formUser.trim() || formDoc.trim();
-    const gtTeams = formType === 'GT' ? [formGtSubTeam] : [];
+    const selectedGtTeams =
+      formType === 'GT'
+        ? formGtSubTeams.length > 0
+          ? formGtSubTeams
+          : [formGtSubTeam]
+        : [];
+    const primaryGtSub = selectedGtTeams.length > 0 ? selectedGtTeams[0] : undefined;
 
     setIsSubmitting(true);
     try {
@@ -142,8 +156,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           email: formEmail.trim(),
           phone: formPhone.trim(),
           primaryType: formType,
-          gtTeams,
-          gtSubTeam: formType === 'GT' ? formGtSubTeam : undefined,
+          gtTeams: selectedGtTeams,
+          gtSubTeam: formType === 'GT' ? primaryGtSub : undefined,
           functions: formSelectedFunctions,
           roleTitle: formRole.trim(),
           shirtSize: formShirt,
@@ -158,8 +172,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           email: formEmail.trim(),
           phone: formPhone.trim(),
           primaryType: formType,
-          gtTeams,
-          gtSubTeam: formType === 'GT' ? formGtSubTeam : undefined,
+          gtTeams: selectedGtTeams,
+          gtSubTeam: formType === 'GT' ? primaryGtSub : undefined,
           functions: formSelectedFunctions,
           roleTitle: formRole.trim(),
           shirtSize: formShirt,
@@ -395,9 +409,18 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         {person.primaryType === 'GT' && (
                           <div className="flex items-center gap-1 flex-wrap">
                             <span className="text-[10px] text-[#64748B] font-bold">GT:</span>
-                            <span className="px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
-                              {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
-                            </span>
+                            {person.gtTeams && person.gtTeams.length > 1 ? (
+                              <span
+                                className="px-2 py-0.5 rounded-md bg-[#FFF5F2] border border-[#FADCD5] text-[11px] font-bold text-[#B83A24]"
+                                title={person.gtTeams.join(', ')}
+                              >
+                                {person.gtTeams.join(', ')}
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
+                                {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
+                              </span>
+                            )}
                           </div>
                         )}
                         {person.functions && person.functions.length > 0 ? (
@@ -484,9 +507,18 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   {person.primaryType === 'GT' && (
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-[#182535]">Sub-Equipo:</span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#FFFDF8] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
-                        {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
-                      </span>
+                      {person.gtTeams && person.gtTeams.length > 1 ? (
+                        <span
+                          className="px-2 py-0.5 rounded-md bg-[#FFF5F2] border border-[#FADCD5] text-[11px] font-bold text-[#B83A24]"
+                          title={person.gtTeams.join(', ')}
+                        >
+                          {person.gtTeams.join(', ')}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-[#FFFDF8] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
+                          {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
+                        </span>
+                      )}
                     </div>
                   )}
                   {person.functions && person.functions.length > 0 && (
@@ -653,23 +685,86 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   />
                 </div>
 
-                {/* Grupo / GT Sub-team */}
+                {/* Grupo / GT Sub-teams con selección múltiple */}
                 {formType === 'GT' ? (
-                  <div>
-                    <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                      Sub-Equipo GT *
-                    </label>
-                    <select
-                      value={formGtSubTeam}
-                      onChange={(e) => setFormGtSubTeam(e.target.value as GtSubTeam)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
-                    >
-                      {GT_SUBTEAMS.map((sub) => (
-                        <option key={sub} value={sub}>
-                          GT → {sub}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-xs font-bold text-[#182535] font-montserrat">
+                          Sub-Equipos GT Asignados *
+                        </label>
+                        <span className="text-[11px] text-[#64748B]">
+                          Seleccione uno o varios sub-equipos a los que pertenece esta persona
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allSelected = formGtSubTeams.length === GT_SUBTEAMS.length;
+                          const newTeams = allSelected ? ['Logística'] : [...GT_SUBTEAMS];
+                          setFormGtSubTeams(newTeams as GtSubTeam[]);
+                          setFormGtSubTeam(newTeams[0] as GtSubTeam);
+                        }}
+                        className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+                      >
+                        {formGtSubTeams.length === GT_SUBTEAMS.length
+                          ? 'Solo Logística'
+                          : 'Seleccionar todos (8)'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {GT_SUBTEAMS.map((sub) => {
+                        const isSelected = formGtSubTeams.includes(sub);
+                        return (
+                          <button
+                            key={sub}
+                            type="button"
+                            onClick={() => {
+                              let updated: GtSubTeam[];
+                              if (isSelected) {
+                                if (formGtSubTeams.length === 1) return; // Mínimo 1
+                                updated = formGtSubTeams.filter((s) => s !== sub);
+                              } else {
+                                updated = [...formGtSubTeams, sub];
+                              }
+                              setFormGtSubTeams(updated);
+                              setFormGtSubTeam(updated[0]);
+                            }}
+                            className={`px-3 py-2 rounded-xl text-xs font-montserrat flex items-center justify-between border transition-all text-left cursor-pointer ${
+                              isSelected
+                                ? 'bg-white border-[#B83A24] text-[#B83A24] font-bold shadow-2xs ring-1 ring-[#B83A24]/20'
+                                : 'bg-[#FAF6EC]/70 border-[#D8C7A5] text-[#475569] hover:bg-white'
+                            }`}
+                          >
+                            <span>{sub}</span>
+                            <div
+                              className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors ${
+                                isSelected
+                                  ? 'bg-[#B83A24] border-[#B83A24] text-white'
+                                  : 'border-[#CBD5E1] bg-white text-transparent'
+                              }`}
+                            >
+                              ✓
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 border-t border-[#EADDC7]/70 flex items-center justify-between text-[11px] text-[#64748B]">
+                      <span>
+                        Grupos asignados:{' '}
+                        <strong className="text-[#182535]">
+                          {formGtSubTeams.length === GT_SUBTEAMS.length
+                            ? 'Todos los 8 sub-equipos'
+                            : formGtSubTeams.join(', ')}
+                        </strong>
+                      </span>
+                      <span className="font-semibold text-[#B83A24]">
+                        {formGtSubTeams.length} de {GT_SUBTEAMS.length} grupos
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <div>
@@ -692,7 +787,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-[#182535] font-montserrat">
                     Funciones Asignadas a este Integrante (
-                    {formType === 'GT' ? `GT → ${formGtSubTeam}` : formType})
+                    {formType === 'GT'
+                      ? formGtSubTeams.length === GT_SUBTEAMS.length
+                        ? 'Todos los Sub-Equipos'
+                        : formGtSubTeams.join(', ')
+                      : formType}
+                    )
                   </label>
                   <span className="text-[10px] text-[#64748B]">
                     Seleccione una o varias aptitudes
@@ -704,7 +804,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   const availableCatalogFns = getFilteredFunctions(
                     functions,
                     formType,
-                    formType === 'GT' ? formGtSubTeam : undefined,
+                    formType === 'GT' ? formGtSubTeams : undefined,
                     true
                   );
 

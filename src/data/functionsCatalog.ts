@@ -295,7 +295,7 @@ export const DEFAULT_GROUP_FUNCTIONS: GroupFunction[] = [
 export function getFilteredFunctions(
   functions: GroupFunction[],
   category: PersonType,
-  gtSubTeam?: string,
+  gtSubTeam?: string | string[],
   onlyActive = true
 ): GroupFunction[] {
   return functions.filter((f) => {
@@ -304,6 +304,10 @@ export function getFilteredFunctions(
 
     if (category === 'GT') {
       if (!gtSubTeam) return true;
+      if (Array.isArray(gtSubTeam)) {
+        if (gtSubTeam.length === 0) return true;
+        return f.gtSubTeam ? gtSubTeam.includes(f.gtSubTeam) : false;
+      }
       return f.gtSubTeam === gtSubTeam;
     }
 

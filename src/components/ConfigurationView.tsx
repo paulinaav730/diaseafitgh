@@ -114,7 +114,12 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       if (dayFilter !== 'all' && s.dayId !== dayFilter) return false;
       if (eventFilter !== 'all' && s.eventId !== eventFilter) return false;
       if (categoryFilter !== 'all' && s.category !== categoryFilter) return false;
-      if (subTeamFilter !== 'all' && s.gtSubTeam !== subTeamFilter) return false;
+      if (subTeamFilter !== 'all') {
+        const matchesSubTeam =
+          s.gtSubTeam === subTeamFilter ||
+          (s.gtSubTeams && s.gtSubTeams.includes(subTeamFilter));
+        if (!matchesSubTeam) return false;
+      }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = s.name.toLowerCase().includes(q);
@@ -146,6 +151,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       eventId: defaultEvent?.id || 'the-show',
       category: 'GT',
       gtSubTeam: 'Logística',
+      gtSubTeams: ['Logística'],
       startTime: '06:00',
       endTime: '08:00',
       capacity: 10,
@@ -159,8 +165,17 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
 
   // Open Shift Edit Modal
   const handleOpenEditShift = (shift: ConfigurableShift) => {
+    const initialSubTeams =
+      shift.gtSubTeams && shift.gtSubTeams.length > 0
+        ? [...shift.gtSubTeams]
+        : shift.gtSubTeam
+        ? [shift.gtSubTeam]
+        : ['Logística'];
+
     setEditingShift({
       ...shift,
+      gtSubTeams: initialSubTeams,
+      gtSubTeam: initialSubTeams[0] || 'Logística',
       specificFunctions: shift.specificFunctions ? [...shift.specificFunctions] : [],
     });
     setIsShiftModalOpen(true);
@@ -178,13 +193,23 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       return;
     }
 
+    const selectedSubTeams =
+      editingShift.category === 'GT'
+        ? editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+          ? editingShift.gtSubTeams
+          : editingShift.gtSubTeam
+          ? [editingShift.gtSubTeam]
+          : ['Logística']
+        : undefined;
+
     const payload = {
       ...editingShift,
       name: editingShift.name.trim(),
       dayId: editingShift.dayId,
       eventId: editingShift.eventId,
       category: editingShift.category,
-      gtSubTeam: editingShift.category === 'GT' ? editingShift.gtSubTeam : undefined,
+      gtSubTeams: selectedSubTeams,
+      gtSubTeam: selectedSubTeams && selectedSubTeams.length > 0 ? selectedSubTeams[0] : undefined,
       startTime: editingShift.startTime || '06:00',
       endTime: editingShift.endTime || '08:00',
       capacity: Number(editingShift.capacity) || 1,
@@ -259,13 +284,22 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
     setDeleteConfirm(null);
   };
 
-  // Available functions inside Shift Modal (filtered strictly by current category and gtSubTeam)
+  // Available functions inside Shift Modal (filtered strictly by current category and all selected gtSubTeams)
   const shiftModalAvailableFunctions = useMemo(() => {
     if (!editingShift || !editingShift.category) return [];
+    const subTeams =
+      editingShift.category === 'GT'
+        ? editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+          ? editingShift.gtSubTeams
+          : editingShift.gtSubTeam
+          ? [editingShift.gtSubTeam]
+          : ['Logística']
+        : undefined;
+
     return getFilteredFunctions(
       functions,
       editingShift.category,
-      editingShift.category === 'GT' ? editingShift.gtSubTeam : undefined,
+      subTeams,
       true
     );
   }, [editingShift, functions]);
@@ -650,10 +684,21 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                                   : 'MESA'}
                               </span>
 
-                              {shift.category === 'GT' && shift.gtSubTeam && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0]">
-                                  {shift.gtSubTeam}
-                                </span>
+                              {shift.category === 'GT' && (
+                                shift.gtSubTeams && shift.gtSubTeams.length > 1 ? (
+                                  <span
+                                    className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF5F2] text-[#B83A24] border border-[#FADCD5]"
+                                    title={shift.gtSubTeams.join(', ')}
+                                  >
+                                    {shift.gtSubTeams.length === GT_SUBTEAMS.length
+                                      ? 'Todos los GT'
+                                      : `${shift.gtSubTeams.length} sub-equipos`}
+                                  </span>
+                                ) : shift.gtSubTeam ? (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0]">
+                                    {shift.gtSubTeam}
+                                  </span>
+                                ) : null
                               )}
 
                               {shift.hasBases && (
@@ -960,7 +1005,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               );
 
               const subTeamShifts = shifts.filter(
-                (s) => s.category === 'GT' && s.gtSubTeam === subTeam
+                (s) =>
+                  s.category === 'GT' &&
+                  (s.gtSubTeam === subTeam || (s.gtSubTeams && s.gtSubTeams.includes(subTeam)))
               );
 
               return (
@@ -1100,7 +1147,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 </div>
               </div>
 
-              {/* Category and SubTeam */}
+              {/* Category and SubTeam Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
@@ -1110,10 +1157,18 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     value={editingShift.category}
                     onChange={(e) => {
                       const cat = e.target.value as PersonType;
+                      const defaultTeams =
+                        cat === 'GT'
+                          ? editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                            ? editingShift.gtSubTeams
+                            : ['Logística']
+                          : undefined;
+
                       setEditingShift({
                         ...editingShift,
                         category: cat,
-                        gtSubTeam: cat === 'GT' ? editingShift.gtSubTeam || 'Logística' : undefined,
+                        gtSubTeams: defaultTeams,
+                        gtSubTeam: defaultTeams ? defaultTeams[0] : undefined,
                         hasBases: cat === 'GAP',
                         specificFunctions: [], // reset when category changes
                       });
@@ -1127,31 +1182,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   </select>
                 </div>
 
-                {editingShift.category === 'GT' ? (
-                  <div>
-                    <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
-                      GRUPO DE TRABAJO (SUB-EQUIPO) *
-                    </label>
-                    <select
-                      value={editingShift.gtSubTeam || 'Logística'}
-                      onChange={(e) => {
-                        setEditingShift({
-                          ...editingShift,
-                          gtSubTeam: e.target.value as GtSubTeam,
-                          specificFunctions: [], // automatically reset functions to match new group!
-                        });
-                      }}
-                      className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white text-[#182535] focus:ring-1 focus:ring-[#B83A24]"
-                      required
-                    >
-                      {GT_SUBTEAMS.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
+                {editingShift.category === 'GAP' ? (
                   <div>
                     <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
                       ¿OPERA EN BASES FÍSICAS?
@@ -1169,6 +1200,121 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                       <option value="yes">Sí (Asociado a bases físicas)</option>
                       <option value="no">No (Turno general)</option>
                     </select>
+                  </div>
+                ) : (
+                  <div className="hidden sm:block" />
+                )}
+
+                {/* Sub-equipos GT con selección múltiple interactiva */}
+                {editingShift.category === 'GT' && (
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-xs font-bold text-[#182535] font-montserrat">
+                          GRUPOS DE TRABAJO (SUB-EQUIPOS) *
+                        </label>
+                        <span className="text-[11px] text-[#64748B]">
+                          Seleccione uno o varios sub-equipos de GT para este turno
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentTeams =
+                            editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                              ? editingShift.gtSubTeams
+                              : editingShift.gtSubTeam
+                              ? [editingShift.gtSubTeam]
+                              : ['Logística'];
+                          const allSelected = currentTeams.length === GT_SUBTEAMS.length;
+                          const newTeams = allSelected ? ['Logística'] : [...GT_SUBTEAMS];
+                          setEditingShift({
+                            ...editingShift,
+                            gtSubTeams: newTeams,
+                            gtSubTeam: newTeams[0],
+                          });
+                        }}
+                        className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer transition-colors"
+                      >
+                        {(editingShift.gtSubTeams || []).length === GT_SUBTEAMS.length
+                          ? 'Solo Logística'
+                          : 'Seleccionar todos (8)'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {GT_SUBTEAMS.map((st) => {
+                        const currentTeams =
+                          editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                            ? editingShift.gtSubTeams
+                            : editingShift.gtSubTeam
+                            ? [editingShift.gtSubTeam]
+                            : ['Logística'];
+                        const isSelected = currentTeams.includes(st);
+
+                        return (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => {
+                              let updated: string[];
+                              if (isSelected) {
+                                if (currentTeams.length === 1) return; // Mínimo 1 seleccionado
+                                updated = currentTeams.filter((s) => s !== st);
+                              } else {
+                                updated = [...currentTeams, st];
+                              }
+                              setEditingShift({
+                                ...editingShift,
+                                gtSubTeams: updated,
+                                gtSubTeam: updated[0],
+                              });
+                            }}
+                            className={`px-3 py-2 rounded-xl text-xs font-montserrat flex items-center justify-between border transition-all text-left cursor-pointer ${
+                              isSelected
+                                ? 'bg-white border-[#B83A24] text-[#B83A24] font-bold shadow-2xs ring-1 ring-[#B83A24]/20'
+                                : 'bg-[#FAF6EC]/70 border-[#D8C7A5] text-[#475569] hover:bg-white'
+                            }`}
+                          >
+                            <span>{st}</span>
+                            <div
+                              className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors ${
+                                isSelected
+                                  ? 'bg-[#B83A24] border-[#B83A24] text-white'
+                                  : 'border-[#CBD5E1] bg-white text-transparent'
+                              }`}
+                            >
+                              ✓
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 border-t border-[#EADDC7]/70 flex items-center justify-between text-[11px] text-[#64748B]">
+                      <span>
+                        Seleccionados:{' '}
+                        <strong className="text-[#182535]">
+                          {(editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                            ? editingShift.gtSubTeams
+                            : [editingShift.gtSubTeam || 'Logística']
+                          ).length === GT_SUBTEAMS.length
+                            ? 'Todos los 8 sub-equipos'
+                            : (editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                                ? editingShift.gtSubTeams
+                                : [editingShift.gtSubTeam || 'Logística']
+                              ).join(', ')}
+                        </strong>
+                      </span>
+                      <span className="font-semibold text-[#B83A24]">
+                        {(editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                          ? editingShift.gtSubTeams
+                          : [editingShift.gtSubTeam || 'Logística']
+                        ).length}{' '}
+                        de {GT_SUBTEAMS.length} grupos
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1255,7 +1401,17 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     Filtrado para:{' '}
                     <strong>
                       {editingShift.category === 'GT'
-                        ? `GT → ${editingShift.gtSubTeam || 'Logística'}`
+                        ? `GT → ${
+                            (editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                              ? editingShift.gtSubTeams
+                              : [editingShift.gtSubTeam || 'Logística']
+                            ).length === GT_SUBTEAMS.length
+                              ? 'Todos los sub-equipos'
+                              : (editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
+                                  ? editingShift.gtSubTeams
+                                  : [editingShift.gtSubTeam || 'Logística']
+                                ).join(', ')
+                          }`
                         : editingShift.category === 'GAP'
                         ? 'GRUPO DE APOYO'
                         : 'MESA'}
