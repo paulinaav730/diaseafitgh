@@ -158,10 +158,11 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
       const q = tableSearch.toLowerCase().trim();
       const matchName = row.name.toLowerCase().includes(q);
       const matchDoc = row.documentId.toLowerCase().includes(q);
+      const matchUser = row.username ? row.username.toLowerCase().includes(q) : false;
       const matchEpik = row.epikId.toLowerCase().includes(q);
       const matchEmail = row.email.toLowerCase().includes(q);
       const matchGt = row.gt.toLowerCase().includes(q);
-      return matchName || matchDoc || matchEpik || matchEmail || matchGt;
+      return matchName || matchDoc || matchUser || matchEpik || matchEmail || matchGt;
     }
 
     return true;
@@ -344,7 +345,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     <span>Detección de Duplicados</span>
                   </div>
                   <p className="text-[11px] text-[#64748B] leading-relaxed">
-                    Compara <b>Cédula</b>, <b>Correo institucional</b>, <b>EPIK ID</b> y Correo. Si
+                    Compara <b>Cédula</b>, <b>Usuario</b>, <b>Correo institucional</b>, <b>EPIK ID</b> y Correo. Si
                     la persona ya existe, actualiza su información <b>sin eliminar</b> asignaciones ni
                     asistencias.
                   </p>
@@ -681,7 +682,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     <tr>
                       <th className="py-2.5 px-3">Fila</th>
                       <th className="py-2.5 px-3">Persona</th>
-                      <th className="py-2.5 px-3">Documento / EPIK</th>
+                      <th className="py-2.5 px-3">Documento / Usuario</th>
                       <th className="py-2.5 px-3">GT / Tipo</th>
                       <th className="py-2.5 px-3">Disponibilidad Reconocida</th>
                       <th className="py-2.5 px-3">Estado</th>
@@ -721,11 +722,14 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                               </div>
                             </td>
 
-                            {/* Document & Epik */}
+                            {/* Document & Username */}
                             <td className="py-2.5 px-3 font-mono">
                               <div className="font-bold text-[#182535]">{row.documentId}</div>
-                              {row.epikId && (
-                                <div className="text-[10px] text-[#64748B]">{row.epikId}</div>
+                              <div className="text-[10px] text-[#B83A24] font-semibold flex items-center gap-1">
+                                <span>@{row.username}</span>
+                              </div>
+                              {row.epikId && row.epikId.toLowerCase() !== row.username.toLowerCase() && (
+                                <div className="text-[9px] text-[#64748B]">EPIK: {row.epikId}</div>
                               )}
                             </td>
 

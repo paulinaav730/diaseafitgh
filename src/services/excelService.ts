@@ -29,6 +29,7 @@ export interface ExcelMaestroParsedRow {
   fullName: string;
   phone: string;
   documentId: string;
+  username: string;
   institutionalEmail: string;
   epikId: string;
   gt: string;
@@ -341,6 +342,7 @@ export function identifyColumns(headers: string[]): {
   fullNameKey?: string;
   phoneKey?: string;
   documentIdKey?: string;
+  usernameKey?: string;
   institutionalEmailKey?: string;
   epikIdKey?: string;
   gtKey?: string;
@@ -369,6 +371,17 @@ export function identifyColumns(headers: string[]): {
       result.startTimeKey = hdr;
     } else if (norm.includes('hora') && (norm.includes('fin') || norm.includes('finalizacion'))) {
       result.endTimeKey = hdr;
+    } else if (
+      norm === 'usuario' ||
+      norm === 'username' ||
+      norm === 'user' ||
+      norm === 'login' ||
+      norm.includes('nombre de usuario') ||
+      norm.includes('usuario eafit') ||
+      norm.includes('user eafit') ||
+      (norm.includes('usuario') && !norm.includes('hora'))
+    ) {
+      result.usernameKey = hdr;
     } else if (norm.includes('institucional') || norm.includes('correo inst')) {
       result.institutionalEmailKey = hdr;
     } else if (norm.includes('correo') || norm.includes('email') || norm.includes('mail')) {
@@ -412,11 +425,12 @@ export function identifyColumns(headers: string[]): {
 }
 
 /**
- * Searches for an existing person by Document ID, Institutional Email, EPIK ID, or Personal Email.
+ * Searches for an existing person by Document ID, Username, Institutional Email, EPIK ID, or Personal Email.
  */
 export function findExistingPerson(
   rowIdentifiers: {
     documentId: string;
+    username?: string;
     institutionalEmail?: string;
     epikId?: string;
     email?: string;
@@ -424,6 +438,7 @@ export function findExistingPerson(
   existingPeople: Person[]
 ): { existingPerson: Person | null; reasons: string[] } {
   const cleanDoc = rowIdentifiers.documentId.trim();
+  const cleanUser = (rowIdentifiers.username || '').trim().toLowerCase().replace(/^@+/, '');
   const cleanInstEmail = (rowIdentifiers.institutionalEmail || '').trim().toLowerCase();
   const cleanEpik = (rowIdentifiers.epikId || '').trim().toLowerCase();
   const cleanEmail = (rowIdentifiers.email || '').trim().toLowerCase();
@@ -432,6 +447,7 @@ export function findExistingPerson(
 
   for (const p of existingPeople) {
     const pDoc = p.documentId.trim();
+    const pUser = (p.username || '').trim().toLowerCase().replace(/^@+/, '');
     const pInstEmail = (p.institutionalEmail || '').trim().toLowerCase();
     const pEpik = (p.epikId || '').trim().toLowerCase();
     const pEmail = p.email.trim().toLowerCase();
@@ -442,19 +458,25 @@ export function findExistingPerson(
       return { existingPerson: p, reasons };
     }
 
-    // 2. Check Institutional Email
+    // 2. Check Username
+    if (cleanUser && pUser && pUser === cleanUser) {
+      reasons.push(`Nombre de usuario coincidente (@${cleanUser})`);
+      return { existingPerson: p, reasons };
+    }
+
+    // 3. Check Institutional Email
     if (cleanInstEmail && (pInstEmail === cleanInstEmail || pEmail === cleanInstEmail)) {
       reasons.push(`Correo institucional coincidente (${cleanInstEmail})`);
       return { existingPerson: p, reasons };
     }
 
-    // 3. Check EPIK ID
+    // 4. Check EPIK ID
     if (cleanEpik && pEpik === cleanEpik) {
       reasons.push(`ID de EPIK coincidente (${cleanEpik})`);
       return { existingPerson: p, reasons };
     }
 
-    // 4. Check Personal Email
+    // 5. Check Personal Email
     if (cleanEmail && (pEmail === cleanEmail || pInstEmail === cleanEmail)) {
       reasons.push(`Correo electrónico coincidente (${cleanEmail})`);
       return { existingPerson: p, reasons };
@@ -501,6 +523,7 @@ export async function parseExcelMaestroFile(
 
   const parsedRows: ExcelMaestroParsedRow[] = [];
   const seenDocumentsInFile = new Map<string, number>();
+  const seenUsersInFile = new Map<string, number>();
   const seenEpikInFile = new Map<string, number>();
   const allUnrecognized: UnrecognizedScheduleItem[] = [];
 
@@ -535,6 +558,7 @@ export async function parseExcelMaestroFile(
     const fullName = colMap.fullNameKey ? cleanVal(raw[colMap.fullNameKey]) : '';
     const phone = colMap.phoneKey ? cleanVal(raw[colMap.phoneKey]) : '';
     let documentId = colMap.documentIdKey ? cleanVal(raw[colMap.documentIdKey]) : '';
+    let username = colMap.usernameKey ? cleanVal(raw[colMap.usernameKey]) : '';
     const institutionalEmail = colMap.institutionalEmailKey
       ? cleanVal(raw[colMap.institutionalEmailKey])
       : '';
@@ -556,6 +580,26 @@ export async function parseExcelMaestroFile(
     // Clean documentId
     documentId = documentId.replace(/\D/g, '') || documentId;
 
+    // Clean and normalize username (lowercase, remove leading @, remove whitespace)
+    username = username.replace(/^@+/, '').trim().toLowerCase().replace(/\s+/g, '');
+
+    // If username was not explicitly provided in Excel, derive it by priority:
+    // 1. EPIK ID
+    // 2. Institutional Email prefix (before @)
+    // 3. Personal Email prefix (before @)
+    // 4. Document ID (cédula)
+    if (!username) {
+      if (epikId && epikId.trim()) {
+        username = epikId.trim().toLowerCase().replace(/\s+/g, '').replace(/^@+/, '');
+      } else if (institutionalEmail && institutionalEmail.includes('@')) {
+        username = institutionalEmail.split('@')[0].trim().toLowerCase().replace(/^@+/, '');
+      } else if (email && email.includes('@')) {
+        username = email.split('@')[0].trim().toLowerCase().replace(/^@+/, '');
+      } else if (documentId) {
+        username = documentId.trim();
+      }
+    }
+
     if (!name) {
       errors.push('Nombre es obligatorio.');
     }
@@ -572,6 +616,14 @@ export async function parseExcelMaestroFile(
         errors.push(`Documento de identidad duplicado en este archivo.`);
       } else {
         seenDocumentsInFile.set(documentId, rowNumber);
+      }
+    }
+
+    if (username) {
+      if (seenUsersInFile.has(username)) {
+        warnings.push(`Usuario @${username} repetido en la fila ${seenUsersInFile.get(username)}.`);
+      } else {
+        seenUsersInFile.set(username, rowNumber);
       }
     }
 
@@ -604,7 +656,7 @@ export async function parseExcelMaestroFile(
 
     // Match with existing people in database
     const { existingPerson, reasons } = findExistingPerson(
-      { documentId, institutionalEmail, epikId, email },
+      { documentId, username, institutionalEmail, epikId, email },
       existingPeople
     );
 
@@ -706,6 +758,7 @@ export async function parseExcelMaestroFile(
       fullName: fullName || name,
       phone,
       documentId,
+      username,
       institutionalEmail,
       epikId,
       gt,
@@ -779,6 +832,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Nombre completo (Nombre y documento/identificación)': 'Juan Camilo Pérez Gómez 1017123456',
       'Número de celular': '3001234567',
       'Documento de identidad': '1017123456',
+      Usuario: 'jperez',
       'Correo institucional': 'jperez@eafit.edu.co',
       'ID de EPIK': 'EPIK-00129',
       '¿A qué GT pertenece?': 'Logística, Montaje',
@@ -798,6 +852,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Nombre completo (Nombre y documento/identificación)': 'María José Gómez López 1020304050',
       'Número de celular': '3017654321',
       'Documento de identidad': '1020304050',
+      Usuario: 'mgomez',
       'Correo institucional': 'mgomez@eafit.edu.co',
       'ID de EPIK': 'EPIK-00245',
       '¿A qué GT pertenece?': 'GAP',
@@ -817,6 +872,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Nombre completo (Nombre y documento/identificación)': 'Carlos Mario Restrepo Ruiz 1033445566',
       'Número de celular': '3129876543',
       'Documento de identidad': '1033445566',
+      Usuario: 'crestrepo',
       'Correo institucional': 'crestrepo@eafit.edu.co',
       'ID de EPIK': 'EPIK-00388',
       '¿A qué GT pertenece?': 'RRPP',
@@ -844,6 +900,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
     { wch: 36 }, // Nombre completo
     { wch: 16 }, // Celular
     { wch: 22 }, // Documento
+    { wch: 18 }, // Usuario
     { wch: 26 }, // Correo inst
     { wch: 14 }, // EPIK
     { wch: 24 }, // GT
@@ -888,7 +945,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
 }
 
 /**
- * EXPORT PEOPLE & AVAILABILITY TO OFFICIAL 17-COLUMN EXCEL MAESTRO
+ * EXPORT PEOPLE & AVAILABILITY TO OFFICIAL 18-COLUMN EXCEL MAESTRO
  */
 export function exportPeopleToOfficialExcel(
   people: Person[],
@@ -919,6 +976,7 @@ export function exportPeopleToOfficialExcel(
         p.fullName || `${p.name} ${p.documentId}`,
       'Número de celular': p.phone || '',
       'Documento de identidad': p.documentId,
+      Usuario: p.username || '',
       'Correo institucional': p.institutionalEmail || '',
       'ID de EPIK': p.epikId || '',
       '¿A qué GT pertenece?':
@@ -961,7 +1019,7 @@ export async function parseExcelFile(
       correo: r.email,
       celular: r.phone,
       cedula: r.documentId,
-      usuario: r.epikId || r.documentId,
+      usuario: r.username || r.epikId || r.documentId,
       tipo: r.primaryType,
       gt: r.gt,
       funciones: '',
