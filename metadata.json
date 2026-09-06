@@ -1,0 +1,6 @@
+{
+  "name": "DÍAS EAFIT - Gestión de Eventos y Turnos",
+  "description": "Sistema oficial de gestión, turnos, bases, asignaciones y disponibilidad para DÍAS EAFIT.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
