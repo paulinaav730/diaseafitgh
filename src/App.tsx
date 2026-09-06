@@ -36,6 +36,8 @@ import { StaffMyDiasView } from './components/StaffMyDiasView';
 import { LoginModal } from './components/LoginModal';
 import { ExcelImportModal } from './components/ExcelImportModal';
 import { ShieldCheck, UserCheck } from 'lucide-react';
+import { isSupabaseConfigured } from './services/supabaseClient';
+import { syncAllFromSupabase } from './services/supabaseSync';
 
 const INITIAL_USER_STORAGE_KEY = 'dias_eafit_current_user';
 
@@ -111,6 +113,15 @@ export default function App() {
       unsubShifts();
       unsubBases();
     };
+  }, []);
+
+  // Automatic cloud sync on app start if Supabase is configured
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      syncAllFromSupabase().catch((err) => {
+        console.warn('Auto Supabase sync failed on mount:', err);
+      });
+    }
   }, []);
 
   // Keep staff data synchronized if database updates in real-time

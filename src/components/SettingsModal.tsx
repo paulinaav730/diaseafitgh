@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
 import { resetToEmptyState, exportAllData, importAllData } from '../services/storageService';
+import { isSupabaseConfigured } from '../services/supabaseClient';
+import {
+  testSupabaseConnection,
+  syncAllToSupabase,
+  syncAllFromSupabase,
+} from '../services/supabaseSync';
 import {
   CheckCircle,
   ShieldCheck,
@@ -9,6 +15,11 @@ import {
   Trash2,
   X,
   FileCheck,
+  Cloud,
+  CloudUpload,
+  CloudDownload,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -31,7 +42,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [importJson, setImportJson] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
 
+  // Cloud sync state
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudMessage, setCloudMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
   if (!isOpen) return null;
+
+  const handleTestCloud = async () => {
+    setCloudLoading(true);
+    setCloudMessage(null);
+    try {
+      const res = await testSupabaseConnection();
+      setCloudMessage({ text: res.message, isError: !res.success });
+    } catch (e: any) {
+      setCloudMessage({ text: e?.message || 'Error al conectar con Supabase', isError: true });
+    } finally {
+      setCloudLoading(false);
+    }
+  };
+
+  const handlePushCloud = async () => {
+    setCloudLoading(true);
+    setCloudMessage(null);
+    try {
+      const res = await syncAllToSupabase(people, assignments, availabilities);
+      setCloudMessage({ text: res.message, isError: !res.success });
+    } catch (e: any) {
+      setCloudMessage({ text: e?.message || 'Error al subir datos a Supabase', isError: true });
+    } finally {
+      setCloudLoading(false);
+    }
+  };
+
+  const handlePullCloud = async () => {
+    setCloudLoading(true);
+    setCloudMessage(null);
+    try {
+      const res = await syncAllFromSupabase();
+      setCloudMessage({ text: res.message, isError: !res.success });
+    } catch (e: any) {
+      setCloudMessage({ text: e?.message || 'Error al descargar datos de Supabase', isError: true });
+    } finally {
+      setCloudLoading(false);
+    }
+  };
 
   const handleExport = () => {
     const dataStr = exportAllData();
@@ -170,6 +224,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Supabase Cloud Sync */}
+        <div className="border-t border-[#EADDC7] pt-5 space-y-3 font-montserrat">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-[#182535] uppercase tracking-wider font-dalek flex items-center gap-1.5">
+              <Cloud className="w-4 h-4 text-[#C87F17]" />
+              <span>Sincronización en la Nube (Multi-Dispositivo)</span>
+            </h4>
+            <span
+              className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+                isSupabaseConfigured()
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-amber-100 text-amber-800 border border-amber-300'
+              }`}
+            >
+              {isSupabaseConfigured() ? 'Supabase Conectado' : 'Supabase No Configurado'}
+            </span>
+          </div>
+
+          <p className="text-xs text-[#64748B] leading-relaxed">
+            Permite que los integrantes del Staff ingresen desde sus teléfonos móviles (como WhatsApp o navegadores externos) compartiendo la misma base de datos centralizada.
+          </p>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              onClick={handleTestCloud}
+              disabled={cloudLoading}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] flex items-center gap-2 border border-[#EADDC7] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 text-[#B83A24] ${cloudLoading ? 'animate-spin' : ''}`} />
+              <span>Probar Conexión Nube</span>
+            </button>
+
+            <button
+              onClick={handlePushCloud}
+              disabled={cloudLoading || people.length === 0}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] text-white flex items-center gap-2 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <CloudUpload className="w-4 h-4" />
+              <span>Subir Base de Datos a la Nube ({people.length} pers.)</span>
+            </button>
+
+            <button
+              onClick={handlePullCloud}
+              disabled={cloudLoading}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] flex items-center gap-2 border border-[#EADDC7] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <CloudDownload className="w-4 h-4 text-[#C87F17]" />
+              <span>Descargar de la Nube</span>
+            </button>
+          </div>
+
+          {cloudMessage && (
+            <div
+              className={`p-3 rounded-xl text-xs font-medium flex items-start gap-2 ${
+                cloudMessage.isError
+                  ? 'bg-[#FDF2EE] border border-[#F6C7BA] text-[#B83A24]'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {cloudMessage.isError ? (
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#B83A24]" />
+              ) : (
+                <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+              )}
+              <span className="leading-relaxed">{cloudMessage.text}</span>
+            </div>
+          )}
         </div>
 
         {/* Export & Import */}

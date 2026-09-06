@@ -200,3 +200,126 @@ export async function pushAvailabilitiesToSupabase(availabilities: AvailabilityR
     return false;
   }
 }
+
+/**
+ * Pulls all assignments from Supabase PostgreSQL
+ */
+export async function pullAssignmentsFromSupabase(): Promise<Assignment[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+
+  try {
+    const { data, error } = await client.from('assignments').select('*');
+    if (error || !data) {
+      console.warn('Error pulling assignments from Supabase:', error);
+      return null;
+    }
+    return data.map((r: any) => ({
+      id: r.id,
+      personId: r.person_id,
+      dayId: r.day_id,
+      shiftId: r.shift_id,
+      assignedType: r.assigned_type || 'GAP',
+      baseNumber: r.base_id !== null && r.base_id !== undefined ? Number(r.base_id) : undefined,
+      assignedFunction: r.function_id || undefined,
+      notes: r.notes || undefined,
+      updatedAt: r.updated_at || new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.warn('Exception pulling assignments from Supabase:', err);
+    return null;
+  }
+}
+
+/**
+ * Pulls all availabilities from Supabase PostgreSQL
+ */
+export async function pullAvailabilitiesFromSupabase(): Promise<AvailabilityRecord[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+
+  try {
+    const { data, error } = await client.from('availabilities').select('*');
+    if (error || !data) {
+      console.warn('Error pulling availabilities from Supabase:', error);
+      return null;
+    }
+    return data.map((r: any) => ({
+      id: r.id,
+      personId: r.person_id,
+      dayId: r.day_id,
+      shiftIds: Array.isArray(r.shift_ids) ? r.shift_ids : [],
+      updatedAt: r.updated_at || new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.warn('Exception pulling availabilities from Supabase:', err);
+    return null;
+  }
+}
+
+/**
+ * Downloads all data from Supabase into storage
+ */
+export async function syncAllFromSupabase(): Promise<{ success: boolean; message: string; count?: number }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Supabase no está configurado.' };
+  }
+  try {
+    const people = await pullPeopleFromSupabase();
+    if (people && people.length > 0) {
+      const { replaceAllPeopleFromCloud } = await import('./storageService');
+      replaceAllPeopleFromCloud(people);
+    }
+
+    const assignments = await pullAssignmentsFromSupabase();
+    if (assignments && assignments.length > 0) {
+      const { replaceAllAssignmentsFromCloud } = await import('./storageService');
+      replaceAllAssignmentsFromCloud(assignments);
+    }
+
+    const availabilities = await pullAvailabilitiesFromSupabase();
+    if (availabilities && availabilities.length > 0) {
+      const { replaceAllAvailabilitiesFromCloud } = await import('./storageService');
+      replaceAllAvailabilitiesFromCloud(availabilities);
+    }
+
+    return {
+      success: true,
+      message: `Sincronización completada: ${people?.length || 0} personas, ${assignments?.length || 0} turnos.`,
+      count: people?.length || 0,
+    };
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Error al sincronizar con Supabase' };
+  }
+}
+
+/**
+ * Uploads all local data to Supabase
+ */
+export async function syncAllToSupabase(
+  people: Person[],
+  assignments: Assignment[],
+  availabilities: AvailabilityRecord[]
+): Promise<{ success: boolean; message: string }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, message: 'Supabase no está configurado en las variables de entorno.' };
+  }
+  try {
+    const pOk = await pushPeopleToSupabase(people);
+    const aOk = await pushAssignmentsToSupabase(assignments);
+    const avOk = await pushAvailabilitiesToSupabase(availabilities);
+
+    if (!pOk && people.length > 0) {
+      return { success: false, message: 'Fallo al sincronizar personas en Supabase.' };
+    }
+
+    return {
+      success: true,
+      message: `¡Base de datos sincronizada en la nube! ${people.length} personas, ${assignments.length} turnos.`,
+    };
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Error al subir a Supabase' };
+  }
+}
+
+

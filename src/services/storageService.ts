@@ -69,6 +69,25 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// Helper to derive smart username from person fields
+export function derivePersonUsername(p: {
+  epikId?: string;
+  institutionalEmail?: string;
+  email?: string;
+  documentId?: string;
+}): string {
+  if (p.epikId && p.epikId.trim()) {
+    return p.epikId.trim().toLowerCase();
+  }
+  if (p.institutionalEmail && p.institutionalEmail.includes('@')) {
+    return p.institutionalEmail.split('@')[0].trim().toLowerCase();
+  }
+  if (p.email && p.email.includes('@')) {
+    return p.email.split('@')[0].trim().toLowerCase();
+  }
+  return (p.documentId || '').trim();
+}
+
 // Initialize storage
 export function initializeStorage(): void {
   if (isInitialized) return;
@@ -84,7 +103,15 @@ export function initializeStorage(): void {
     const rawShifts = localStorage.getItem(STORAGE_KEYS.SHIFTS);
     const rawBases = localStorage.getItem(STORAGE_KEYS.BASES);
 
-    peopleCache = rawPeople ? JSON.parse(rawPeople) : [];
+    const parsedPeople: Person[] = rawPeople ? JSON.parse(rawPeople) : [];
+    // Normalize usernames for any people missing them or set to documentId
+    peopleCache = parsedPeople.map((p) => {
+      const derived = derivePersonUsername(p);
+      if (derived && (!p.username || p.username === p.documentId)) {
+        return { ...p, username: derived };
+      }
+      return p;
+    });
     assignmentCache = rawAssignments ? JSON.parse(rawAssignments) : [];
     availabilityCache = rawAvailabilities ? JSON.parse(rawAvailabilities) : [];
     attendanceCache = rawAttendances ? JSON.parse(rawAttendances) : [];
@@ -385,11 +412,22 @@ export async function importExcelMaestroBatch(
 
       if (options.updateExisting) {
         // Non-destructive update of user fields (NEVER touches assignments or attendance)
+        const derivedUser = derivePersonUsername({
+          epikId: row.epikId || existing.epikId,
+          institutionalEmail: row.institutionalEmail || existing.institutionalEmail,
+          email: row.email || existing.email,
+          documentId: row.documentId || existing.documentId,
+        });
+
         peopleCache[existingIndex] = {
           ...existing,
           name: row.name || existing.name,
           fullName: row.fullName || existing.fullName || row.name,
           documentId: row.documentId || existing.documentId,
+          username:
+            existing.username && existing.username !== existing.documentId
+              ? existing.username
+              : derivedUser || existing.username,
           phone: row.phone || existing.phone,
           email: row.email || existing.email,
           institutionalEmail: row.institutionalEmail || existing.institutionalEmail,
@@ -410,12 +448,19 @@ export async function importExcelMaestroBatch(
     } else {
       // NEW PERSON
       targetPersonId = 'person_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const derivedUser = derivePersonUsername({
+        epikId: row.epikId,
+        institutionalEmail: row.institutionalEmail,
+        email: row.email,
+        documentId: row.documentId,
+      });
+
       const newPerson: Person = {
         id: targetPersonId,
         name: row.name,
         fullName: row.fullName || row.name,
         documentId: row.documentId,
-        username: row.documentId,
+        username: derivedUser || row.documentId,
         email:
           row.email ||
           (row.institutionalEmail ? row.institutionalEmail : `${row.documentId}@eafit.edu.co`),
@@ -1260,3 +1305,30 @@ export function importAllData(jsonString: string): boolean {
     return false;
   }
 }
+
+// ----------------- CLOUD SYNCHRONIZATION HELPERS -----------------
+export function replaceAllPeopleFromCloud(newPeople: Person[]): void {
+  // Normalize usernames
+  peopleCache = newPeople.map((p) => {
+    const derived = derivePersonUsername(p);
+    if (derived && (!p.username || p.username === p.documentId)) {
+      return { ...p, username: derived };
+    }
+    return p;
+  });
+  localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
+  peopleListeners.forEach((fn) => fn([...peopleCache]));
+}
+
+export function replaceAllAssignmentsFromCloud(newAssignments: Assignment[]): void {
+  assignmentCache = newAssignments;
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+}
+
+export function replaceAllAvailabilitiesFromCloud(newAvail: AvailabilityRecord[]): void {
+  availabilityCache = newAvail;
+  localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
+  availabilityListeners.forEach((fn) => fn([...availabilityCache]));
+}
+

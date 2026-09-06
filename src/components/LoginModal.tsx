@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Person, CurrentUser } from '../types';
-import { ShieldCheck, User, Lock, Key, AlertCircle, ArrowRight, X } from 'lucide-react';
+import { ShieldCheck, User, Lock, Key, AlertCircle, ArrowRight, X, AlertTriangle, Users, CheckCircle2 } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -68,52 +68,109 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    const rawQuery = staffUsername.trim().toLowerCase();
-    const queryWithoutAt = rawQuery.startsWith('@') ? rawQuery.slice(1) : rawQuery;
-    const passQuery = staffPassword.trim().replace(/\D/g, ''); // Cédula numbers only
-    const passRaw = staffPassword.trim();
-
-    if (!rawQuery || !passRaw) {
-      setErrorMessage('Por favor ingresa tu usuario (o cédula/correo) y tu contraseña (cédula).');
-      return;
-    }
-
-    // Lookup person by username, email, documentId or full name
-    const foundPerson = people.find((p) => {
-      const cleanDoc = p.documentId.trim().replace(/\D/g, '');
-      const pUser = (p.username || '').toLowerCase().trim();
-      const pUserWithoutAt = pUser.startsWith('@') ? pUser.slice(1) : pUser;
-      const pEmail = (p.email || '').toLowerCase().trim();
-      const pName = (p.name || '').toLowerCase().trim();
-
-      const matchUser = pUser === rawQuery || pUserWithoutAt === queryWithoutAt;
-      const matchEmail = pEmail === rawQuery;
-      const matchDoc = cleanDoc === passQuery || p.documentId.trim() === rawQuery;
-      const matchName = pName === rawQuery || pName.includes(rawQuery);
-
-      if (!matchUser && !matchEmail && !matchDoc && !matchName) return false;
-
-      // Validate password against documentId (cédula)
-      const isPassCorrect =
-        (passQuery && cleanDoc === passQuery) ||
-        passRaw === p.documentId.trim();
-
-      return isPassCorrect;
-    });
-
-    if (foundPerson) {
-      onLoginSuccess(
-        {
-          role: 'staff',
-          staffData: foundPerson,
-        },
-        rememberMe
+    if (people.length === 0) {
+      setErrorMessage(
+        '⚠️ La base de datos en este dispositivo está vacía (0 integrantes cargados). El Administrador debe iniciar sesión (pestaña Administrador) para cargar el Excel o sincronizar los datos.'
       );
       return;
     }
 
-    setErrorMessage(
-      'Usuario o contraseña incorrectos. Verifica que tu usuario esté registrado y que la contraseña sea tu número de cédula.'
+    const rawQuery = staffUsername.trim().toLowerCase();
+    const queryWithoutAt = rawQuery.startsWith('@') ? rawQuery.slice(1) : rawQuery;
+    const cleanDocQuery = rawQuery.replace(/\D/g, '');
+    const passClean = staffPassword.trim().replace(/\D/g, ''); // Cédula numbers only
+    const passRaw = staffPassword.trim().toLowerCase();
+
+    if (!rawQuery || !staffPassword.trim()) {
+      setErrorMessage('Por favor ingresa tu usuario (o cédula/correo) y tu contraseña (cédula).');
+      return;
+    }
+
+    const emailUserPrefix = (email?: string) => {
+      if (!email) return '';
+      const lower = email.trim().toLowerCase();
+      return lower.includes('@') ? lower.split('@')[0] : lower;
+    };
+
+    // Lookup person with comprehensive matching (username, EPIK ID, institutional email, email prefix, document ID, name)
+    const candidate = people.find((p) => {
+      const pDoc = (p.documentId || '').trim();
+      const pDocClean = pDoc.replace(/\D/g, '');
+      const pDocLower = pDoc.toLowerCase();
+
+      const pUser = (p.username || '').trim().toLowerCase();
+      const pUserWithoutAt = pUser.startsWith('@') ? pUser.slice(1) : pUser;
+
+      const pEmail = (p.email || '').trim().toLowerCase();
+      const pEmailPrefix = emailUserPrefix(p.email);
+
+      const pInstEmail = (p.institutionalEmail || '').trim().toLowerCase();
+      const pInstEmailPrefix = emailUserPrefix(p.institutionalEmail);
+
+      const pEpik = (p.epikId || '').trim().toLowerCase();
+      const pExtId = (p.externalExcelId || '').trim().toLowerCase();
+
+      const pName = (p.name || '').trim().toLowerCase();
+      const pFullName = (p.fullName || '').trim().toLowerCase();
+
+      // Document / cédula match (exact digits or raw match)
+      if (cleanDocQuery && pDocClean && cleanDocQuery === pDocClean) return true;
+      if (rawQuery === pDocLower) return true;
+
+      // Username match (e.g. ejromeror or @ejromeror)
+      if (pUser && (pUser === rawQuery || pUserWithoutAt === queryWithoutAt)) return true;
+
+      // EPIK ID match (e.g. ejromeror)
+      if (pEpik && (pEpik === rawQuery || pEpik === queryWithoutAt)) return true;
+
+      // Institutional email or prefix match (e.g. ejromeror from ejromeror@eafit.edu.co)
+      if (pInstEmail && (pInstEmail === rawQuery || pInstEmailPrefix === queryWithoutAt)) return true;
+
+      // Personal email or prefix match
+      if (pEmail && (pEmail === rawQuery || pEmailPrefix === queryWithoutAt)) return true;
+
+      // External Excel ID
+      if (pExtId && pExtId === rawQuery) return true;
+
+      // Exact name or tokens
+      if (rawQuery.length >= 4) {
+        if (pName === rawQuery || pFullName === rawQuery) return true;
+        if (pName.split(' ').includes(rawQuery) || pFullName.split(' ').includes(rawQuery)) return true;
+      }
+
+      return false;
+    });
+
+    if (!candidate) {
+      setErrorMessage(
+        `No se encontró ningún integrante con el usuario, correo o cédula "${staffUsername}". Verifica tus datos (${people.length} integrantes cargados en el sistema).`
+      );
+      return;
+    }
+
+    // Candidate found: now validate password against cédula (documentId)
+    const candDoc = (candidate.documentId || '').trim();
+    const candDocClean = candDoc.replace(/\D/g, '');
+    const candDocLower = candDoc.toLowerCase();
+
+    const isPassCorrect =
+      (passClean && candDocClean && passClean === candDocClean) ||
+      passRaw === candDocLower ||
+      staffPassword.trim() === candDoc;
+
+    if (!isPassCorrect) {
+      setErrorMessage(
+        `Usuario "${candidate.name || candidate.fullName || staffUsername}" encontrado, pero la contraseña no coincide con el número de cédula registrado.`
+      );
+      return;
+    }
+
+    onLoginSuccess(
+      {
+        role: 'staff',
+        staffData: candidate,
+      },
+      rememberMe
     );
   };
 
@@ -151,7 +208,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] mb-6">
+        <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] mb-4">
           <button
             type="button"
             onClick={() => {
@@ -183,6 +240,40 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <span>ADMINISTRADOR</span>
           </button>
         </div>
+
+        {/* Database Status Indicator */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] mb-4 text-[11px] font-montserrat text-[#64748B]">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-[#B83A24]" />
+            <span>Equipo registrado:</span>
+          </div>
+          {people.length > 0 ? (
+            <span className="font-semibold text-emerald-700 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              {people.length} integrantes cargados
+            </span>
+          ) : (
+            <span className="font-semibold text-amber-700 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-600" />
+              0 personas en este equipo
+            </span>
+          )}
+        </div>
+
+        {/* Empty database helper when on Staff tab */}
+        {activeTab === 'staff' && people.length === 0 && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-amber-950 font-montserrat">
+                Base de datos local vacía en este dispositivo
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed font-montserrat">
+                Este navegador aún no tiene la lista del equipo cargada. Para habilitar el ingreso de Staff, el Administrador debe iniciar sesión (usuario <span className="font-bold font-mono">DIAS2026</span>) y cargar el archivo Excel Maestro.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Error notification */}
         {errorMessage && (
