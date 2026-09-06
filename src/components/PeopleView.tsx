@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Person, PersonType, GroupFunction, GtSubTeam, ConfigurableShift, AvailabilityRecord } from '../types';
 import { addPerson, updatePerson, deletePerson } from '../services/storageService';
 import { exportPeopleToOfficialExcel, downloadOfficialExcelMaestroTemplate } from '../services/excelService';
@@ -23,6 +23,11 @@ import {
   Tag,
   Key,
   Plus,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownAZ,
+  ArrowUpZA,
 } from 'lucide-react';
 
 interface PeopleViewProps {
@@ -44,6 +49,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<PersonType | 'ALL'>('ALL');
+  const [selectedGtSubTeamFilter, setSelectedGtSubTeamFilter] = useState<GtSubTeam | 'ALL'>('ALL');
+  const [sortOption, setSortOption] = useState<'name-asc' | 'name-desc' | 'doc-asc' | 'doc-desc' | 'gt-asc' | 'recent'>('name-asc');
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
 
@@ -201,18 +208,98 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     }
   };
 
-  // Filtered people
-  const filteredPeople = people.filter((p) => {
-    const query = searchTerm.toLowerCase();
-    const matchesSearch =
-      p.name.toLowerCase().includes(query) ||
-      p.documentId.toLowerCase().includes(query) ||
-      (p.username && p.username.toLowerCase().includes(query)) ||
-      p.email.toLowerCase().includes(query);
+  // Subteam member counts for GT
+  const subTeamCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    GT_SUBTEAMS.forEach((sub) => {
+      counts[sub] = people.filter(
+        (p) =>
+          p.primaryType === 'GT' &&
+          (p.gtSubTeam === sub || (p.gtTeams && p.gtTeams.includes(sub)))
+      ).length;
+    });
+    return counts;
+  }, [people]);
 
-    const matchesType = selectedTypeFilter === 'ALL' || p.primaryType === selectedTypeFilter;
-    return matchesSearch && matchesType;
-  });
+  // Filtered and Sorted people
+  const filteredPeople = useMemo(() => {
+    const query = searchTerm.toLowerCase().trim();
+
+    const filtered = people.filter((p) => {
+      // 1. Search Query
+      if (query) {
+        const matchesName = p.name.toLowerCase().includes(query);
+        const matchesDoc = p.documentId.toLowerCase().includes(query);
+        const matchesUser = !!(p.username && p.username.toLowerCase().includes(query));
+        const matchesEmail = p.email.toLowerCase().includes(query);
+        const matchesPhone = !!(p.phone && p.phone.toLowerCase().includes(query));
+        const matchesSubTeam = !!(
+          (p.gtSubTeam && p.gtSubTeam.toLowerCase().includes(query)) ||
+          (p.gtTeams && p.gtTeams.some((t) => t.toLowerCase().includes(query)))
+        );
+        const matchesRole = !!(p.roleTitle && p.roleTitle.toLowerCase().includes(query));
+        const matchesFunction = !!(
+          p.functions && p.functions.some((f) => f.toLowerCase().includes(query))
+        );
+
+        if (
+          !matchesName &&
+          !matchesDoc &&
+          !matchesUser &&
+          !matchesEmail &&
+          !matchesPhone &&
+          !matchesSubTeam &&
+          !matchesRole &&
+          !matchesFunction
+        ) {
+          return false;
+        }
+      }
+
+      // 2. Category / Type Filter (ALL, GT, GAP, MESA)
+      if (selectedTypeFilter !== 'ALL' && p.primaryType !== selectedTypeFilter) {
+        return false;
+      }
+
+      // 3. GT Sub-Team Filter
+      if (selectedTypeFilter === 'GT' && selectedGtSubTeamFilter !== 'ALL') {
+        const hasSubTeam =
+          p.gtSubTeam === selectedGtSubTeamFilter ||
+          (p.gtTeams && p.gtTeams.includes(selectedGtSubTeamFilter));
+        if (!hasSubTeam) return false;
+      }
+
+      return true;
+    });
+
+    // 4. Sorting
+    return [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+        case 'name-desc':
+          return b.name.localeCompare(a.name, 'es', { sensitivity: 'base' });
+        case 'doc-asc':
+          return a.documentId.localeCompare(b.documentId, undefined, { numeric: true });
+        case 'doc-desc':
+          return b.documentId.localeCompare(a.documentId, undefined, { numeric: true });
+        case 'gt-asc': {
+          const aGt = a.gtSubTeam || (a.gtTeams && a.gtTeams[0]) || '';
+          const bGt = b.gtSubTeam || (b.gtTeams && b.gtTeams[0]) || '';
+          if (aGt && !bGt) return -1;
+          if (!aGt && bGt) return 1;
+          return aGt.localeCompare(bGt, 'es');
+        }
+        case 'recent': {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        }
+        default:
+          return a.name.localeCompare(b.name, 'es');
+      }
+    });
+  }, [people, searchTerm, selectedTypeFilter, selectedGtSubTeamFilter, sortOption]);
 
   const gtCount = people.filter((p) => p.primaryType === 'GT').length;
   const gapCount = people.filter((p) => p.primaryType === 'GAP').length;
@@ -268,49 +355,164 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-3">
-        {/* Search */}
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Buscar por nombre, cédula, usuario o correo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] shadow-2xs font-montserrat"
-          />
-          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3.5 top-3.5 text-[#94A3B8] hover:text-[#182535]"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+      {/* Filters, Sort & Search */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Buscar por nombre, cédula, usuario, sub-equipo o función..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] shadow-2xs font-montserrat"
+            />
+            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3.5 top-3.5 text-[#94A3B8] hover:text-[#182535] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
-        {/* Type Filter Pills */}
-        <div className="flex items-center gap-1.5 bg-[#FFFDF8] border border-[#EADDC7] p-1.5 rounded-2xl shadow-2xs overflow-x-auto">
-          {[
-            { id: 'ALL', label: `Todos (${people.length})` },
-            { id: 'GT', label: `GT (${gtCount})` },
-            { id: 'GAP', label: `GAP (${gapCount})` },
-            { id: 'MESA', label: `MESA (${mesaCount})` },
-          ].map((btn) => (
+          {/* Selector de Ordenamiento y Botón Rápido A-Z */}
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-[200px]">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as any)}
+                className="w-full pl-9 pr-8 py-3 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24] shadow-2xs font-montserrat appearance-none cursor-pointer"
+              >
+                <option value="name-asc">Nombre (A → Z)</option>
+                <option value="name-desc">Nombre (Z → A)</option>
+                <option value="doc-asc">Cédula (0 → 9)</option>
+                <option value="doc-desc">Cédula (9 → 0)</option>
+                <option value="gt-asc">Sub-Equipo GT (A → Z)</option>
+                <option value="recent">Registro más reciente</option>
+              </select>
+              <ArrowUpDown className="w-4 h-4 text-[#B83A24] absolute left-3 top-3.5 pointer-events-none" />
+              <div className="absolute right-3 top-4 pointer-events-none text-[8px] text-[#64748B]">
+                ▼
+              </div>
+            </div>
+
+            {/* Botón rápido A-Z / Z-A */}
             <button
-              key={btn.id}
-              onClick={() => setSelectedTypeFilter(btn.id as any)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat whitespace-nowrap transition-all ${
-                selectedTypeFilter === btn.id
-                  ? 'bg-[#B83A24] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]'
+              onClick={() =>
+                setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
+              }
+              title={sortOption === 'name-asc' ? 'Cambiar orden a Z → A' : 'Cambiar orden a A → Z'}
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-2xl border flex items-center gap-1.5 text-xs font-bold font-montserrat transition-all cursor-pointer shadow-2xs ${
+                sortOption === 'name-asc' || sortOption === 'name-desc'
+                  ? 'bg-[#FEF8EC] border-[#E5A12E]/60 text-[#C87F17]'
+                  : 'bg-[#FFFDF8] border-[#EADDC7] text-[#64748B] hover:text-[#182535]'
               }`}
             >
-              {btn.label}
+              {sortOption === 'name-desc' ? (
+                <>
+                  <ArrowUpZA className="w-4 h-4 text-[#B83A24]" />
+                  <span className="hidden sm:inline">Z → A</span>
+                </>
+              ) : (
+                <>
+                  <ArrowDownAZ className="w-4 h-4 text-[#B83A24]" />
+                  <span className="hidden sm:inline">A → Z</span>
+                </>
+              )}
             </button>
-          ))}
+          </div>
         </div>
+
+        {/* Categoría Pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 bg-[#FFFDF8] border border-[#EADDC7] p-1.5 rounded-2xl shadow-2xs overflow-x-auto">
+            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+              Categoría:
+            </span>
+            {[
+              { id: 'ALL', label: `Todos (${people.length})` },
+              { id: 'GT', label: `GT (${gtCount})` },
+              { id: 'GAP', label: `GAP (${gapCount})` },
+              { id: 'MESA', label: `MESA (${mesaCount})` },
+            ].map((btn) => (
+              <button
+                key={btn.id}
+                onClick={() => {
+                  setSelectedTypeFilter(btn.id as any);
+                  if (btn.id !== 'GT') {
+                    setSelectedGtSubTeamFilter('ALL');
+                  }
+                }}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat whitespace-nowrap transition-all cursor-pointer ${
+                  selectedTypeFilter === btn.id
+                    ? 'bg-[#B83A24] text-white shadow-2xs'
+                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]'
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-[11px] text-[#64748B] font-montserrat px-2">
+            Mostrando <strong>{filteredPeople.length}</strong> de {people.length} personas
+          </div>
+        </div>
+
+        {/* Barra de Sub-Equipos GT cuando se selecciona GT */}
+        {selectedTypeFilter === 'GT' && (
+          <div className="p-3 bg-[#FAF6EC] border border-[#EADDC7] rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#182535] font-montserrat flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-[#B83A24]" />
+                Filtrar por Sub-Equipo GT:
+              </span>
+              {selectedGtSubTeamFilter !== 'ALL' && (
+                <button
+                  onClick={() => setSelectedGtSubTeamFilter('ALL')}
+                  className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+                >
+                  Ver todos los GT ({gtCount})
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={() => setSelectedGtSubTeamFilter('ALL')}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-montserrat font-bold transition-all cursor-pointer border ${
+                  selectedGtSubTeamFilter === 'ALL'
+                    ? 'bg-[#B83A24] text-white border-[#B83A24] shadow-2xs'
+                    : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                }`}
+              >
+                Todos los GT ({gtCount})
+              </button>
+
+              {GT_SUBTEAMS.map((sub) => {
+                const count = subTeamCounts[sub] || 0;
+                const isSelected = selectedGtSubTeamFilter === sub;
+                return (
+                  <button
+                    key={sub}
+                    onClick={() => setSelectedGtSubTeamFilter(sub)}
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-montserrat font-bold transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-[#B83A24] text-white border-[#B83A24] shadow-2xs'
+                        : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                    }`}
+                  >
+                    <span>{sub}</span>{' '}
+                    <span className="text-[10px] opacity-75">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* People List / Table */}
@@ -351,10 +553,59 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF6EC] text-[#64748B] font-bold border-b border-[#EADDC7]">
                 <tr>
-                  <th className="p-4">Persona</th>
-                  <th className="p-4">Cédula & Usuario</th>
+                  <th className="p-4">
+                    <button
+                      onClick={() =>
+                        setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
+                      }
+                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                      title="Clic para ordenar de A-Z o Z-A"
+                    >
+                      <span>Persona</span>
+                      {sortOption === 'name-asc' ? (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                      ) : sortOption === 'name-desc' ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-4">
+                    <button
+                      onClick={() =>
+                        setSortOption((prev) => (prev === 'doc-asc' ? 'doc-desc' : 'doc-asc'))
+                      }
+                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                      title="Clic para ordenar por documento"
+                    >
+                      <span>Cédula & Usuario</span>
+                      {sortOption === 'doc-asc' ? (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                      ) : sortOption === 'doc-desc' ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                      )}
+                    </button>
+                  </th>
                   <th className="p-4">Tipo Principal</th>
-                  <th className="p-4">GT / Funciones</th>
+                  <th className="p-4">
+                    <button
+                      onClick={() =>
+                        setSortOption((prev) => (prev === 'gt-asc' ? 'name-asc' : 'gt-asc'))
+                      }
+                      className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                      title="Clic para ordenar por GT"
+                    >
+                      <span>GT / Funciones</span>
+                      {sortOption === 'gt-asc' ? (
+                        <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                      ) : (
+                        <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                      )}
+                    </button>
+                  </th>
                   <th className="p-4">Contacto</th>
                   <th className="p-4 text-right">Acciones</th>
                 </tr>
