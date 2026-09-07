@@ -141,6 +141,13 @@ export function initializeStorage(): void {
     // Initialize shifts with defaults if not set
     if (rawShifts) {
       shiftsCache = JSON.parse(rawShifts);
+      // Auto-migrate martes-t1 to 08:30 if it was stored with the old 07:00
+      const martesT1 = shiftsCache.find((s) => s.id === 'martes-t1');
+      if (martesT1 && (martesT1.startTime === '07:00' || martesT1.startTime === '7:00')) {
+        martesT1.startTime = '08:30';
+        martesT1.label = '8:30 AM – 12:30 PM';
+        localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+      }
     } else {
       shiftsCache = [...DEFAULT_INITIAL_SHIFTS];
       localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
@@ -559,6 +566,38 @@ export async function deletePerson(id: string): Promise<void> {
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
   localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(attendanceCache));
+
+  notifyAll();
+}
+
+export async function deletePeopleBatch(ids: string[]): Promise<void> {
+  if (!ids || ids.length === 0) return;
+  initializeStorage();
+  const idSet = new Set(ids);
+  peopleCache = peopleCache.filter((p) => !idSet.has(p.id));
+  assignmentCache = assignmentCache.filter((a) => !idSet.has(a.personId));
+  availabilityCache = availabilityCache.filter((av) => !idSet.has(av.personId));
+  attendanceCache = attendanceCache.filter((at) => !idSet.has(at.personId));
+
+  localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
+  localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(attendanceCache));
+
+  notifyAll();
+}
+
+export async function deleteAllPeople(): Promise<void> {
+  initializeStorage();
+  peopleCache = [];
+  assignmentCache = [];
+  availabilityCache = [];
+  attendanceCache = [];
+
+  localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify([]));
 
   notifyAll();
 }
@@ -982,7 +1021,7 @@ export async function saveShift(
     `shift_${shiftData.dayId}_${shiftData.category.toLowerCase()}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 5)}`;
 
   const label =
-    shiftData.label || formatTimeRangeLabel(shiftData.startTime, shiftData.endTime);
+    formatTimeRangeLabel(shiftData.startTime, shiftData.endTime);
 
   // Check if updating an existing shift with changed hours
   let conflicts: ShiftConflictReport[] = [];

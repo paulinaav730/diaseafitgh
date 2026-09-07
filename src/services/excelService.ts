@@ -817,7 +817,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
   };
 
   const lunesSample = getDaySampleHours('lunes') || '4:00 PM – 7:30 PM; 7:30 PM – 10:30 PM';
-  const martesSample = getDaySampleHours('martes') || '7:00 AM – 12:30 PM';
+  const martesSample = getDaySampleHours('martes') || '8:30 AM – 12:30 PM';
   const miercolesSample = getDaySampleHours('miercoles') || '8:50 AM – 12:10 PM; 12:00 PM – 3:10 PM';
   const juevesSample = getDaySampleHours('jueves') || '6:00 AM – 12:00 PM';
   const viernesSample = getDaySampleHours('viernes') || '6:00 AM – 9:30 PM';

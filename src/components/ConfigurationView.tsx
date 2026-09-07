@@ -203,6 +203,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
           : ['Logística']
         : undefined;
 
+    const cleanStartTime = (editingShift.startTime || '06:00').trim();
+    const cleanEndTime = (editingShift.endTime || '08:00').trim();
+
     const payload = {
       ...editingShift,
       name: editingShift.name.trim(),
@@ -211,8 +214,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       category: editingShift.category,
       gtSubTeams: selectedSubTeams,
       gtSubTeam: selectedSubTeams && selectedSubTeams.length > 0 ? selectedSubTeams[0] : undefined,
-      startTime: editingShift.startTime || '06:00',
-      endTime: editingShift.endTime || '08:00',
+      startTime: cleanStartTime,
+      endTime: cleanEndTime,
+      label: formatTimeRangeLabel(cleanStartTime, cleanEndTime),
       capacity: Number(editingShift.capacity) || 1,
       isActive: editingShift.isActive !== undefined ? editingShift.isActive : true,
       hasBases: editingShift.category === 'GAP' || editingShift.hasBases === true,
@@ -1356,9 +1360,28 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Hours (Start and End) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
-                    HORA DE INICIO (24H) *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-[#475569] font-montserrat">
+                      HORA DE INICIO (24H) *
+                    </label>
+                    <div className="flex items-center gap-1">
+                      {['07:00', '08:30', '12:30', '16:00'].map((timePreset) => (
+                        <button
+                          key={timePreset}
+                          type="button"
+                          onClick={() => setEditingShift({ ...editingShift, startTime: timePreset })}
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors cursor-pointer ${
+                            editingShift.startTime === timePreset
+                              ? 'bg-[#B83A24] text-white font-bold'
+                              : 'bg-white text-[#64748B] hover:bg-[#E2E8F0] border border-[#CBD5E1]'
+                          }`}
+                          title={`Fijar a las ${timePreset}`}
+                        >
+                          {timePreset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     type="time"
                     value={editingShift.startTime || '06:00'}
@@ -1369,9 +1392,28 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
-                    HORA DE FINALIZACIÓN (24H) *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-[#475569] font-montserrat">
+                      HORA DE FINALIZACIÓN (24H) *
+                    </label>
+                    <div className="flex items-center gap-1">
+                      {['12:30', '16:00', '19:30', '22:30'].map((timePreset) => (
+                        <button
+                          key={timePreset}
+                          type="button"
+                          onClick={() => setEditingShift({ ...editingShift, endTime: timePreset })}
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors cursor-pointer ${
+                            editingShift.endTime === timePreset
+                              ? 'bg-[#B83A24] text-white font-bold'
+                              : 'bg-white text-[#64748B] hover:bg-[#E2E8F0] border border-[#CBD5E1]'
+                          }`}
+                          title={`Fijar a las ${timePreset}`}
+                        >
+                          {timePreset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <input
                     type="time"
                     value={editingShift.endTime || '08:00'}

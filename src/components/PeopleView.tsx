@@ -1,6 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Person, PersonType, GroupFunction, GtSubTeam, ConfigurableShift, AvailabilityRecord } from '../types';
-import { addPerson, updatePerson, deletePerson, getAssignments, getAvailabilities, getPeople } from '../services/storageService';
+import {
+  addPerson,
+  updatePerson,
+  deletePerson,
+  deletePeopleBatch,
+  deleteAllPeople,
+  getAssignments,
+  getAvailabilities,
+  getPeople,
+} from '../services/storageService';
 import { exportPeopleToOfficialExcel, downloadOfficialExcelMaestroTemplate } from '../services/excelService';
 import { ExcelImportModal } from './ExcelImportModal';
 import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
@@ -35,6 +44,8 @@ import {
   SlidersHorizontal,
   Cloud,
   RefreshCw,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 
 interface PeopleViewProps {
@@ -99,6 +110,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [colFilterContact, setColFilterContact] = useState('');
   const [showColumnFilters, setShowColumnFilters] = useState(true);
 
+  // Bulk selection & deletion
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteModal, setBulkDeleteModal] = useState<{
+    isOpen: boolean;
+    mode: 'selected' | 'filtered' | 'all';
+    count: number;
+    ids?: string[];
+  } | null>(null);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+
   // Count of active column-level filters
   const activeColFiltersCount = [
     colFilterName.trim() !== '',
@@ -119,6 +140,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setColFilterGt('ALL');
     setColFilterContact('');
     setSortOption('name-asc');
+    setSelectedIds(new Set());
   };
 
   // Form State
@@ -436,6 +458,94 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const gapCount = people.filter((p) => p.primaryType === 'GAP').length;
   const mesaCount = people.filter((p) => p.primaryType === 'MESA').length;
 
+  const hasActiveFilters =
+    activeColFiltersCount > 0 ||
+    searchTerm.trim() !== '' ||
+    selectedTypeFilter !== 'ALL' ||
+    selectedGtSubTeamFilter !== 'ALL';
+
+  // Selection handlers
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const isAllFilteredSelected =
+    filteredPeople.length > 0 && filteredPeople.every((p) => selectedIds.has(p.id));
+  const isSomeFilteredSelected =
+    filteredPeople.some((p) => selectedIds.has(p.id)) && !isAllFilteredSelected;
+
+  const toggleSelectAllFiltered = () => {
+    if (isAllFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredPeople.map((p) => p.id)));
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (!bulkDeleteModal) return;
+    setIsDeletingBulk(true);
+    try {
+      if (bulkDeleteModal.mode === 'all') {
+        const total = people.length;
+        await deleteAllPeople();
+        if (isSupabaseConfigured()) {
+          const client = getSupabase();
+          if (client) {
+            await client.from('people').delete().neq('id', 'placeholder_impossible_id');
+            await client.from('assignments').delete().neq('id', 'placeholder_impossible_id');
+            await client.from('availabilities').delete().neq('id', 'placeholder_impossible_id');
+          }
+        }
+        setCloudBanner({
+          message: `Se han eliminado a todos los ${total} integrantes y sus asignaciones de la base de datos.`,
+          isError: false,
+        });
+      } else {
+        const idsToDelete =
+          bulkDeleteModal.mode === 'selected'
+            ? Array.from(selectedIds)
+            : (bulkDeleteModal.ids || filteredPeople.map((p) => p.id));
+
+        if (idsToDelete.length > 0) {
+          await deletePeopleBatch(idsToDelete);
+          if (isSupabaseConfigured()) {
+            const client = getSupabase();
+            if (client) {
+              await client.from('people').delete().in('id', idsToDelete);
+              await client.from('assignments').delete().in('person_id', idsToDelete);
+              await client.from('availabilities').delete().in('person_id', idsToDelete);
+            }
+          }
+          setCloudBanner({
+            message: `Se han eliminado ${idsToDelete.length} integrantes correctamente.`,
+            isError: false,
+          });
+        }
+      }
+      setSelectedIds(new Set());
+      setBulkDeleteModal(null);
+      setTimeout(() => setCloudBanner(null), 5000);
+    } catch (err: any) {
+      console.error(err);
+      setCloudBanner({
+        message: err?.message || 'Error al eliminar integrantes en lote.',
+        isError: true,
+      });
+      setTimeout(() => setCloudBanner(null), 5000);
+    } finally {
+      setIsDeletingBulk(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Actions */}
@@ -467,6 +577,34 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <span className="hidden sm:inline">
                 {isSyncingCloud ? 'Sincronizando...' : 'Sincronizar Supabase'}
               </span>
+            </button>
+          )}
+
+          {/* Botón Eliminar Todos / Filtrados */}
+          {people.length > 0 && (
+            <button
+              onClick={() =>
+                setBulkDeleteModal({
+                  isOpen: true,
+                  mode: hasActiveFilters ? 'filtered' : 'all',
+                  count: hasActiveFilters ? filteredPeople.length : people.length,
+                  ids: filteredPeople.map((p) => p.id),
+                })
+              }
+              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#FDF2EE] hover:bg-[#FBE4DD] text-[#B83A24] border border-[#F6C7BA] font-bold text-xs flex items-center gap-1.5 transition-colors font-montserrat shadow-2xs cursor-pointer"
+              title={
+                hasActiveFilters
+                  ? `Eliminar los ${filteredPeople.length} integrantes filtrados`
+                  : `Eliminar a todos los ${people.length} integrantes de la base de datos`
+              }
+            >
+              <Trash2 className="w-4 h-4 text-[#B83A24]" />
+              <span className="hidden sm:inline">
+                {hasActiveFilters
+                  ? `Eliminar Filtrados (${filteredPeople.length})`
+                  : `Eliminar a Todos (${people.length})`}
+              </span>
+              <span className="sm:hidden">Eliminar Todos</span>
             </button>
           )}
 
@@ -804,13 +942,78 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
               </div>
 
-              <button
-                onClick={handleResetAllFilters}
-                className="text-[11px] font-bold text-[#B83A24] hover:underline flex items-center gap-1 cursor-pointer shrink-0"
-              >
-                <FilterX className="w-3.5 h-3.5" />
-                <span>Restablecer todo</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setBulkDeleteModal({
+                      isOpen: true,
+                      mode: 'filtered',
+                      count: filteredPeople.length,
+                      ids: filteredPeople.map((p) => p.id),
+                    })
+                  }
+                  className="text-[11px] font-bold text-[#B83A24] bg-[#FDF2EE] hover:bg-[#FBE4DD] px-2.5 py-1 rounded-xl border border-[#F6C7BA] flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title="Eliminar solo las personas que coinciden con los filtros actuales"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-[#B83A24]" />
+                  <span>Eliminar los {filteredPeople.length} filtrados</span>
+                </button>
+
+                <button
+                  onClick={handleResetAllFilters}
+                  className="text-[11px] font-bold text-[#64748B] hover:text-[#182535] flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <FilterX className="w-3.5 h-3.5" />
+                  <span>Restablecer todo</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Selected Batch Actions Bar */}
+          {selectedIds.size > 0 && (
+            <div className="bg-[#182535] text-white px-4 py-3 rounded-2xl mx-4 my-3 flex items-center justify-between gap-3 shadow-lg flex-wrap animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-[#C87F17] text-white flex items-center justify-center font-bold text-xs">
+                  {selectedIds.size}
+                </div>
+                <span className="text-xs font-bold font-montserrat">
+                  {selectedIds.size === 1
+                    ? '1 persona seleccionada'
+                    : `${selectedIds.size} personas seleccionadas`}
+                  <span className="text-[#94A3B8] font-normal ml-1">
+                    (de {filteredPeople.length} visibles)
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSelectedIds(new Set(filteredPeople.map((p) => p.id)))}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-montserrat transition-colors cursor-pointer"
+                >
+                  Seleccionar todos ({filteredPeople.length})
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-montserrat transition-colors cursor-pointer"
+                >
+                  Deseleccionar
+                </button>
+                <button
+                  onClick={() =>
+                    setBulkDeleteModal({
+                      isOpen: true,
+                      mode: 'selected',
+                      count: selectedIds.size,
+                      ids: Array.from(selectedIds),
+                    })
+                  }
+                  className="px-3.5 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Eliminar Seleccionados ({selectedIds.size})</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -820,6 +1023,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <thead className="bg-[#FAF6EC] text-[#64748B] font-bold border-b border-[#EADDC7]">
                 {/* Row 1: Column Titles with Sort & Indicators */}
                 <tr>
+                  {/* Selector / Checkbox */}
+                  <th className="p-3.5 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllFilteredSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeFilteredSelected;
+                      }}
+                      onChange={toggleSelectAllFiltered}
+                      className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer"
+                      title={isAllFilteredSelected ? 'Deseleccionar todos' : 'Seleccionar todos los visibles'}
+                    />
+                  </th>
+
                   {/* Persona */}
                   <th className="p-3.5">
                     <div className="flex items-center justify-between gap-2">
@@ -933,6 +1150,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 {/* Row 2: Direct Column Filter Inputs & Selects */}
                 {showColumnFilters && (
                   <tr className="bg-[#FEF8EC]/60 border-t border-[#EADDC7]">
+                    {/* Checkbox placeholder */}
+                    <th className="p-2.5 w-12 text-center text-[#94A3B8] font-normal text-xs">
+                      —
+                    </th>
+
                     {/* Filtro Nombre */}
                     <th className="p-2.5 font-normal">
                       <div className="relative">
@@ -1095,6 +1317,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <tbody className="divide-y divide-[#EADDC7]/60">
                 {filteredPeople.map((person) => (
                   <tr key={person.id} className="hover:bg-[#FAF6EC]/60 transition-colors">
+                    {/* Checkbox Selector */}
+                    <td className="p-4 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(person.id)}
+                        onChange={() => toggleSelect(person.id)}
+                        className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer"
+                      />
+                    </td>
+
                     {/* Persona */}
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -1361,6 +1593,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <div key={person.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(person.id)}
+                      onChange={() => toggleSelect(person.id)}
+                      className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer shrink-0"
+                    />
                     <div className="w-10 h-10 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-[#B83A24] font-bold font-dalek flex items-center justify-center shrink-0">
                       {person.name.substring(0, 2).toUpperCase()}
                     </div>
@@ -1843,6 +2081,140 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteModal && bulkDeleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-[#FFFDF8] border-2 border-[#F6C7BA] rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative text-[#182535] animate-in fade-in zoom-in-95 duration-150">
+            <button
+              onClick={() => !isDeletingBulk && setBulkDeleteModal(null)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC] cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#FDF2EE] border border-[#F6C7BA] flex items-center justify-center text-[#B83A24] shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#B83A24] font-montserrat tracking-wider">
+                  Acción Definitiva
+                </span>
+                <h3 className="text-lg font-bold font-dalek text-[#182535]">
+                  {bulkDeleteModal.mode === 'all'
+                    ? '¿ELIMINAR A TODOS LOS INTEGRANTES?'
+                    : bulkDeleteModal.mode === 'filtered'
+                    ? `¿ELIMINAR ${bulkDeleteModal.count} INTEGRANTES FILTRADOS?`
+                    : `¿ELIMINAR ${bulkDeleteModal.count} INTEGRANTES SELECCIONADOS?`}
+                </h3>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-6 text-xs text-[#64748B] font-montserrat">
+              <p className="text-sm text-[#182535] font-semibold">
+                {bulkDeleteModal.mode === 'all'
+                  ? `Estás a punto de eliminar a la totalidad de los ${people.length} integrantes registrados en la base de datos.`
+                  : bulkDeleteModal.mode === 'filtered'
+                  ? `Se eliminarán las ${bulkDeleteModal.count} personas que coinciden con los filtros aplicados actualmente.`
+                  : `Se eliminarán las ${bulkDeleteModal.count} personas seleccionadas con casillas de verificación.`}
+              </p>
+
+              <div className="p-3.5 rounded-2xl bg-[#FDF2EE] border border-[#F6C7BA] text-[#B83A24] text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Atención: Acción Irreversible</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-[#852717]">
+                  Esta operación borrará los perfiles, así como todos sus turnos asignados y disponibilidades registradas en el evento.
+                </p>
+              </div>
+
+              {/* Selector de modo si hay filtros aplicados o personas seleccionadas */}
+              {hasActiveFilters && bulkDeleteModal.mode !== 'selected' && (
+                <div className="pt-2">
+                  <span className="block text-[11px] font-bold text-[#182535] mb-2">
+                    Selecciona el alcance de la eliminación:
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBulkDeleteModal({
+                          isOpen: true,
+                          mode: 'filtered',
+                          count: filteredPeople.length,
+                          ids: filteredPeople.map((p) => p.id),
+                        })
+                      }
+                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                        bulkDeleteModal.mode === 'filtered'
+                          ? 'border-[#B83A24] bg-[#FDF2EE] text-[#B83A24] font-bold shadow-2xs'
+                          : 'border-[#EADDC7] bg-white text-[#64748B] hover:bg-[#FAF6EC]'
+                      }`}
+                    >
+                      <div className="text-xs font-bold">Solo Filtrados</div>
+                      <div className="text-[10px] opacity-80">{filteredPeople.length} personas</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBulkDeleteModal({
+                          isOpen: true,
+                          mode: 'all',
+                          count: people.length,
+                        })
+                      }
+                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                        bulkDeleteModal.mode === 'all'
+                          ? 'border-[#B83A24] bg-[#FDF2EE] text-[#B83A24] font-bold shadow-2xs'
+                          : 'border-[#EADDC7] bg-white text-[#64748B] hover:bg-[#FAF6EC]'
+                      }`}
+                    >
+                      <div className="text-xs font-bold">Todos en Base de Datos</div>
+                      <div className="text-[10px] opacity-80">{people.length} personas</div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#EADDC7]">
+              <button
+                type="button"
+                disabled={isDeletingBulk}
+                onClick={() => setBulkDeleteModal(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#64748B] hover:bg-[#FAF6EC] cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingBulk}
+                onClick={handleConfirmBulkDelete}
+                className="px-5 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 font-montserrat"
+              >
+                {isDeletingBulk ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>
+                      {bulkDeleteModal.mode === 'all'
+                        ? `Sí, Eliminar a Todos (${people.length})`
+                        : `Sí, Eliminar (${bulkDeleteModal.count})`}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
