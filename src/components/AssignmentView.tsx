@@ -382,15 +382,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         Array.isArray(availRecord.shiftIds) &&
         availRecord.shiftIds.includes(activeShift.id)
       );
-      if (!isAvailableInShift && isMesa && availRecord && Array.isArray(availRecord.shiftIds)) {
-        const hasOverlappingShift = availRecord.shiftIds.some(sid => {
-          const s = shifts?.find(shift => shift.id === sid);
-          return s && s.startTime === activeShift.startTime && s.endTime === activeShift.endTime;
-        });
-        if (hasOverlappingShift) {
-          isAvailableInShift = true;
-        }
-      }
 
       // 5. Functions check (Rule 5 & 9)
       let matchesFunctions = true;
