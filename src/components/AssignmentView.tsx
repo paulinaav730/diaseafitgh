@@ -383,7 +383,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
 
       const isEligible =
-        matchesGroup && !isAlreadyAssigned && !conflictingAssignment && matchesFunctions;
+        matchesGroup && !isAlreadyAssigned && !conflictingAssignment && matchesFunctions && isAvailableInShift;
 
       return {
         person,
