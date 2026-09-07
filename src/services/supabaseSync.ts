@@ -66,7 +66,9 @@ export function personToPostgres(p: Person) {
     role_title: p.roleTitle || 'Staff',
     shirt_size: p.shirtSize || 'M',
     dietary_restrictions: p.dietaryRestrictions || 'Ninguna',
-    notes: p.notes || '',
+    notes: p.alsoActsAsGap
+      ? `${p.notes || ''} [DUAL_GAP${p.gapRoleDescription ? ':' + p.gapRoleDescription : ''}]`.trim()
+      : p.notes || '',
     updated_at: new Date().toISOString(),
   };
 }
@@ -75,6 +77,12 @@ export function personToPostgres(p: Person) {
  * Converts snake_case PostgreSQL record to camelCase Person
  */
 export function postgresToPerson(r: any): Person {
+  const hasDualGapInNotes = typeof r.notes === 'string' && r.notes.includes('[DUAL_GAP');
+  const extractedGapDesc =
+    typeof r.notes === 'string' ? r.notes.match(/\[DUAL_GAP:([^\]]+)\]/)?.[1] : undefined;
+  const cleanNotes =
+    typeof r.notes === 'string' ? r.notes.replace(/\[DUAL_GAP[^\]]*\]/g, '').trim() : '';
+
   return {
     id: r.id,
     name: r.name,
@@ -89,13 +97,15 @@ export function postgresToPerson(r: any): Person {
     startTimeExcel: r.start_time_excel || undefined,
     endTimeExcel: r.end_time_excel || undefined,
     primaryType: r.primary_type,
+    alsoActsAsGap: r.also_acts_as_gap ?? (hasDualGapInNotes || false),
+    gapRoleDescription: r.gap_role_description || extractedGapDesc || undefined,
     gtTeams: r.gt_teams || [],
     gtSubTeam: r.gt_sub_team || undefined,
     functions: r.functions || [],
     roleTitle: r.role_title || 'Staff',
     shirtSize: r.shirt_size || 'M',
     dietaryRestrictions: r.dietary_restrictions || 'Ninguna',
-    notes: r.notes || '',
+    notes: cleanNotes,
     createdAt: r.created_at || new Date().toISOString(),
     updatedAt: r.updated_at || undefined,
   };

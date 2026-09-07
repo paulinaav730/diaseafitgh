@@ -35,6 +35,8 @@ export interface ExcelMaestroParsedRow {
   gt: string;
   shirtSize: string;
   primaryType: PersonType;
+  alsoActsAsGap?: boolean;
+  gapRoleDescription?: string;
   gtTeams: string[];
   gtSubTeam?: GtSubTeam;
   // Raw text per day
@@ -637,14 +639,35 @@ export async function parseExcelMaestroFile(
 
     // Determine primaryType and GT teams
     let primaryType: PersonType = 'GT';
+    let alsoActsAsGap = false;
+    let gapRoleDescription: string | undefined = undefined;
     let gtTeams: string[] = [];
     let gtSubTeam: GtSubTeam | undefined;
 
     const gtClean = gt.trim();
-    if (gtClean.toUpperCase().includes('GAP') || gtClean.toUpperCase().includes('APOYO')) {
-      primaryType = 'GAP';
-    } else if (gtClean.toUpperCase().includes('MESA')) {
+    const isExplicitGap =
+      gtClean.toUpperCase().includes('GAP') || gtClean.toUpperCase().includes('APOYO');
+    const isExplicitGt =
+      gtClean.toUpperCase().includes('GT') ||
+      gtClean.toUpperCase().includes('TRABAJO') ||
+      gtClean.toUpperCase().includes('LOGÍSTICA') ||
+      gtClean.toUpperCase().includes('LOGISTICA');
+    const isMesa = gtClean.toUpperCase().includes('MESA');
+
+    if (isMesa) {
       primaryType = 'MESA';
+    } else if (isExplicitGap && isExplicitGt) {
+      primaryType = 'GT';
+      alsoActsAsGap = true;
+      gapRoleDescription = 'GAP Generales (Miércoles, Jueves y Viernes)';
+      const cleanedGt = gtClean.replace(/GAP/gi, '').replace(/APOYO/gi, '');
+      gtTeams = cleanedGt
+        ? cleanedGt.split(/[,/;|\-]+/).map((s) => s.trim()).filter(Boolean)
+        : ['Logística'];
+      if (gtTeams.length === 0) gtTeams = ['Logística'];
+      gtSubTeam = (gtTeams[0] || 'Logística') as GtSubTeam;
+    } else if (isExplicitGap) {
+      primaryType = 'GAP';
     } else {
       primaryType = 'GT';
       // Split multiple GT teams: e.g. "Logística, Seguridad"
@@ -748,6 +771,26 @@ export async function parseExcelMaestroFile(
       });
     });
 
+    // If GT person has recognized GAP shifts (e.g. Carnival GAP or Jueves/Viernes GAP), automatically enable dual role
+    if (primaryType === 'GT') {
+      const hasGapShifts = Object.values(recognizedShiftsByDay).some((shifts) =>
+        shifts.some((s) => s.shiftId.toLowerCase().includes('gap'))
+      );
+      if (hasGapShifts) {
+        alsoActsAsGap = true;
+        if (!gapRoleDescription) {
+          gapRoleDescription = 'GAP Generales (Miércoles, Jueves y Viernes)';
+        }
+      }
+    }
+
+    if (existingPerson && existingPerson.alsoActsAsGap) {
+      alsoActsAsGap = true;
+      if (!gapRoleDescription) {
+        gapRoleDescription = existingPerson.gapRoleDescription;
+      }
+    }
+
     parsedRows.push({
       rowNumber,
       externalExcelId,
@@ -764,6 +807,8 @@ export async function parseExcelMaestroFile(
       gt,
       shirtSize,
       primaryType,
+      alsoActsAsGap,
+      gapRoleDescription,
       gtTeams,
       gtSubTeam,
       rawAvailabilityByDay,
@@ -981,7 +1026,7 @@ export function exportPeopleToOfficialExcel(
       'ID de EPIK': p.epikId || '',
       '¿A qué GT pertenece?':
         p.primaryType === 'GT'
-          ? (p.gtTeams && p.gtTeams.length > 0 ? p.gtTeams.join(', ') : p.gtSubTeam || 'Logística')
+          ? `${p.gtTeams && p.gtTeams.length > 0 ? p.gtTeams.join(', ') : p.gtSubTeam || 'Logística'}${p.alsoActsAsGap ? ' / GAP Generales' : ''}`
           : p.primaryType,
       'Talla de camiseta': p.shirtSize || 'M',
       'THE SHOW LUNES 28 de septiembre': formatDayShifts('lunes'),

@@ -84,6 +84,8 @@ export interface Person {
   startTimeExcel?: string; // Hora de inicio del Excel (col 2)
   endTimeExcel?: string; // Hora de finalización del Excel (col 3)
   primaryType: PersonType; // GT (GRUPO DE TRABAJO), GAP (GRUPO DE APOYO), or MESA
+  alsoActsAsGap?: boolean; // GT que también actúa o aparece de GAP (ej: Miércoles, Jueves y Viernes GAP Generales)
+  gapRoleDescription?: string; // Descripción del rol o días de GAP (ej: "GAP Generales (Miércoles, Jueves y Viernes)")
   gtTeams?: string[]; // Multiple GT teams: e.g. ["Logística", "Seguridad"]
   gtSubTeam?: GtSubTeam; // Main GT sub-team if GT
   functions?: string[]; // Multiple functions: e.g. ["Montaje", "Apoyo logístico"]

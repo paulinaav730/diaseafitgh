@@ -171,15 +171,17 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   NO se mezclan los turnos de GT con los de GAP.
                   {selectedPerson?.primaryType === 'GAP' &&
                     ' Como este integrante es GAP, se presentan sus 3 turnos oficiales.'}
-                  {selectedPerson?.primaryType === 'GT' &&
-                    ' Como este integrante es GT, se presentan sus 5 turnos oficiales.'}
+                  {selectedPerson?.primaryType === 'GT' && !selectedPerson?.alsoActsAsGap &&
+                    ' Como este integrante es GT, se presentan sus 5 turnos oficiales de GT.'}
+                  {selectedPerson?.primaryType === 'GT' && selectedPerson?.alsoActsAsGap &&
+                    ' Este integrante de GT también actúa como GAP (ej: GAP Generales Miércoles, Jueves y Viernes): puede registrar turnos tanto de GT como de GAP.'}
                   {selectedPerson?.primaryType === 'MESA' &&
                     ' Como integrante de MESA, puede seleccionar cualquier turno válido de GT o GAP.'}
                 </p>
               </div>
 
-              {/* GAP SHIFTS (Shown if GAP, MESA, or no person selected) */}
-              {(!selectedPerson || selectedPerson.primaryType === 'GAP' || selectedPerson.primaryType === 'MESA') && (
+              {/* GAP SHIFTS (Shown if GAP, MESA, GT dual, or no person selected) */}
+              {(!selectedPerson || selectedPerson.primaryType === 'GAP' || selectedPerson.primaryType === 'MESA' || selectedPerson.alsoActsAsGap) && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
                     <div className="flex items-center gap-2">

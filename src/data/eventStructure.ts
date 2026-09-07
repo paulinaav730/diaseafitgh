@@ -340,7 +340,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 60, // 30 bases x 2
     isActive: true,
     hasBases: true,
-    forTypes: ['GAP', 'MESA'],
+    forTypes: ['GAP', 'GT', 'MESA'],
   },
   {
     id: 'miercoles-gap-t2',
@@ -354,7 +354,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 60, // 30 bases x 2
     isActive: true,
     hasBases: true,
-    forTypes: ['GAP', 'MESA'],
+    forTypes: ['GAP', 'GT', 'MESA'],
   },
   {
     id: 'miercoles-gap-t3',
@@ -368,7 +368,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 60, // 30 bases x 2
     isActive: true,
     hasBases: true,
-    forTypes: ['GAP', 'MESA'],
+    forTypes: ['GAP', 'GT', 'MESA'],
   },
 
   // JUEVES - THE CHALLENGE & THE GAMES

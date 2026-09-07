@@ -735,19 +735,26 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
                             {/* GT / Primary Type */}
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                  row.primaryType === 'GT'
-                                    ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
-                                    : row.primaryType === 'GAP'
-                                    ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
-                                    : 'bg-purple-50 text-purple-700 border border-purple-200'
-                                }`}
-                              >
-                                {row.primaryType === 'GT'
-                                  ? `GT → ${row.gtTeams.join(', ') || 'Logística'}`
-                                  : row.primaryType}
-                              </span>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                    row.primaryType === 'GT'
+                                      ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
+                                      : row.primaryType === 'GAP'
+                                      ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                      : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  }`}
+                                >
+                                  {row.primaryType === 'GT'
+                                    ? `GT → ${row.gtTeams.join(', ') || 'Logística'}`
+                                    : row.primaryType}
+                                </span>
+                                {row.primaryType === 'GT' && row.alsoActsAsGap && (
+                                  <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                                    + GAP Generales
+                                  </span>
+                                )}
+                              </div>
                             </td>
 
                             {/* Availability Badges */}

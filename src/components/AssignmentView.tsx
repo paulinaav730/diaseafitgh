@@ -1445,6 +1445,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               >
                                 {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
                               </span>
+                              {person.primaryType === 'GT' && person.alsoActsAsGap && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#EADDC7]">
+                                  + GAP Generales
+                                </span>
+                              )}
                               {!isAvailableInShift && (
                                 <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold">
                                   No disponible en formulario
