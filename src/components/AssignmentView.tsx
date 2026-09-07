@@ -135,7 +135,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       const baseShifts = isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS] : currentDay.shifts;
       if (carnivalCategory === 'GAP') return baseShifts.filter(s => s.category === 'GAP' || s.hasBases);
       if (carnivalCategory === 'GT') return baseShifts.filter(s => s.category === 'GT' && !s.hasBases);
-      return baseShifts; // MESA sees all shifts
+      return baseShifts.filter(s => s.category === 'MESA');
     }
     return currentDay.shifts;
   }, [shifts, selectedDayId, isCarnival, carnivalCategory, currentDay]);
