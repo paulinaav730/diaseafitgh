@@ -108,7 +108,6 @@ export interface AppEvent {
   isActive: boolean;
   isCarnival?: boolean;
   isDivided?: boolean;
-  isDivided?: boolean;
   order?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -146,10 +145,14 @@ export interface PhysicalBase {
   name: string; // e.g. "Base 1" ... "Base 27", "Base Toro", "Base Speedway", "Base Arcade"
   code?: string;
   defaultCapacity: number; // default capacity per base (e.g. 2)
+  capacity?: number;
   suggestedCapacity?: number;
   isSpecial?: boolean; // true for Toro, Speedway, Arcade
   isActive?: boolean;
   eventId?: string; // e.g. 'carnival' | 'the-games'
+  dayId?: string;
+  color?: string;
+  orderIndex?: number;
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -165,6 +168,7 @@ export interface EventDayDefinition {
   shifts: ShiftDefinition[];
   physicalBasesCount?: number; // 30 for Carnival, 15 for The Games
   isCarnival?: boolean;
+  isDivided?: boolean;
   notes?: string;
 }
 

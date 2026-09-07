@@ -45,6 +45,7 @@ import {
   Lock,
   Tag,
   Filter,
+  Search,
   X,
   Check,
   Calendar,
@@ -102,6 +103,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [modalAlert, setModalAlert] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isContinuityLocked, setIsContinuityLocked] = useState(false);
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+  const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
@@ -271,6 +274,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     setModalPersonId('');
     setModalAlert(null);
     setIsContinuityLocked(false);
+    setCandidateSearchQuery('');
+    setShowOnlyAvailableInModal(true);
 
     if (req) {
       setModalAssignedType(req.groupType);
@@ -358,13 +363,19 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
       });
 
-      // 4. Availability for this shift
+      // 4. Availability for this shift:
+      // STRICT: A person is ONLY available if they explicitly registered availability for this day
+      // and their shiftIds includes this activeShift.id.
+      // If they didn't fill out this day or didn't select this shift (e.g. Tomas Gomez only registered for Jueves and Viernes),
+      // they are strictly NOT available on other days like Lunes.
       const availRecord = availabilities.find(
         (av) => av.personId === person.id && av.dayId === selectedDayId
       );
-      const isAvailableInShift = availRecord
-        ? availRecord.shiftIds.includes(activeShift.id)
-        : true; // if no availability form filed, not strictly disqualifying but highlighted
+      const isAvailableInShift = Boolean(
+        availRecord &&
+        Array.isArray(availRecord.shiftIds) &&
+        availRecord.shiftIds.includes(activeShift.id)
+      );
 
       // 5. Functions check (Rule 5 & 9)
       let matchesFunctions = true;
@@ -382,8 +393,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         matchingFunctionsList = person.functions || [];
       }
 
-      const isEligible =
-        matchesGroup && !isAlreadyAssigned && !conflictingAssignment && matchesFunctions && isAvailableInShift;
+      const matchesPrerequisites =
+        matchesGroup && !isAlreadyAssigned && !conflictingAssignment && matchesFunctions;
+
+      const isEligible = matchesPrerequisites && isAvailableInShift;
 
       return {
         person,
@@ -391,9 +404,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         isAlreadyAssigned,
         conflictingAssignment,
         isAvailableInShift,
-        hasAvailRecord: !!availRecord,
+        hasAvailRecord: Boolean(availRecord && availRecord.shiftIds && availRecord.shiftIds.length > 0),
         matchesFunctions,
         matchingFunctionsList,
+        matchesPrerequisites,
         isEligible,
       };
     });
@@ -406,6 +420,31 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     activeRequirement,
     currentDay,
   ]);
+
+  const availableCandidatesCount = useMemo(() => {
+    return candidatePool.filter((c) => c.isEligible).length;
+  }, [candidatePool]);
+
+  const filteredCandidates = useMemo(() => {
+    const q = candidateSearchQuery.trim().toLowerCase();
+    return candidatePool.filter((c) => {
+      // Must match group, not already assigned, no overlapping conflict, and match functions
+      if (!c.matchesPrerequisites) return false;
+
+      // If toggle is active (default = true), only show people with confirmed shift availability
+      if (showOnlyAvailableInModal && !c.isAvailableInShift) return false;
+
+      // Search query filter
+      if (q) {
+        const matchName = c.person.name.toLowerCase().includes(q);
+        const matchDoc = (c.person.documentId || '').toLowerCase().includes(q);
+        const matchUser = (c.person.username || '').toLowerCase().includes(q);
+        if (!matchName && !matchDoc && !matchUser) return false;
+      }
+
+      return true;
+    });
+  }, [candidatePool, candidateSearchQuery, showOnlyAvailableInModal]);
 
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
@@ -1375,148 +1414,182 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </div>
             )}
 
-            {/* Candidate Pool List */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
-              <div className="flex items-center justify-between text-xs font-bold text-[#182535] pb-1">
-                <span>
-                  Personas Disponibles y Aptas (
-                  {candidatePool.filter((c) => c.isEligible).length} encontradas)
-                </span>
-                <span className="text-[11px] text-[#64748B]">
-                  Filtro: GT + Disponibilidad + Conflicto + Funciones
-                </span>
+            {/* Search & Availability Toggle Controls */}
+            <div className="space-y-2 pt-2 pb-2 shrink-0 border-b border-[#EADDC7]/60">
+              <div className="relative">
+                <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar candidato por nombre, cédula o usuario..."
+                  value={candidateSearchQuery}
+                  onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                />
+                {candidateSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setCandidateSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
 
-              {candidatePool.filter((c) => c.isEligible).length === 0 ? (
+              <div className="flex items-center justify-between flex-wrap gap-2 px-1">
+                <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+                  <input
+                    type="checkbox"
+                    checked={showOnlyAvailableInModal}
+                    onChange={(e) => setShowOnlyAvailableInModal(e.target.checked)}
+                    className="w-4 h-4 accent-[#B83A24] rounded cursor-pointer"
+                  />
+                  <span className="font-semibold text-[#182535]">
+                    Solo personas con disponibilidad confirmada en este turno ({availableCandidatesCount})
+                  </span>
+                </label>
+
+                <span className="text-[11px] text-[#64748B]">
+                  Mostrando: <b>{filteredCandidates.length}</b> candidatos
+                </span>
+              </div>
+            </div>
+
+            {/* Candidate Pool List */}
+            <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
+              {filteredCandidates.length === 0 ? (
                 <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
                   <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
                   <p className="font-bold text-[#182535] text-xs">
-                    No se encontraron integrantes disponibles que cumplan todos los requisitos
+                    {showOnlyAvailableInModal
+                      ? 'No hay personas con disponibilidad confirmada para este turno'
+                      : 'No se encontraron candidatos que coincidan con los filtros'}
                   </p>
                   <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
-                    Verifique si las personas del grupo tienen las funciones requeridas asignadas en el módulo Personas, o amplíe el filtro de funciones del turno.
+                    {showOnlyAvailableInModal
+                      ? 'Puede desmarcar la casilla "Solo personas con disponibilidad confirmada" arriba si desea asignar a un integrante sin horario registrado.'
+                      : 'Verifique si las personas del grupo tienen las funciones requeridas o amplíe la búsqueda.'}
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {candidatePool
-                    .filter((c) => c.isEligible)
-                    .map(({ person, matchingFunctionsList, isAvailableInShift }) => {
-                      const isSelected = modalPersonId === person.id;
-                      const selectedFunctionToUse =
-                        isSelected && modalAssignedFunction
-                          ? modalAssignedFunction
-                          : matchingFunctionsList[0] || '';
+                  {filteredCandidates.map(({ person, matchingFunctionsList, isAvailableInShift }) => {
+                    const isSelected = modalPersonId === person.id;
+                    const selectedFunctionToUse =
+                      isSelected && modalAssignedFunction
+                        ? modalAssignedFunction
+                        : matchingFunctionsList[0] || '';
 
-                      return (
-                        <div
-                          key={person.id}
-                          className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                            isSelected
-                              ? 'bg-[#FEF8EC] border-[#B83A24] shadow-xs'
-                              : 'bg-[#FFFDF8] border-[#EADDC7] hover:border-[#B83A24]/50'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-[#182535]">
-                                {person.name}
+                    return (
+                      <div
+                        key={person.id}
+                        className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          isSelected
+                            ? 'bg-[#FEF8EC] border-[#B83A24] shadow-xs'
+                            : 'bg-[#FFFDF8] border-[#EADDC7] hover:border-[#B83A24]/50'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-[#182535]">
+                              {person.name}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                person.primaryType === 'GT'
+                                  ? 'bg-[#FDF2EE] text-[#B83A24]'
+                                  : 'bg-[#FEF8EC] text-[#C87F17]'
+                              }`}
+                            >
+                              {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
+                            </span>
+                            {person.primaryType === 'GT' && person.alsoActsAsGap && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#EADDC7]">
+                                + GAP Generales
                               </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                  person.primaryType === 'GT'
-                                    ? 'bg-[#FDF2EE] text-[#B83A24]'
-                                    : 'bg-[#FEF8EC] text-[#C87F17]'
-                                }`}
-                              >
-                                {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
+                            )}
+                            {!isAvailableInShift && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                Sin turno registrado
                               </span>
-                              {person.primaryType === 'GT' && person.alsoActsAsGap && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#EADDC7]">
-                                  + GAP Generales
-                                </span>
-                              )}
-                              {!isAvailableInShift && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold">
-                                  No disponible en formulario
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
-                              ID: {person.documentId} • @{person.username || person.documentId}
-                            </div>
-
-                            {/* Show functions of person */}
-                            <div className="flex items-center gap-1 flex-wrap mt-1.5">
-                              <span className="text-[10px] text-[#64748B] font-bold">
-                                Funciones:
-                              </span>
-                              {person.functions && person.functions.length > 0 ? (
-                                person.functions.map((f, i) => {
-                                  const isMatchingReq =
-                                    activeRequirement?.specificFunctions?.includes(f);
-                                  return (
-                                    <span
-                                      key={i}
-                                      className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                                        isMatchingReq
-                                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                          : 'bg-[#FAF6EC] text-[#475569] border border-[#EADDC7]'
-                                      }`}
-                                    >
-                                      {f}
-                                    </span>
-                                  );
-                                })
-                              ) : (
-                                <span className="text-[10px] text-[#94A3B8]">Sin funciones</span>
-                              )}
-                            </div>
+                            )}
                           </div>
 
-                          {/* Function selection and Assign action */}
-                          <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
-                            {/* Selector for which function to register in assignment */}
-                            {matchingFunctionsList.length > 1 ? (
-                              <select
-                                value={selectedFunctionToUse}
-                                onChange={(e) => {
-                                  setModalPersonId(person.id);
-                                  setModalAssignedFunction(e.target.value);
-                                }}
-                                className="px-2.5 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
-                              >
-                                {matchingFunctionsList.map((fn) => (
-                                  <option key={fn} value={fn}>
-                                    Asignar: {fn}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : matchingFunctionsList.length === 1 ? (
-                              <span className="px-2 py-1 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-bold text-[#16A34A]">
-                                {matchingFunctionsList[0]}
-                              </span>
-                            ) : null}
+                          <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
+                            ID: {person.documentId} • @{person.username || person.documentId}
+                          </div>
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleQuickAssignCandidate(
-                                  person,
-                                  selectedFunctionToUse || matchingFunctionsList[0] || ''
+                          {/* Show functions of person */}
+                          <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                            <span className="text-[10px] text-[#64748B] font-bold">
+                              Funciones:
+                            </span>
+                            {person.functions && person.functions.length > 0 ? (
+                              person.functions.map((f, i) => {
+                                const isMatchingReq =
+                                  activeRequirement?.specificFunctions?.includes(f);
+                                return (
+                                  <span
+                                    key={i}
+                                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                                      isMatchingReq
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                        : 'bg-[#FAF6EC] text-[#475569] border border-[#EADDC7]'
+                                    }`}
+                                  >
+                                    {f}
+                                  </span>
                                 );
-                              }}
-                              disabled={isSubmitting}
-                              className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1 shadow-2xs transition-all"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Asignar Cupo</span>
-                            </button>
+                              })
+                            ) : (
+                              <span className="text-[10px] text-[#94A3B8]">Sin funciones</span>
+                            )}
                           </div>
                         </div>
-                      );
-                    })}
+
+                        {/* Function selection and Assign action */}
+                        <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                          {/* Selector for which function to register in assignment */}
+                          {matchingFunctionsList.length > 1 ? (
+                            <select
+                              value={selectedFunctionToUse}
+                              onChange={(e) => {
+                                setModalPersonId(person.id);
+                                setModalAssignedFunction(e.target.value);
+                              }}
+                              className="px-2.5 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
+                            >
+                              {matchingFunctionsList.map((fn) => (
+                                <option key={fn} value={fn}>
+                                  Asignar: {fn}
+                                </option>
+                              ))}
+                            </select>
+                          ) : matchingFunctionsList.length === 1 ? (
+                            <span className="px-2 py-1 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-bold text-[#16A34A]">
+                              {matchingFunctionsList[0]}
+                            </span>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleQuickAssignCandidate(
+                                person,
+                                selectedFunctionToUse || matchingFunctionsList[0] || ''
+                              );
+                            }}
+                            disabled={isSubmitting}
+                            className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1 shadow-2xs transition-all"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Asignar Cupo</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

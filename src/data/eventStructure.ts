@@ -59,6 +59,7 @@ export const THE_GAMES_JUEVES_BASES: ConfigurableBase[] = Array.from({ length: 1
   id: 'games_jueves_' + (i + 1),
   name: 'Base ' + (i + 1),
   baseNumber: String(i + 1),
+  defaultCapacity: 2,
   capacity: 2,
   isActive: true,
   eventId: 'the-games',
@@ -71,6 +72,7 @@ export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = Array.from({ length: 
   id: 'games_viernes_' + (i + 16),
   name: 'Base ' + (i + 16),
   baseNumber: String(i + 16),
+  defaultCapacity: 2,
   capacity: 2,
   isActive: true,
   eventId: 'the-games',
@@ -79,11 +81,17 @@ export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = Array.from({ length: 
   orderIndex: i + 16,
 }));
 
+export const THE_GAMES_PHYSICAL_BASES: ConfigurableBase[] = [
+  ...THE_GAMES_JUEVES_BASES,
+  ...THE_GAMES_VIERNES_BASES,
+];
+
 export const DEFAULT_INITIAL_BASES: ConfigurableBase[] = [
   ...CARNIVAL_PHYSICAL_BASES.map((b) => ({
     id: 'carnival_' + b.id,
     name: b.name,
     baseNumber: String(b.id),
+    defaultCapacity: b.defaultCapacity,
     capacity: b.defaultCapacity,
     isActive: true,
     eventId: 'carnival',

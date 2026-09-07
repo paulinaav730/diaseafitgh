@@ -8,6 +8,7 @@ import {
   AppEvent,
   ConfigurableShift,
   ConfigurableBase,
+  PhysicalBase,
 } from '../types';
 import { ExcelMaestroParsedRow } from './excelService';
 import {
@@ -1384,6 +1385,12 @@ export function replaceAllAvailabilitiesFromCloud(newAvail: AvailabilityRecord[]
   availabilityCache = newAvail;
   localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
   availabilityListeners.forEach((fn) => fn([...availabilityCache]));
+}
+
+export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
+  basesCache = newBases;
+  localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
+  baseListeners.forEach((fn) => fn([...basesCache]));
 }
 
 
