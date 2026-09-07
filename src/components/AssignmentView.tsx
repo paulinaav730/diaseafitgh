@@ -323,9 +323,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Candidate pool calculation based on GT/Group + Availability + Conflict + Functions
   const candidatePool = useMemo(() => {
     return people.map((person) => {
-      // 1. Group / Subteam matching
+      const isMesa = person.primaryType === 'MESA';
+
+      // 1. Group / Subteam matching:
+      // RULE: MESA can be assigned to ANY shift and ANY requirement ("la mesa puede ser asignada a todos los turnos sin importar qué")
       let matchesGroup = false;
-      if (activeRequirement) {
+      if (isMesa) {
+        matchesGroup = true;
+      } else if (activeRequirement) {
         if (activeRequirement.groupType === 'GT') {
           const isGt = person.primaryType === 'GT';
           const matchesSub =
@@ -350,37 +355,46 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           a.shiftId === activeShift.id
       );
 
-      // 3. Overlapping shift conflict on the same day
-      const conflictingAssignment = assignments.find((a) => {
-        if (
-          a.personId !== person.id ||
-          a.dayId !== selectedDayId ||
-          a.shiftId === activeShift.id
-        ) {
-          return false;
-        }
-        const otherShift = findShiftById(currentDay, a.shiftId);
-        return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
-      });
+      // 3. Overlapping shift conflict on the same day:
+      // MESA has cross-shift leadership and is not blocked by overlapping hours
+      const conflictingAssignment = isMesa
+        ? undefined
+        : assignments.find((a) => {
+            if (
+              a.personId !== person.id ||
+              a.dayId !== selectedDayId ||
+              a.shiftId === activeShift.id
+            ) {
+              return false;
+            }
+            const otherShift = findShiftById(currentDay, a.shiftId);
+            return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
+          });
 
       // 4. Availability for this shift:
-      // STRICT: A person is ONLY available if they explicitly registered availability for this day
-      // and their shiftIds includes this activeShift.id.
-      // If they didn't fill out this day or didn't select this shift (e.g. Tomas Gomez only registered for Jueves and Viernes),
-      // they are strictly NOT available on other days like Lunes.
+      // For MESA: ALWAYS available across all days and shifts ("sin importar qué")
+      // For GT and GAP: STRICT: A person is ONLY available if they explicitly registered availability for this day and shift
       const availRecord = availabilities.find(
         (av) => av.personId === person.id && av.dayId === selectedDayId
       );
-      const isAvailableInShift = Boolean(
-        availRecord &&
-        Array.isArray(availRecord.shiftIds) &&
-        availRecord.shiftIds.includes(activeShift.id)
-      );
+      const isAvailableInShift =
+        isMesa ||
+        Boolean(
+          availRecord &&
+          Array.isArray(availRecord.shiftIds) &&
+          availRecord.shiftIds.includes(activeShift.id)
+        );
 
       // 5. Functions check (Rule 5 & 9)
       let matchesFunctions = true;
       let matchingFunctionsList: string[] = [];
-      if (
+      if (isMesa) {
+        matchesFunctions = true;
+        matchingFunctionsList =
+          person.functions && person.functions.length > 0
+            ? person.functions
+            : ['Coordinación / Mesa'];
+      } else if (
         activeRequirement &&
         activeRequirement.specificFunctions &&
         activeRequirement.specificFunctions.length > 0
@@ -404,7 +418,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         isAlreadyAssigned,
         conflictingAssignment,
         isAvailableInShift,
-        hasAvailRecord: Boolean(availRecord && availRecord.shiftIds && availRecord.shiftIds.length > 0),
+        hasAvailRecord: isMesa || Boolean(availRecord && availRecord.shiftIds && availRecord.shiftIds.length > 0),
         matchesFunctions,
         matchingFunctionsList,
         matchesPrerequisites,
@@ -1503,6 +1517,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             >
                               {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
                             </span>
+                            {person.primaryType === 'MESA' && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
+                                Flexible (Todos los turnos)
+                              </span>
+                            )}
                             {person.primaryType === 'GT' && person.alsoActsAsGap && (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#EADDC7]">
                                 + GAP Generales

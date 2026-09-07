@@ -1,5 +1,5 @@
-﻿import { getSupabase, isSupabaseConfigured } from './supabaseClient';
-import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
+import { getSupabase, isSupabaseConfigured } from './supabaseClient';
+import { Person, Assignment, AvailabilityRecord, AttendanceRecord, ConfigurableShift } from '../types';
 
 export interface SupabaseSyncStatus {
   isConfigured: boolean;
@@ -241,6 +241,117 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
   }
 }
 
+/**
+ * Converts a ConfigurableShift to PostgreSQL shifts table row
+ */
+export function shiftToPostgres(s: ConfigurableShift) {
+  const validCategory = (['GT', 'GAP', 'MESA'].includes(s.category) ? s.category : 'MESA');
+  const validEventId = s.eventId || (
+    s.dayId === 'martes' ? 'the-zone' :
+    s.dayId === 'miercoles' ? 'carnival' :
+    s.dayId === 'jueves' ? 'the-challenge' :
+    s.dayId === 'viernes' ? 'the-games' : 'the-show'
+  );
+
+  return {
+    id: s.id,
+    event_id: validEventId,
+    day_id: s.dayId,
+    name: s.name,
+    category: validCategory,
+    gt_sub_team: s.gtSubTeam || (s.gtSubTeams && s.gtSubTeams[0]) || null,
+    start_time: s.startTime || '08:00',
+    end_time: s.endTime || '12:00',
+    label: s.label || `${s.startTime} - ${s.endTime}`,
+    capacity: Number(s.capacity) || 10,
+    is_active: s.isActive !== false,
+    has_bases: Boolean(s.hasBases),
+    base_ids: s.baseIds || [],
+    specific_functions: s.specificFunctions || [],
+    notes: s.notes || null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export function postgresToShift(r: any): ConfigurableShift {
+  return {
+    id: r.id,
+    eventId: r.event_id || undefined,
+    dayId: r.day_id,
+    name: r.name,
+    category: r.category,
+    gtSubTeam: r.gt_sub_team || undefined,
+    gtSubTeams: r.gt_sub_team ? [r.gt_sub_team] : undefined,
+    startTime: r.start_time,
+    endTime: r.end_time,
+    label: r.label,
+    capacity: r.capacity || 10,
+    isActive: r.is_active !== false,
+    hasBases: Boolean(r.has_bases),
+    baseIds: r.base_ids || [],
+    specificFunctions: r.specific_functions || [],
+    notes: r.notes || '',
+    forTypes: [r.category, 'MESA'],
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function pushShiftsToSupabase(shifts: ConfigurableShift[]): Promise<boolean> {
+  const client = getSupabase();
+  if (!client || shifts.length === 0) return false;
+  try {
+    const payload = shifts.map(shiftToPostgres);
+    const { error } = await client.from('shifts').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Error pushing shifts to Supabase:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Exception pushing shifts to Supabase:', err);
+    return false;
+  }
+}
+
+export async function pushSingleShiftToSupabase(s: ConfigurableShift): Promise<{ success: boolean; error?: string }> {
+  const client = getSupabase();
+  if (!client) return { success: false, error: 'No client' };
+  try {
+    const payload = shiftToPostgres(s);
+    const { error } = await client.from('shifts').upsert(payload, { onConflict: 'id' });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+export async function deleteSingleShiftFromSupabase(id: string): Promise<{ success: boolean; error?: string }> {
+  const client = getSupabase();
+  if (!client) return { success: false, error: 'No client' };
+  try {
+    const { error } = await client.from('shifts').delete().eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+export async function pullShiftsFromSupabase(): Promise<ConfigurableShift[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+  try {
+    const { data, error } = await client.from('shifts').select('*');
+    if (error || !data) return null;
+    return data.map(postgresToShift);
+  } catch (err) {
+    console.warn('Exception pulling shifts from Supabase:', err);
+    return null;
+  }
+}
+
 export async function pushAvailabilitiesToSupabase(availabilities: AvailabilityRecord[]): Promise<boolean> {
   const client = getSupabase();
   if (!client || availabilities.length === 0) return false;
@@ -340,6 +451,12 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
       replaceAllPeopleFromCloud(people);
     }
 
+    const cloudShifts = await pullShiftsFromSupabase();
+    if (cloudShifts && cloudShifts.length > 0) {
+      const { replaceAllShiftsFromCloud } = await import('./storageService');
+      replaceAllShiftsFromCloud(cloudShifts);
+    }
+
     const assignments = await pullAssignmentsFromSupabase();
     if (assignments && assignments.length > 0) {
       const { replaceAllAssignmentsFromCloud } = await import('./storageService');
@@ -359,7 +476,7 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
 
     return {
       success: true,
-      message: `SincronizaciÃƒÂ³n completada: ${people?.length || 0} personas, ${assignments?.length || 0} turnos.`,
+      message: `Sincronización completada: ${people?.length || 0} personas, ${assignments?.length || 0} turnos.`,
       count: people?.length || 0,
     };
   } catch (err: any) {
@@ -379,10 +496,11 @@ export async function syncAllToSupabase(
     return { success: false, message: 'Supabase no está configurado en las variables de entorno.' };
   }
   try {
+    const { getShifts, getBases } = await import('./storageService');
+    await pushShiftsToSupabase(getShifts());
     const pOk = await pushPeopleToSupabase(people);
     const aOk = await pushAssignmentsToSupabase(assignments);
     const avOk = await pushAvailabilitiesToSupabase(availabilities);
-    const { getBases } = await import('./storageService');
     await pushBasesToSupabase(getBases());
 
     if (!pOk && people.length > 0) {
@@ -391,7 +509,7 @@ export async function syncAllToSupabase(
 
     return {
       success: true,
-      message: `Ã‚Â¡Base de datos sincronizada en la nube! ${people.length} personas, ${assignments.length} turnos.`,
+      message: `¡Base de datos sincronizada en la nube! ${people.length} personas, ${assignments.length} turnos.`,
     };
   } catch (err: any) {
     return { success: false, message: err?.message || 'Error al subir a Supabase' };
@@ -407,6 +525,36 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
   if (!client) return { success: false, error: 'No Supabase client' };
   
   try {
+    // 1. Ensure the shift exists in Supabase to strictly prevent foreign key constraint violations (assignments_shift_id_fkey)
+    const { data: shiftRow } = await client.from('shifts').select('id').eq('id', a.shiftId).maybeSingle();
+    if (!shiftRow) {
+      const { getShifts } = await import('./storageService');
+      const allShifts = getShifts();
+      const matching = allShifts.find((s) => s.id === a.shiftId);
+      if (matching) {
+        await client.from('shifts').upsert(shiftToPostgres(matching), { onConflict: 'id' });
+      } else {
+        const validEventId =
+          a.dayId === 'martes' ? 'the-zone' :
+          a.dayId === 'miercoles' ? 'carnival' :
+          a.dayId === 'jueves' ? 'the-challenge' :
+          a.dayId === 'viernes' ? 'the-games' : 'the-show';
+        await client.from('shifts').upsert({
+          id: a.shiftId,
+          event_id: validEventId,
+          day_id: a.dayId,
+          name: a.shiftId.replace(/_/g, ' '),
+          category: (['GT', 'GAP', 'MESA'].includes(a.assignedType as any) ? a.assignedType : 'MESA') as any,
+          start_time: '06:00',
+          end_time: '22:00',
+          label: 'Turno ' + a.shiftId,
+          capacity: 20,
+          is_active: true,
+          has_bases: false,
+        }, { onConflict: 'id' });
+      }
+    }
+
     const payload = {
       id: a.id,
       person_id: a.personId,
@@ -422,7 +570,7 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       notes: a.notes || null,
       updated_at: a.updatedAt || new Date().toISOString(),
     };
-    const { error } = await client.from('assignments').insert(payload);
+    const { error } = await client.from('assignments').upsert(payload, { onConflict: 'id' });
     if (error) return { success: false, error: error.message };
     return { success: true };
   } catch (err: any) {
@@ -462,6 +610,10 @@ export function setupRealtimeSubscriptions(
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'bases' }, (payload) => {
       console.log('Realtime change received on bases!', payload);
+      onAssignmentChange();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts' }, (payload) => {
+      console.log('Realtime change received on shifts!', payload);
       onAssignmentChange();
     })
     .subscribe((status: string) => {

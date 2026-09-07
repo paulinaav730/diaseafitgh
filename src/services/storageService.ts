@@ -21,7 +21,16 @@ import {
   doShiftsOverlap,
 } from '../data/eventStructure';
 import { DEFAULT_GROUP_FUNCTIONS } from '../data/functionsCatalog';
-import { insertSingleAssignmentToSupabase, deleteSingleAssignmentFromSupabase, pullAssignmentsFromSupabase, setupRealtimeSubscriptions } from './supabaseSync';
+import {
+  insertSingleAssignmentToSupabase,
+  deleteSingleAssignmentFromSupabase,
+  pullAssignmentsFromSupabase,
+  setupRealtimeSubscriptions,
+  pushSingleShiftToSupabase,
+  deleteSingleShiftFromSupabase,
+  pushShiftsToSupabase,
+} from './supabaseSync';
+import { isSupabaseConfigured } from './supabaseClient';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -171,6 +180,13 @@ export function initializeStorage(): void {
         assignmentListeners.forEach((fn) => fn([...assignmentCache]));
       }
     });
+
+    // Ensure all local shifts are synced to Supabase shifts table in the background
+    if (isSupabaseConfigured() && shiftsCache.length > 0) {
+      pushShiftsToSupabase(shiftsCache).catch((err) =>
+        console.warn('Background sync of shifts to Supabase:', err)
+      );
+    }
   } catch (error) {
     console.error('Error loading data from storage:', error);
     peopleCache = [];
@@ -1068,6 +1084,10 @@ export async function saveShift(
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 
+  pushSingleShiftToSupabase(newShift).catch((err) =>
+    console.warn('Error syncing shift to Supabase:', err)
+  );
+
   return { shift: newShift, conflicts };
 }
 
@@ -1102,6 +1122,10 @@ export async function duplicateShift(id: string): Promise<ConfigurableShift | nu
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 
+  pushSingleShiftToSupabase(duplicated).catch((err) =>
+    console.warn('Error syncing duplicated shift to Supabase:', err)
+  );
+
   return duplicated;
 }
 
@@ -1129,6 +1153,10 @@ export async function deleteShift(
   shiftsCache = shiftsCache.filter((s) => s.id !== id);
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
+
+  deleteSingleShiftFromSupabase(id).catch((err) =>
+    console.warn('Error deleting shift from Supabase:', err)
+  );
 
   return { success: true };
 }
@@ -1391,6 +1419,12 @@ export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
   basesCache = newBases;
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
+}
+
+export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void {
+  shiftsCache = newShifts;
+  localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+  shiftListeners.forEach((fn) => fn([...shiftsCache]));
 }
 
 
