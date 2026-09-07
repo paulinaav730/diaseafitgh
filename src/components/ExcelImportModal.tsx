@@ -683,7 +683,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                       <th className="py-2.5 px-3">Fila</th>
                       <th className="py-2.5 px-3">Persona</th>
                       <th className="py-2.5 px-3">Documento / Usuario</th>
-                      <th className="py-2.5 px-3">GT / Tipo</th>
+                      <th className="py-2.5 px-3">TIPO</th>
+<th className="py-2.5 px-3">GT</th>
                       <th className="py-2.5 px-3">Disponibilidad Reconocida</th>
                       <th className="py-2.5 px-3">Estado</th>
                     </tr>

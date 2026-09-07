@@ -226,6 +226,7 @@ export default function App() {
                 functions={functions}
                 shifts={shifts}
                 availabilities={availabilities}
+                assignments={assignments}
                 isAddModalOpen={isAddPersonModalOpen}
                 setIsAddModalOpen={setIsAddPersonModalOpen}
               />

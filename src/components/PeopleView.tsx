@@ -66,6 +66,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   setIsAddModalOpen,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('Todos');
+  const [gtFilter, setGtFilter] = useState<string>('Todos');
+  const [shiftFilter, setShiftFilter] = useState<string>('Todos');
+  const [statusFilter, setStatusFilter] = useState<string>('Activo');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<PersonType | 'ALL'>('ALL');
   const [selectedGtSubTeamFilter, setSelectedGtSubTeamFilter] = useState<GtSubTeam | 'ALL'>('ALL');
   const [sortOption, setSortOption] = useState<'name-asc' | 'name-desc' | 'doc-asc' | 'doc-desc' | 'gt-asc' | 'recent'>('name-asc');

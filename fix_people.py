@@ -1,29 +1,31 @@
-﻿const fs = require('fs');
-let content = fs.readFileSync('src/components/PeopleView.tsx', 'utf8');
+﻿import re
 
-// 1. Add assignments to props
+with open('src/components/PeopleView.tsx', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# 1. Add assignments to props
 content = content.replace(
     '  availabilities?: AvailabilityRecord[];\n  isAddModalOpen: boolean;\n  setIsAddModalOpen: (open: boolean) => void;',
     '  availabilities?: AvailabilityRecord[];\n  assignments?: Assignment[];\n  isAddModalOpen: boolean;\n  setIsAddModalOpen: (open: boolean) => void;'
-);
+)
 content = content.replace(
     '  availabilities,\n  isAddModalOpen,',
     '  availabilities,\n  assignments,\n  isAddModalOpen,'
-);
+)
 
-// 2. Add filter states
-const state_insert = `  const [typeFilter, setTypeFilter] = useState<string>('Todos');
+# 2. Add filter states
+state_insert = '''  const [typeFilter, setTypeFilter] = useState<string>('Todos');
   const [gtFilter, setGtFilter] = useState<string>('Todos');
   const [shiftFilter, setShiftFilter] = useState<string>('Todos');
-  const [statusFilter, setStatusFilter] = useState<string>('Activo');`;
+  const [statusFilter, setStatusFilter] = useState<string>('Activo');'''
 
 content = content.replace(
     "const [searchTerm, setSearchTerm] = useState('');",
-    `const [searchTerm, setSearchTerm] = useState('');\n${state_insert}`
-);
+    f"const [searchTerm, setSearchTerm] = useState('');\n{state_insert}"
+)
 
-// 3. Add filter UI
-const filter_ui = `
+# 3. Add filter UI
+filter_ui = '''
       {/* GLOBAL FILTERS */}
       <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 shadow-xs mb-6">
         <div className="flex flex-col sm:flex-row gap-4 items-end">
@@ -82,18 +84,25 @@ const filter_ui = `
           </div>
         </div>
       </div>
-`;
+'''
 content = content.replace(
     '<div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl overflow-hidden shadow-xs">',
     filter_ui + '\n      <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl overflow-hidden shadow-xs">'
-);
+)
 
-// 4. Filter logic
-const original_filter_logic = `const filtered = people.filter((p) => {
+# 4. Filter logic
+# We need to find the useMemo for ilteredPeople and replace its inner logic.
+filter_pattern = re.compile(r'const filtered = people\.filter\(\(p\) => \{.*?\};\n\n\s*if \(\!matchesName', re.DOTALL)
+# Actually, the original is:
+#     const filtered = people.filter((p) => {
+#       // 1. Global Search Query
+#       if (query) {
+
+original_filter_logic = '''const filtered = people.filter((p) => {
       // 1. Global Search Query
-      if (query) {`;
+      if (query) {'''
 
-const new_filter_logic = `const filtered = people.filter((p) => {
+new_filter_logic = '''const filtered = people.filter((p) => {
       // GLOBAL FILTERS
       if (typeFilter !== 'Todos' && p.primaryType !== typeFilter) return false;
       
@@ -114,12 +123,13 @@ const new_filter_logic = `const filtered = people.filter((p) => {
       }
 
       // 1. Global Search Query
-      if (query) {`;
+      if (query) {'''
 
-content = content.replace(original_filter_logic, new_filter_logic);
+content = content.replace(original_filter_logic, new_filter_logic)
 
-// 5. Table Headers
-const new_thead = `<thead className="bg-[#FFFDF8] sticky top-0 z-10">
+# 5. Table Headers
+thead_pattern = re.compile(r'<thead className="bg-\[#FFFDF8\] sticky top-0 z-10">.*?</thead>', re.DOTALL)
+new_thead = '''<thead className="bg-[#FFFDF8] sticky top-0 z-10">
                 <tr>
                   <th className="p-3.5 w-12 text-center">
                     <input
@@ -140,11 +150,12 @@ const new_thead = `<thead className="bg-[#FFFDF8] sticky top-0 z-10">
                   <th className="p-3.5 text-left font-montserrat text-xs text-[#182535]">ESTADO</th>
                   <th className="p-3.5 text-right font-montserrat text-xs text-[#182535]">ACCIONES</th>
                 </tr>
-              </thead>`;
-content = content.replace(/<thead className="bg-\[#FFFDF8\] sticky top-0 z-10">[\s\S]*?<\/thead>/, new_thead);
+              </thead>'''
+content = thead_pattern.sub(new_thead, content)
 
-// 6. Table Body
-const new_tbody = `<tbody>
+# 6. Table Body
+tbody_pattern = re.compile(r'<tbody>.*?</tbody>', re.DOTALL)
+new_tbody = '''<tbody>
               {filteredPeople.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[#64748B]">
@@ -198,13 +209,7 @@ const new_tbody = `<tbody>
                         )}
                       </td>
                       <td className="p-4">
-                        <span className={\`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold \${
-                          person.primaryType === 'GT'
-                            ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
-                            : person.primaryType === 'GAP'
-                            ? 'bg-[#F0FDF4] text-[#166534] border border-[#BBF7D0]'
-                            : 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]'
-                        }\`}>
+                        <span className={inline-block px-2.5 py-1 rounded-md text-[11px] font-bold }>
                           {person.primaryType}
                         </span>
                         {person.primaryType === 'GT' && person.alsoActsAsGap && (
@@ -217,7 +222,7 @@ const new_tbody = `<tbody>
                         {assignedShiftNames.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {assignedShiftNames.map((shiftName, idx) => (
-                              <span key={idx} className="bg-[#F1F5F9] border border-[#E2E8F0] px-2 py-0.5 rounded text-[10px] font-bold text-[#475569]">
+                              <span key={idx} className="bg-[#F1F5F9] border border-[#E2E8F0] px-2 py-0.5 rounded text-[10px] font-bold">
                                 {shiftName}
                               </span>
                             ))}
@@ -240,7 +245,7 @@ const new_tbody = `<tbody>
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm(\`¿Eliminar a \${person.name}?\`)) {
+                              if (window.confirm(¿Eliminar a ?)) {
                                 handleDeletePeople([person.id]);
                               }
                             }}
@@ -255,8 +260,9 @@ const new_tbody = `<tbody>
                   );
                 })
               )}
-            </tbody>`;
-content = content.replace(/<tbody>[\s\S]*?<\/tbody>/, new_tbody);
+            </tbody>'''
+content = tbody_pattern.sub(new_tbody, content)
 
-fs.writeFileSync('src/components/PeopleView.tsx', content);
-console.log('Done rewriting PeopleView.tsx');
+with open('src/components/PeopleView.tsx', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Done!')
