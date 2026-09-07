@@ -222,7 +222,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
   // Open Requirement Creation Modal
   const handleOpenCreateRequirement = () => {
-    setReqGroupType(isCarnival && carnivalCategory === 'GAP' ? 'GAP' : 'GT');
+    setReqGroupType(isDivided && carnivalCategory === 'GAP' ? 'GAP' : 'GT');
     setReqGtSubTeam('Logística');
     setReqCapacity(10);
     setReqShowSpecificFunctions(false);
@@ -882,7 +882,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       </div>
 
       {/* CONDITIONAL: 30 PHYSICAL BASES FOR CARNIVAL GAP */}
-      {isCarnival && carnivalCategory === 'GAP' && physicalBases.length > 0 && (
+      {isDivided && carnivalCategory === 'GAP' && activeShift.hasBases && physicalBases.length > 0 && (
         <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EADDC7]">
             <div>
@@ -892,11 +892,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 </span>
                 <span className="text-xs text-[#16A34A] font-semibold flex items-center gap-1 font-montserrat">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  30 Bases Físicas Oficiales
+                  {physicalBases.length} Bases Físicas Oficiales
                 </span>
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek tracking-wide mt-1">
-                ASIGNACIÓN DE BASES FÍSICAS CARNIVAL
+                ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] font-montserrat">
                 Base 1 a 27 + Toro, Speedway y Arcade. Cada base admite 2 encargados con continuidad garantizada.

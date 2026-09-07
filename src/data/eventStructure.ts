@@ -404,13 +404,13 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   // JUEVES - THE CHALLENGE & THE GAMES
   {
     id: 'jueves-t1',
-    name: 'T1 - The Challenge',
+    name: 'T1 - Mañana GAP',
     dayId: 'jueves',
     eventId: 'the-challenge',
-    category: 'GT',
+    category: 'GAP',
     startTime: '06:00',
     endTime: '12:00',
-    label: '6:00 AM – 12:00 PM (The Challenge)',
+    label: '6:00 AM – 12:00 PM (Solo GAP)',
     capacity: 15,
     isActive: true,
     hasBases: false,
@@ -418,7 +418,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   },
   {
     id: 'jueves-t2',
-    name: 'T2 - The Games',
+    name: 'T2 - The Games (GAP)',
     dayId: 'jueves',
     eventId: 'the-challenge',
     category: 'GAP',
@@ -430,11 +430,25 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     hasBases: true,
     forTypes: ['GAP', 'GT', 'MESA'],
   },
+  {
+    id: 'jueves-t2-gt',
+    name: 'T2 - The Games (GT)',
+    dayId: 'jueves',
+    eventId: 'the-challenge',
+    category: 'GT',
+    startTime: '13:00',
+    endTime: '21:00',
+    label: '1:00 PM – 9:00 PM (GT)',
+    capacity: 25,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['GT', 'MESA'],
+  },
 
   // VIERNES - THE GAMES
   {
     id: 'viernes-gt',
-    name: 'GT General',
+    name: 'T1 - GT General',
     dayId: 'viernes',
     eventId: 'the-games',
     category: 'GT',
@@ -448,7 +462,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   },
   {
     id: 'viernes-gap',
-    name: 'GAP Bases',
+    name: 'T1 - GAP Bases',
     dayId: 'viernes',
     eventId: 'the-games',
     category: 'GAP',
