@@ -107,6 +107,8 @@ export interface AppEvent {
   notes?: string;
   isActive: boolean;
   isCarnival?: boolean;
+  isDivided?: boolean;
+  isDivided?: boolean;
   order?: number;
   createdAt?: string;
   updatedAt?: string;

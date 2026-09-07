@@ -12,8 +12,7 @@ import {
 import { ExcelMaestroParsedRow } from './excelService';
 import {
   CARNIVAL_PHYSICAL_BASES,
-  THE_GAMES_PHYSICAL_BASES,
-  getBaseDisplayName,
+    getBaseDisplayName,
   DEFAULT_INITIAL_EVENTS,
   DEFAULT_INITIAL_SHIFTS,
   DEFAULT_INITIAL_BASES,
@@ -21,6 +20,7 @@ import {
   doShiftsOverlap,
 } from '../data/eventStructure';
 import { DEFAULT_GROUP_FUNCTIONS } from '../data/functionsCatalog';
+import { insertSingleAssignmentToSupabase, deleteSingleAssignmentFromSupabase, pullAssignmentsFromSupabase, setupRealtimeSubscriptions } from './supabaseSync';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -154,12 +154,22 @@ export function initializeStorage(): void {
     }
 
     // Initialize bases with defaults if not set
-    if (rawBases) {
+        if (rawBases) {
       basesCache = JSON.parse(rawBases);
     } else {
       basesCache = [...DEFAULT_INITIAL_BASES];
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
     }
+    
+    // Initialize Realtime
+    setupRealtimeSubscriptions(async () => {
+      const latestAssignments = await pullAssignmentsFromSupabase();
+      if (latestAssignments) {
+        assignmentCache = latestAssignments;
+        localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+        assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+      }
+    });
   } catch (error) {
     console.error('Error loading data from storage:', error);
     peopleCache = [];
@@ -654,10 +664,6 @@ export async function assignPerson(
   const { personId, dayId, shiftId, assignedType } = assignmentData;
   let baseNumber = assignmentData.baseNumber;
 
-  // RULE 1: CARNIVAL CONTINUITY CHECK
-  // Si una persona GAP trabaja varios turnos de Carnival, debe permanecer en la misma base.
-  // Ejemplo: T1 -> Base 8, T2 -> Base 8, T3 -> Base 8.
-  // También aplica para: Base Toro, Base Speedway, Base Arcade.
   if (dayId === 'miercoles') {
     const existingCarnivalWithBase = assignmentCache.find(
       (a) =>
@@ -681,32 +687,23 @@ export async function assignPerson(
           };
         }
       } else {
-        // Enforce continuity by auto-assigning the prior base if none was explicitly picked
         baseNumber = priorBase;
       }
     }
   }
 
-  // RULE 2: BASE CAPACITY CHECK
   if (baseNumber !== undefined && baseNumber !== null && baseNumber !== '') {
     let maxCapacity = 2;
-    let targetBaseObj = undefined;
-
-    if (dayId === 'miercoles') {
-      targetBaseObj = CARNIVAL_PHYSICAL_BASES.find(
-        (b) =>
+    const targetBaseObj = basesCache.find(
+      (b) =>
+        b.dayId === dayId &&
+        (String(b.baseNumber) === String(baseNumber) ||
           String(b.id) === String(baseNumber) ||
-          b.name.toLowerCase() === String(baseNumber).toLowerCase() ||
-          b.code === baseNumber
-      );
-      if (targetBaseObj) maxCapacity = targetBaseObj.defaultCapacity;
-    } else if (dayId === 'jueves' || dayId === 'viernes') {
-      targetBaseObj = THE_GAMES_PHYSICAL_BASES.find(
-        (b) =>
-          String(b.id) === String(baseNumber) ||
-          b.name.toLowerCase() === String(baseNumber).toLowerCase()
-      );
-      if (targetBaseObj) maxCapacity = targetBaseObj.defaultCapacity;
+          b.name.toLowerCase() === String(baseNumber).toLowerCase())
+    );
+    
+    if (targetBaseObj) {
+      maxCapacity = targetBaseObj.capacity || 2;
     }
 
     const currentOccupants = assignmentCache.filter(
@@ -727,7 +724,6 @@ export async function assignPerson(
     }
   }
 
-  // Check if this person already has an assignment for this day and shift
   const existingIndex = assignmentCache.findIndex(
     (a) => a.personId === personId && a.dayId === dayId && a.shiftId === shiftId
   );
@@ -756,6 +752,12 @@ export async function assignPerson(
     updatedAt: new Date().toISOString(),
   };
 
+  // ----- SUPABASE DIRECT INSERTION -----
+  const supabaseRes = await insertSingleAssignmentToSupabase(newAssignment);
+  if (!supabaseRes.success) {
+    return { success: false, alertMessage: `Error de Supabase: ${supabaseRes.error}` };
+  }
+
   if (existingIndex >= 0) {
     assignmentCache = assignmentCache.map((a, idx) =>
       idx === existingIndex ? newAssignment : a
@@ -770,12 +772,9 @@ export async function assignPerson(
   return { success: true, assignment: newAssignment };
 }
 
-export async function removeAssignment(assignmentId: string): Promise<void> {
-  initializeStorage();
-  assignmentCache = assignmentCache.filter((a) => a.id !== assignmentId);
-  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
-  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
-}
+
+
+
 
 // ----------------- GROUP FUNCTIONS CRUD -----------------
 export async function addGroupFunction(
@@ -1386,4 +1385,21 @@ export function replaceAllAvailabilitiesFromCloud(newAvail: AvailabilityRecord[]
   localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
   availabilityListeners.forEach((fn) => fn([...availabilityCache]));
 }
+
+
+export async function removeAssignment(assignmentId: string): Promise<void> {
+  initializeStorage();
+  
+  // ----- SUPABASE DIRECT DELETION -----
+  const supabaseRes = await deleteSingleAssignmentFromSupabase(assignmentId);
+  if (!supabaseRes.success) {
+    alert(`Error eliminando en Supabase: ${supabaseRes.error}`);
+    return;
+  }
+
+  assignmentCache = assignmentCache.filter((a) => a.id !== assignmentId);
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+}
+
 

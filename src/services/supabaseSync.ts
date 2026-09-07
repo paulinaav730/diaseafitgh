@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConfigured } from './supabaseClient';
+﻿import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
 
 export interface SupabaseSyncStatus {
@@ -31,14 +31,14 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
       if (error.code === '42P01') {
         return {
           success: false,
-          message: 'Conexión exitosa, pero las tablas aún no han sido creadas. Ejecuta el archivo supabase/schema.sql en el SQL Editor de Supabase.',
+          message: 'ConexiÃƒÂ³n exitosa, pero las tablas aÃƒÂºn no han sido creadas. Ejecuta el archivo supabase/schema.sql en el SQL Editor de Supabase.',
         };
       }
       return { success: false, message: `Error de Supabase: ${error.message}` };
     }
-    return { success: true, message: '¡Conexión con PostgreSQL en Supabase establecida exitosamente!' };
+    return { success: true, message: 'Ã‚Â¡ConexiÃƒÂ³n con PostgreSQL en Supabase establecida exitosamente!' };
   } catch (err: any) {
-    return { success: false, message: `Fallo de conexión: ${err?.message || 'Error desconocido'}` };
+    return { success: false, message: `Fallo de conexiÃƒÂ³n: ${err?.message || 'Error desconocido'}` };
   }
 }
 
@@ -165,8 +165,13 @@ export async function pushAssignmentsToSupabase(assignments: Assignment[]): Prom
       person_id: a.personId,
       day_id: a.dayId,
       shift_id: a.shiftId,
+      assigned_type: a.assignedType || 'GAP',
+      gt_sub_team: a.gtSubTeam || null,
       base_id: a.baseNumber !== undefined ? String(a.baseNumber) : null,
+      base_name: a.baseName || null,
       function_id: a.assignedFunction || null,
+      role_in_base: a.roleInBase || null,
+      requirement_id: a.requirementId || null,
       notes: a.notes || null,
       updated_at: a.updatedAt || new Date().toISOString(),
     }));
@@ -186,6 +191,56 @@ export async function pushAssignmentsToSupabase(assignments: Assignment[]): Prom
 /**
  * Synchronizes availabilities to Supabase PostgreSQL
  */
+export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
+  const client = getSupabase();
+  if (!client || bases.length === 0) return false;
+  try {
+    const payload = bases.map((b) => ({
+      id: b.id,
+      event_id: b.eventId || null,
+      day_id: b.dayId || '',
+      name: b.name,
+      base_number: b.baseNumber || null,
+      category: b.category || null,
+      color: b.color || '#B83A24',
+      order_index: b.orderIndex || 0,
+      is_active: b.isActive !== false,
+      capacity: b.capacity || 2,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await client.from('bases').upsert(payload, { onConflict: 'id' });
+    if (error) { console.warn('Error pushing bases:', error); return false; }
+    return true;
+  } catch (err) {
+    console.warn('Exception pushing bases:', err);
+    return false;
+  }
+}
+
+export async function pullBasesFromSupabase(): Promise<any[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+  try {
+    const { data, error } = await client.from('bases').select('*');
+    if (error || !data) return null;
+    return data.map((r: any) => ({
+      id: r.id,
+      eventId: r.event_id || undefined,
+      dayId: r.day_id || '',
+      name: r.name,
+      baseNumber: r.base_number || undefined,
+      category: r.category || undefined,
+      color: r.color || '#B83A24',
+      orderIndex: r.order_index || 0,
+      isActive: r.is_active !== false,
+      capacity: r.capacity || 2,
+    }));
+  } catch (err) {
+    console.warn('Exception pulling bases:', err);
+    return null;
+  }
+}
+
 export async function pushAvailabilitiesToSupabase(availabilities: AvailabilityRecord[]): Promise<boolean> {
   const client = getSupabase();
   if (!client || availabilities.length === 0) return false;
@@ -230,8 +285,12 @@ export async function pullAssignmentsFromSupabase(): Promise<Assignment[] | null
       dayId: r.day_id,
       shiftId: r.shift_id,
       assignedType: r.assigned_type || 'GAP',
-      baseNumber: r.base_id !== null && r.base_id !== undefined ? Number(r.base_id) : undefined,
+      gtSubTeam: r.gt_sub_team || undefined,
+      baseNumber: r.base_id !== null && r.base_id !== undefined ? (isNaN(Number(r.base_id)) ? r.base_id : Number(r.base_id)) : undefined,
+      baseName: r.base_name || undefined,
       assignedFunction: r.function_id || undefined,
+      roleInBase: r.role_in_base || undefined,
+      requirementId: r.requirement_id || undefined,
       notes: r.notes || undefined,
       updatedAt: r.updated_at || new Date().toISOString(),
     }));
@@ -288,6 +347,11 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     }
 
     const availabilities = await pullAvailabilitiesFromSupabase();
+    const bases = await pullBasesFromSupabase();
+    if (bases && bases.length > 0) {
+      const { replaceAllBasesFromCloud } = await import('./storageService');
+      replaceAllBasesFromCloud(bases);
+    }
     if (availabilities && availabilities.length > 0) {
       const { replaceAllAvailabilitiesFromCloud } = await import('./storageService');
       replaceAllAvailabilitiesFromCloud(availabilities);
@@ -295,7 +359,7 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
 
     return {
       success: true,
-      message: `Sincronización completada: ${people?.length || 0} personas, ${assignments?.length || 0} turnos.`,
+      message: `SincronizaciÃƒÂ³n completada: ${people?.length || 0} personas, ${assignments?.length || 0} turnos.`,
       count: people?.length || 0,
     };
   } catch (err: any) {
@@ -318,6 +382,8 @@ export async function syncAllToSupabase(
     const pOk = await pushPeopleToSupabase(people);
     const aOk = await pushAssignmentsToSupabase(assignments);
     const avOk = await pushAvailabilitiesToSupabase(availabilities);
+    const { getBases } = await import('./storageService');
+    await pushBasesToSupabase(getBases());
 
     if (!pOk && people.length > 0) {
       return { success: false, message: 'Fallo al sincronizar personas en Supabase.' };
@@ -325,11 +391,81 @@ export async function syncAllToSupabase(
 
     return {
       success: true,
-      message: `¡Base de datos sincronizada en la nube! ${people.length} personas, ${assignments.length} turnos.`,
+      message: `Ã‚Â¡Base de datos sincronizada en la nube! ${people.length} personas, ${assignments.length} turnos.`,
     };
   } catch (err: any) {
     return { success: false, message: err?.message || 'Error al subir a Supabase' };
   }
 }
 
+
+
+// ---------------- ATOMIC CRUD DIRECTLY TO SUPABASE ----------------
+
+export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{ success: boolean; error?: string }> {
+  const client = getSupabase();
+  if (!client) return { success: false, error: 'No Supabase client' };
+  
+  try {
+    const payload = {
+      id: a.id,
+      person_id: a.personId,
+      day_id: a.dayId,
+      shift_id: a.shiftId,
+      assigned_type: a.assignedType || 'GAP',
+      gt_sub_team: a.gtSubTeam || null,
+      base_id: a.baseNumber !== undefined ? String(a.baseNumber) : null,
+      base_name: a.baseName || null,
+      function_id: a.assignedFunction || null,
+      role_in_base: a.roleInBase || null,
+      requirement_id: a.requirementId || null,
+      notes: a.notes || null,
+      updated_at: a.updatedAt || new Date().toISOString(),
+    };
+    const { error } = await client.from('assignments').insert(payload);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+export async function deleteSingleAssignmentFromSupabase(id: string): Promise<{ success: boolean; error?: string }> {
+  const client = getSupabase();
+  if (!client) return { success: false, error: 'No Supabase client' };
+  
+  try {
+    const { error } = await client.from('assignments').delete().eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+// REALTIME SUBSCRIPTIONS
+let realtimeChannel: any = null;
+
+export function setupRealtimeSubscriptions(
+  onAssignmentChange: () => void
+) {
+  const client = getSupabase();
+  if (!client) return;
+  
+  if (realtimeChannel) return; // already subscribed
+
+  realtimeChannel = client
+    .channel('public:assignments_and_bases')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, (payload) => {
+      console.log('Realtime change received on assignments!', payload);
+      onAssignmentChange();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bases' }, (payload) => {
+      console.log('Realtime change received on bases!', payload);
+      onAssignmentChange();
+    })
+    .subscribe((status: string) => {
+      console.log('Supabase Realtime status:', status);
+    });
+}
 

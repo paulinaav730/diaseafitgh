@@ -15,7 +15,10 @@ import {
 import {
   EVENT_SCHEDULE,
   CARNIVAL_PHYSICAL_BASES,
-  THE_GAMES_PHYSICAL_BASES,
+  THE_GAMES_JUEVES_BASES,
+  THE_GAMES_VIERNES_BASES,
+  THE_GAMES_JUEVES_BASES,
+  THE_GAMES_VIERNES_BASES,
   CARNIVAL_GT_SHIFTS,
   CARNIVAL_GAP_SHIFTS,
   getBaseDisplayName,
@@ -104,13 +107,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
+  const isDivided = currentDay.isDivided;
 
   // Active shifts available in this view (dynamically uses configurable shifts if present)
   const availableShifts = useMemo(() => {
     if (shifts && shifts.length > 0) {
       const activeInDay = shifts.filter((s) => s.dayId === selectedDayId && s.isActive);
       if (activeInDay.length > 0) {
-        if (isCarnival) {
+        if (isDivided) {
           if (carnivalCategory === 'GAP') {
             const filtered = activeInDay.filter((s) => s.category === 'GAP');
             if (filtered.length > 0) return filtered;
@@ -126,13 +130,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
     }
 
-    return isCarnival
-      ? carnivalCategory === 'GAP'
-        ? CARNIVAL_GAP_SHIFTS
-        : carnivalCategory === 'GT'
-        ? CARNIVAL_GT_SHIFTS
-        : [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS]
-      : currentDay.shifts;
+    if (isDivided) {
+      const baseShifts = isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS] : currentDay.shifts;
+      if (carnivalCategory === 'GAP') return baseShifts.filter(s => s.category === 'GAP' || s.hasBases);
+      if (carnivalCategory === 'GT') return baseShifts.filter(s => s.category === 'GT' && !s.hasBases);
+      return baseShifts; // MESA sees all shifts
+    }
+    return currentDay.shifts;
   }, [shifts, selectedDayId, isCarnival, carnivalCategory, currentDay]);
 
   // Current active shift object
@@ -182,23 +186,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Determine physical bases for current day & category (dynamically uses configurable bases if present)
   const physicalBases: PhysicalBase[] = useMemo(() => {
     if (bases && bases.length > 0) {
-      if (isCarnival) {
-        if (carnivalCategory === 'GAP') {
-          return bases
-            .filter((b) => b.isActive && (b.eventId === 'carnival' || !b.eventId))
-            .map((b) => ({
-              baseNumber: b.baseNumber,
-              name: b.name,
-              suggestedCapacity: b.suggestedCapacity,
-              isSpecial: b.isSpecial,
-            }));
-        }
-      } else if (
-        (selectedDayId === 'jueves' && activeShift.id === 'jueves-t2') ||
-        (selectedDayId === 'viernes' && activeShift.id === 'viernes-gap')
-      ) {
+      if (isDivided && carnivalCategory === 'GAP') {
+        const eventIdFilter = selectedDayId === 'miercoles' ? 'carnival' : 'the-games';
         return bases
-          .filter((b) => b.isActive && b.eventId === 'the-games')
+          .filter((b) => b.isActive && (b.eventId === eventIdFilter || (!b.eventId && selectedDayId === 'miercoles')))
           .map((b) => ({
             baseNumber: b.baseNumber,
             name: b.name,
@@ -208,19 +199,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
     }
 
-    if (isCarnival) {
-      if (carnivalCategory === 'GAP') {
-        return CARNIVAL_PHYSICAL_BASES; // Exactly 30 bases
-      }
-    } else if (
-      (selectedDayId === 'jueves' && activeShift.id === 'jueves-t2') ||
-      (selectedDayId === 'viernes' && activeShift.id === 'viernes-gap')
-    ) {
-      return THE_GAMES_PHYSICAL_BASES; // Exactly 15 bases
+    if (isDivided && carnivalCategory === 'GAP') {
+      if (selectedDayId === 'miercoles') return CARNIVAL_PHYSICAL_BASES; // 30 bases
+      if (selectedDayId === 'jueves') return THE_GAMES_JUEVES_BASES || []; // Need to import this
+      if (selectedDayId === 'viernes') return THE_GAMES_VIERNES_BASES || []; // Need to import this
     }
 
     return [];
-  }, [bases, isCarnival, carnivalCategory, selectedDayId, activeShift.id]);
+  }, [bases, isDivided, carnivalCategory, selectedDayId]);
 
   // Active requirements for this day and shift
   const currentShiftRequirements = useMemo(() => {
@@ -297,7 +283,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           : ''
       );
       setModalRoleInBase(req.groupType === 'GT' ? `GT ${req.gtSubTeam || ''}` : req.groupType);
-    } else if (isCarnival) {
+    } else if (isDivided) {
       if (carnivalCategory === 'GAP' || baseId !== undefined) {
         setModalAssignedType('GAP');
         setModalGtSubTeam(undefined);
@@ -524,14 +510,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA] font-dalek">
-                  MIÉRCOLES • CARNIVAL
+                  {currentDay.dayName.toUpperCase()} • {currentDay.eventName}
                 </span>
                 <span className="text-xs text-[#C87F17] font-montserrat font-bold">
                   Estructura Oficial Diferenciada
                 </span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-[#182535] mt-1 font-dalek tracking-wide">
-                DISTRIBUCIÓN OPERATIVA DE CARNIVAL
+                DISTRIBUCIÓN OPERATIVA DE {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] mt-0.5 font-montserrat max-w-2xl leading-relaxed">
                 Los turnos de <b>GT</b> y <b>GAP</b> son completamente independientes y NO se mezclan.
@@ -550,7 +536,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
-                <span>GAP (3 Turnos + 30 Bases)</span>
+                <span>GAP {isCarnival ? "(3 Turnos + 30 Bases)" : "(Bases Físicas)"}</span>
               </button>
 
               <button
@@ -562,7 +548,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 }`}
               >
                 <Shield className="w-3.5 h-3.5" />
-                <span>GT (5 Turnos)</span>
+                <span>GT {isCarnival ? "(5 Turnos)" : "(Soporte General)"}</span>
               </button>
 
               <button
@@ -580,6 +566,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
 
           {/* Visual Blueprint Diagram */}
+          {isCarnival && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1 text-xs font-montserrat">
             <div
               className={`p-4 rounded-2xl border transition-all ${
@@ -681,6 +668,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </div>
             </div>
           </div>
+          )}
         </div>
       )}
 
@@ -689,10 +677,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#EADDC7]">
           <div>
             <span className="text-xs font-bold text-[#C87F17] uppercase tracking-wide font-dalek">
-              {currentDay.dayName} {isCarnival ? `• ${carnivalCategory}` : `• ${currentDay.eventName}`}
+              {currentDay.dayName} {isDivided ? `• ${carnivalCategory}` : `• ${currentDay.eventName}`}
             </span>
             <h3 className="text-base font-bold text-[#182535] font-montserrat mt-0.5">
-              Turnos disponibles para {isCarnival ? `CARNIVAL (${carnivalCategory})` : currentDay.eventName}
+              Turnos disponibles para {isDivided ? `${currentDay.eventName} (${carnivalCategory})` : currentDay.eventName}
             </h3>
           </div>
 
@@ -1053,7 +1041,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               PERSONAL ASIGNADO A {activeShift.name} ({activeShift.label})
             </h4>
             <p className="text-xs text-[#64748B] font-montserrat">
-              {currentShiftAssignments.length} integrante(s) asignados a este turno general
+              {currentShiftAssignments.length} / {activeShift.capacity} integrante(s) asignados a este turno general
             </p>
           </div>
           <button

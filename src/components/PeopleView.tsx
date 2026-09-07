@@ -155,6 +155,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [formSelectedFunctions, setFormSelectedFunctions] = useState<string[]>([]);
   const [customFunctionInput, setCustomFunctionInput] = useState('');
   const [formRole, setFormRole] = useState('Staff');
+  const [formAlsoActsAsGap, setFormAlsoActsAsGap] = useState(false);
+  const [formGapRoleDesc, setFormGapRoleDesc] = useState('');
   const [formShirt, setFormShirt] = useState<'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
   const [formDiet, setFormDiet] = useState('Ninguna');
   const [formNotes, setFormNotes] = useState('');
@@ -170,6 +172,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setFormEmail('');
     setFormPhone('');
     setFormType('GT');
+    setFormAlsoActsAsGap(false);
+    setFormGapRoleDesc('');
     setFormGtSubTeam('Logística');
     setFormGtSubTeams(['Logística']);
     setFormSelectedFunctions([]);
@@ -191,6 +195,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setFormEmail(person.email);
     setFormPhone(person.phone || '');
     setFormType(person.primaryType);
+    setFormAlsoActsAsGap(person.alsoActsAsGap || false);
+    setFormGapRoleDesc(person.gapRoleDescription || '');
     const mainSub = (person.gtSubTeam ||
       (person.gtTeams && person.gtTeams[0]) ||
       'Logística') as GtSubTeam;
@@ -252,6 +258,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           email: formEmail.trim(),
           phone: formPhone.trim(),
           primaryType: formType,
+          alsoActsAsGap: formAlsoActsAsGap,
+          gapRoleDescription: formGapRoleDesc.trim(),
           gtTeams: selectedGtTeams,
           gtSubTeam: formType === 'GT' ? primaryGtSub : undefined,
           functions: formSelectedFunctions,
@@ -268,6 +276,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           email: formEmail.trim(),
           phone: formPhone.trim(),
           primaryType: formType,
+          alsoActsAsGap: formAlsoActsAsGap,
+          gapRoleDescription: formGapRoleDesc.trim(),
           gtTeams: selectedGtTeams,
           gtSubTeam: formType === 'GT' ? primaryGtSub : undefined,
           functions: formSelectedFunctions,
@@ -1886,6 +1896,29 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       <span className="font-semibold text-[#B83A24]">
                         {formGtSubTeams.length} de {GT_SUBTEAMS.length} grupos
                       </span>
+                    </div>
+
+                    <div className="pt-3 mt-3 border-t border-[#EADDC7]/70 flex flex-col gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formAlsoActsAsGap}
+                          onChange={(e) => setFormAlsoActsAsGap(e.target.checked)}
+                          className="w-4 h-4 rounded text-[#B83A24] bg-white border-gray-300 focus:ring-[#B83A24]"
+                        />
+                        <span className="text-xs font-bold text-[#182535]">
+                          Este GT también apoya como GAP en The Games/Carnival
+                        </span>
+                      </label>
+                      {formAlsoActsAsGap && (
+                        <input
+                          type="text"
+                          value={formGapRoleDesc}
+                          onChange={(e) => setFormGapRoleDesc(e.target.value)}
+                          placeholder="Especificar días o rol (Ej. Jueves y Viernes GAP Generales)"
+                          className="w-full px-3 py-2 mt-1 rounded-xl bg-white border border-[#EADDC7] text-[11px] text-[#182535] focus:outline-none focus:border-[#B83A24]"
+                        />
+                      )}
                     </div>
                   </div>
                 ) : (

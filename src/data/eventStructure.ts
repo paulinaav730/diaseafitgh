@@ -55,17 +55,44 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
 }
 
 // 15 Physical Bases for The Games
-export const THE_GAMES_PHYSICAL_BASES: PhysicalBase[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `games_${i + 1}`,
-  name: `Base ${i + 1}`,
-  defaultCapacity: 2,
+export const THE_GAMES_JUEVES_BASES: ConfigurableBase[] = Array.from({ length: 15 }, (_, i) => ({
+  id: 'games_jueves_' + (i + 1),
+  name: 'Base ' + (i + 1),
+  baseNumber: String(i + 1),
+  capacity: 2,
   isActive: true,
   eventId: 'the-games',
+  dayId: 'jueves',
+  color: '#B83A24',
+  orderIndex: i + 1,
+}));
+
+export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = Array.from({ length: 15 }, (_, i) => ({
+  id: 'games_viernes_' + (i + 16),
+  name: 'Base ' + (i + 16),
+  baseNumber: String(i + 16),
+  capacity: 2,
+  isActive: true,
+  eventId: 'the-games',
+  dayId: 'viernes',
+  color: '#B83A24',
+  orderIndex: i + 16,
 }));
 
 export const DEFAULT_INITIAL_BASES: ConfigurableBase[] = [
-  ...CARNIVAL_PHYSICAL_BASES,
-  ...THE_GAMES_PHYSICAL_BASES,
+  ...CARNIVAL_PHYSICAL_BASES.map((b) => ({
+    id: 'carnival_' + b.id,
+    name: b.name,
+    baseNumber: String(b.id),
+    capacity: b.defaultCapacity,
+    isActive: true,
+    eventId: 'carnival',
+    dayId: 'miercoles',
+    color: '#B83A24',
+    orderIndex: Number(b.id) || 99,
+  })),
+  ...THE_GAMES_JUEVES_BASES,
+  ...THE_GAMES_VIERNES_BASES,
 ];
 
 // DEFAULT INITIAL EVENTS (Admin can edit, delete, or add new ones)
@@ -98,6 +125,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     description: 'Día de actividades simultáneas. Estructura diferenciada: GRUPO DE TRABAJO (GT) con 5 turnos y GRUPO DE APOYO (GAP) con 3 turnos en 30 bases físicas únicas.',
     notes: 'CARNIVAL GT: 5 turnos (6:50 AM – 9:00 PM). CARNIVAL GAP: 3 turnos (8:50 AM – 6:10 PM) con 30 bases físicas (Base 1-27 + Toro, Speedway, Arcade). MESA: Asignable a cualquier turno.',
     isCarnival: true,
+    isDivided: true,
     isActive: true,
     order: 3,
   },
@@ -108,6 +136,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     dayName: 'Jueves',
     description: 'Mañana: The Challenge (GRUPO DE TRABAJO). Tarde: The Games con 15 bases físicas GRUPO DE APOYO (GAP).',
     notes: 'Turno T1: The Challenge (GT). Turno T2: The Games con 15 bases físicas GAP.',
+    isDivided: true,
     isActive: true,
     order: 4,
   },
@@ -118,6 +147,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     dayName: 'Viernes',
     description: 'Gran final de competencias. Equipo GRUPO DE TRABAJO (GT) todo el día y 15 bases físicas GRUPO DE APOYO (GAP).',
     notes: 'GAP opera en 15 bases físicas. GT da soporte de 6:00 AM a 9:30 PM.',
+    isDivided: true,
     isActive: true,
     order: 5,
   },
@@ -449,6 +479,7 @@ export const EVENT_SCHEDULE: EventDayDefinition[] = DEFAULT_INITIAL_EVENTS.map((
   description: event.description || '',
   notes: event.notes,
   isCarnival: event.isCarnival,
+  isDivided: event.isDivided,
   physicalBasesCount: event.isCarnival ? 30 : event.id.includes('games') ? 15 : undefined,
   shifts: DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === event.dayId),
 }));
