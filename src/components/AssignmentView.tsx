@@ -22,6 +22,7 @@ import {
   getBaseDisplayName,
   findShiftById,
   doShiftsOverlap,
+  DEFAULT_INITIAL_SHIFTS,
 } from '../data/eventStructure';
 import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
 import {
@@ -464,18 +465,100 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           });
 
       // 4. Availability for this shift:
-      // For MESA: ALWAYS available across all shifts and days
-      // For GT and GAP: STRICT: A person is ONLY available if they explicitly registered availability for this day and shift
+      // For MESA: ALWAYS available across all shifts, days, and hours without restriction
+      // If the shift is a MESA shift or requirement is MESA: ANY MESA person is available
+      const isMesaShift =
+        activeShift.category === 'MESA' ||
+        activeShift.name.toUpperCase().includes('MESA') ||
+        (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
+
       const availRecord = availabilities.find(
         (av) => av.personId === person.id && av.dayId === selectedDayId
       );
-      const isShiftDirectlyAvailable = Boolean(
-        availRecord &&
-        Array.isArray(availRecord.shiftIds) &&
-        availRecord.shiftIds.includes(activeShift.id)
-      );
 
-      const isAvailableInShift = isMesa ? true : isShiftDirectlyAvailable;
+      let isAvailableInShift = false;
+      if (isMesa || (isMesaShift && person.primaryType === 'MESA')) {
+        isAvailableInShift = true;
+      } else {
+        if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
+          // Direct ID match
+          if (availRecord.shiftIds.includes(activeShift.id)) {
+            isAvailableInShift = true;
+          } else {
+            // Check alias and slot / turno matching
+            // Jueves T2 aliases: shift_jueves_mtqcifm4_nt5, jueves-t2, jueves-t2-gt
+            const isJuevesT2 =
+              selectedDayId === 'jueves' &&
+              (activeShift.id === 'shift_jueves_mtqcifm4_nt5' ||
+                activeShift.id === 'jueves-t2' ||
+                activeShift.id === 'jueves-t2-gt' ||
+                activeShift.name.toUpperCase().includes('T2') ||
+                (activeShift.startTime === '13:00' && activeShift.endTime === '21:00'));
+
+            if (
+              isJuevesT2 &&
+              availRecord.shiftIds.some(
+                (sid) =>
+                  sid === 'jueves-t2' ||
+                  sid === 'jueves-t2-gt' ||
+                  sid === 'shift_jueves_mtqcifm4_nt5'
+              )
+            ) {
+              isAvailableInShift = true;
+            }
+
+            // Jueves T1 alias
+            const isJuevesT1 =
+              selectedDayId === 'jueves' &&
+              (activeShift.id === 'jueves-t1' ||
+                activeShift.name.toUpperCase().includes('T1') ||
+                (activeShift.startTime === '06:00' && activeShift.endTime === '12:00'));
+
+            if (isJuevesT1 && availRecord.shiftIds.includes('jueves-t1')) {
+              isAvailableInShift = true;
+            }
+
+            // Viernes aliases
+            if (
+              selectedDayId === 'viernes' &&
+              availRecord.shiftIds.some((sid) => sid === 'viernes-gt' || sid === 'viernes-gap')
+            ) {
+              isAvailableInShift = true;
+            }
+
+            // Time and Turno matching against all registered shifts
+            if (!isAvailableInShift) {
+              const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+              for (const regId of availRecord.shiftIds) {
+                const regShift = allKnownShifts.find((s) => s.id === regId);
+                if (regShift && regShift.dayId === selectedDayId) {
+                  // If exact times match
+                  if (
+                    regShift.startTime &&
+                    activeShift.startTime &&
+                    regShift.startTime === activeShift.startTime &&
+                    regShift.endTime === activeShift.endTime
+                  ) {
+                    isAvailableInShift = true;
+                    break;
+                  }
+                  // If same Turno number (e.g. T1, T2, T3)
+                  const extractTurno = (name: string, id: string) => {
+                    const m = (name + ' ' + id).match(/\b(t[1-5]|turno\s*[1-5])\b/i);
+                    return m ? m[0].toUpperCase().replace(/\s+/, '') : null;
+                  };
+                  const tActive = extractTurno(activeShift.name, activeShift.id);
+                  const tReg = extractTurno(regShift.name, regShift.id);
+                  if (tActive && tReg && tActive === tReg) {
+                    isAvailableInShift = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
 
       // 5. Functions check (Rule 5 & 9)
       let matchesFunctions = true;

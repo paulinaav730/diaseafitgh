@@ -522,6 +522,14 @@ export function findShiftById(
   if (shiftId === 'miercoles-t1') return shifts.find((s) => s.id === 'miercoles-gap-t1');
   if (shiftId === 'miercoles-t2') return shifts.find((s) => s.id === 'miercoles-gap-t2');
   if (shiftId === 'miercoles-t3') return shifts.find((s) => s.id === 'miercoles-gap-t3');
+  if (shiftId === 'jueves-t2-gt' || shiftId === 'shift_jueves_mtqcifm4_nt5') {
+    const s = shifts.find((x) => x.id === 'shift_jueves_mtqcifm4_nt5' || x.id === 'jueves-t2-gt' || x.id === 'jueves-t2');
+    if (s) return s;
+  }
+
+  // Fallback to DEFAULT_INITIAL_SHIFTS if not in passed shifts
+  const defaultDirect = DEFAULT_INITIAL_SHIFTS.find((s) => s.id === shiftId);
+  if (defaultDirect) return defaultDirect;
 
   return undefined;
 }
