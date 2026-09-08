@@ -105,40 +105,62 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [isContinuityLocked, setIsContinuityLocked] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
+  const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
+  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
   const isDivided = currentDay.isDivided;
 
+  // All active shifts for this day
+  const allShiftsInDay = useMemo(() => {
+    if (shifts && shifts.length > 0) {
+      const activeInDay = shifts.filter((s) => s.dayId === selectedDayId && s.isActive !== false);
+      if (activeInDay.length > 0) return activeInDay;
+    }
+    if (isDivided) {
+      return isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS] : currentDay.shifts;
+    }
+    return currentDay.shifts;
+  }, [shifts, selectedDayId, isCarnival, isDivided, currentDay]);
+
+  const gtShiftsInDay = useMemo(() => {
+    return allShiftsInDay.filter((s) => s.category === 'GT' && !s.hasBases);
+  }, [allShiftsInDay]);
+
+  const mesaShiftsInDay = useMemo(() => {
+    return allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+  }, [allShiftsInDay]);
+
+  const gapShiftsInDay = useMemo(() => {
+    return allShiftsInDay.filter((s) => s.category === 'GAP' || s.hasBases);
+  }, [allShiftsInDay]);
+
   // Active shifts available in this view (dynamically uses configurable shifts if present)
   const availableShifts = useMemo(() => {
-    if (shifts && shifts.length > 0) {
-      const activeInDay = shifts.filter((s) => s.dayId === selectedDayId && s.isActive);
-      if (activeInDay.length > 0) {
-        if (isDivided) {
-          if (carnivalCategory === 'GAP') {
-            const filtered = activeInDay.filter((s) => s.category === 'GAP');
-            if (filtered.length > 0) return filtered;
-          } else if (carnivalCategory === 'GT') {
-            const filtered = activeInDay.filter((s) => s.category === 'GT');
-            if (filtered.length > 0) return filtered;
-          } else {
-            const filtered = activeInDay.filter((s) => s.category === 'MESA');
-            if (filtered.length > 0) return filtered;
-          }
-        }
-        return activeInDay;
+    if (isDivided && isCarnival) {
+      if (carnivalCategory === 'GAP') {
+        const filtered = allShiftsInDay.filter((s) => s.category === 'GAP' || s.hasBases);
+        if (filtered.length > 0) return filtered;
+      } else if (carnivalCategory === 'GT') {
+        const filtered = allShiftsInDay.filter((s) => s.category === 'GT' && !s.hasBases);
+        if (filtered.length > 0) return filtered;
+      } else if (carnivalCategory === 'MESA') {
+        const filtered = allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+        if (filtered.length > 0) return filtered;
       }
     }
 
-    if (isDivided) {
-      const baseShifts = isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS] : currentDay.shifts;
-      if (carnivalCategory === 'GAP') return baseShifts.filter(s => s.category === 'GAP' || s.hasBases);
-      if (carnivalCategory === 'GT') return baseShifts.filter(s => s.category === 'GT' && !s.hasBases);
-      return baseShifts.filter(s => s.category === 'MESA');
+    if (shiftCategoryFilter === 'GT') {
+      return gtShiftsInDay.length > 0 ? gtShiftsInDay : allShiftsInDay;
+    } else if (shiftCategoryFilter === 'MESA') {
+      return mesaShiftsInDay.length > 0 ? mesaShiftsInDay : allShiftsInDay;
+    } else if (shiftCategoryFilter === 'GAP') {
+      return gapShiftsInDay.length > 0 ? gapShiftsInDay : allShiftsInDay;
     }
-    return currentDay.shifts;
-  }, [shifts, selectedDayId, isCarnival, carnivalCategory, currentDay]);
+
+    return allShiftsInDay;
+  }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, mesaShiftsInDay, gapShiftsInDay]);
 
   // Current active shift object
   const activeShift =
@@ -156,31 +178,75 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleDaySelect = (dayId: string) => {
     setSelectedDayId(dayId);
     setSelectedBaseNumber(null);
+    const dayShifts = (shifts && shifts.length > 0 ? shifts : EVENT_SCHEDULE.find((d) => d.dayId === dayId)?.shifts || [])
+      .filter((s) => s.dayId === dayId && s.isActive !== false);
+
+    if (shiftCategoryFilter === 'MESA') {
+      const mesaShift = dayShifts.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+      if (mesaShift) {
+        setSelectedShiftId(mesaShift.id);
+        return;
+      }
+    } else if (shiftCategoryFilter === 'GT') {
+      const gtShift = dayShifts.find((s) => s.category === 'GT' && !s.hasBases);
+      if (gtShift) {
+        setSelectedShiftId(gtShift.id);
+        return;
+      }
+    } else if (shiftCategoryFilter === 'GAP') {
+      const gapShift = dayShifts.find((s) => s.category === 'GAP' || s.hasBases);
+      if (gapShift) {
+        setSelectedShiftId(gapShift.id);
+        return;
+      }
+    }
+
     if (dayId === 'miercoles') {
       if (carnivalCategory === 'GAP') {
-        setSelectedShiftId('miercoles-gap-t1');
+        const gapShift = dayShifts.find((s) => s.category === 'GAP' || s.hasBases);
+        setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
       } else if (carnivalCategory === 'GT') {
-        setSelectedShiftId('miercoles-gt-t1');
+        const gtShift = dayShifts.find((s) => s.category === 'GT' && !s.hasBases);
+        setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
       } else {
-        setSelectedShiftId('miercoles-gt-t1');
+        const mesaShift = dayShifts.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+        setSelectedShiftId(mesaShift ? mesaShift.id : (dayShifts[0]?.id || 'miercoles-gt-t1'));
       }
     } else {
-      const dayObj = EVENT_SCHEDULE.find((d) => d.dayId === dayId);
-      if (dayObj && dayObj.shifts.length > 0) {
-        setSelectedShiftId(dayObj.shifts[0].id);
+      if (dayShifts.length > 0) {
+        setSelectedShiftId(dayShifts[0].id);
       }
     }
   };
 
   const handleCarnivalCategorySelect = (cat: 'GAP' | 'GT' | 'MESA') => {
     setCarnivalCategory(cat);
+    setShiftCategoryFilter(cat);
     setSelectedBaseNumber(null);
     if (cat === 'GAP') {
-      setSelectedShiftId('miercoles-gap-t1');
+      const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
+      setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
     } else if (cat === 'GT') {
-      setSelectedShiftId('miercoles-gt-t1');
+      const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
+      setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
     } else {
-      setSelectedShiftId('miercoles-gt-t1');
+      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+      setSelectedShiftId(mesaShift ? mesaShift.id : (allShiftsInDay[0]?.id || 'miercoles-gt-t1'));
+    }
+  };
+
+  const handleShiftCategoryFilterChange = (cat: 'ALL' | 'GT' | 'GAP' | 'MESA') => {
+    setShiftCategoryFilter(cat);
+    setSelectedBaseNumber(null);
+    if (cat === 'MESA') {
+      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+      if (mesaShift) setSelectedShiftId(mesaShift.id);
+    } else if (cat === 'GT') {
+      const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
+      if (gtShift) setSelectedShiftId(gtShift.id);
+    } else if (cat === 'GAP') {
+      const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
+      if (gapShift) setSelectedShiftId(gapShift.id);
     }
   };
 
@@ -222,6 +288,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       (a) => a.dayId === selectedDayId && a.shiftId === activeShift.id
     );
   }, [assignments, selectedDayId, activeShift.id]);
+
+  const assignedGtCount = useMemo(
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'GT').length,
+    [currentShiftAssignments]
+  );
+  const assignedMesaCount = useMemo(
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'MESA').length,
+    [currentShiftAssignments]
+  );
+  const assignedGapCount = useMemo(
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'GAP').length,
+    [currentShiftAssignments]
+  );
+
+  const filteredCurrentShiftAssignments = useMemo(() => {
+    if (assignedTypeFilter === 'ALL') return currentShiftAssignments;
+    return currentShiftAssignments.filter((a) => a.assignedType === assignedTypeFilter);
+  }, [currentShiftAssignments, assignedTypeFilter]);
 
   // Open Requirement Creation Modal
   const handleOpenCreateRequirement = () => {
@@ -277,6 +361,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     setCandidateSearchQuery('');
     setShowOnlyAvailableInModal(true);
 
+    const isMesaShift =
+      activeShift.category === 'MESA' ||
+      activeShift.name.toUpperCase().includes('MESA') ||
+      (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
+
     if (req) {
       setModalAssignedType(req.groupType);
       setModalGtSubTeam(req.gtSubTeam);
@@ -286,6 +375,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           : ''
       );
       setModalRoleInBase(req.groupType === 'GT' ? `GT ${req.gtSubTeam || ''}` : req.groupType);
+    } else if (isMesaShift) {
+      setModalAssignedType('MESA');
+      setModalGtSubTeam(undefined);
+      setModalAssignedFunction('Coordinación / Mesa');
+      setModalRoleInBase('Coordinación / Mesa');
     } else if (isDivided) {
       if (carnivalCategory === 'GAP' || baseId !== undefined) {
         setModalAssignedType('GAP');
@@ -295,7 +389,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       } else if (carnivalCategory === 'MESA') {
         setModalAssignedType('MESA');
         setModalGtSubTeam(undefined);
-        setModalAssignedFunction('Coordinación');
+        setModalAssignedFunction('Coordinación / Mesa');
         setModalRoleInBase('Coordinación / Mesa');
       } else {
         setModalAssignedType('GT');
@@ -335,11 +429,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             !activeRequirement.gtSubTeam ||
             person.gtSubTeam === activeRequirement.gtSubTeam ||
             (person.gtTeams && person.gtTeams.includes(activeRequirement.gtSubTeam));
-          matchesGroup = isGt && matchesSub;
+          matchesGroup = (isGt && matchesSub) || isMesa;
         } else if (activeRequirement.groupType === 'GAP') {
-          matchesGroup = person.primaryType === 'GAP' || person.primaryType === 'GT';
+          matchesGroup = person.primaryType === 'GAP' || person.primaryType === 'GT' || isMesa;
         } else if (activeRequirement.groupType === 'MESA') {
-          matchesGroup = person.primaryType === 'MESA';
+          matchesGroup = isMesa;
         }
       } else {
         matchesGroup = true;
@@ -365,21 +459,23 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             ) {
               return false;
             }
-            const otherShift = findShiftById(currentDay, a.shiftId);
+            const otherShift = findShiftById(shifts && shifts.length > 0 ? shifts : currentDay, a.shiftId);
             return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
           });
 
       // 4. Availability for this shift:
-      // For MESA: ALWAYS available across all days and shifts ("sin importar qué")
+      // For MESA: ALWAYS available across all shifts and days
       // For GT and GAP: STRICT: A person is ONLY available if they explicitly registered availability for this day and shift
       const availRecord = availabilities.find(
         (av) => av.personId === person.id && av.dayId === selectedDayId
       );
-      let isAvailableInShift = Boolean(
+      const isShiftDirectlyAvailable = Boolean(
         availRecord &&
         Array.isArray(availRecord.shiftIds) &&
         availRecord.shiftIds.includes(activeShift.id)
       );
+
+      const isAvailableInShift = isMesa ? true : isShiftDirectlyAvailable;
 
       // 5. Functions check (Rule 5 & 9)
       let matchesFunctions = true;
@@ -429,6 +525,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     activeShift,
     activeRequirement,
     currentDay,
+    shifts,
   ]);
 
   const availableCandidatesCount = useMemo(() => {
@@ -459,15 +556,27 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
     try {
+      const isMesaPerson = candidatePerson.primaryType === 'MESA';
+      const isMesaShift =
+        activeShift.category === 'MESA' ||
+        activeShift.name.toUpperCase().includes('MESA') ||
+        (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
+
+      const assignedTypeToUse: PersonType = activeRequirement
+        ? activeRequirement.groupType
+        : (isMesaShift || isMesaPerson ? 'MESA' : candidatePerson.primaryType);
+
+      const defaultRole = isMesaPerson || isMesaShift ? 'Coordinación / Mesa' : 'Staff General';
+
       const result = await assignPerson({
         personId: candidatePerson.id,
         dayId: selectedDayId,
         shiftId: activeShift.id,
-        assignedType: activeRequirement ? activeRequirement.groupType : candidatePerson.primaryType,
-        gtSubTeam: activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam,
-        assignedFunction: fnName || undefined,
+        assignedType: assignedTypeToUse,
+        gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam) : undefined,
+        assignedFunction: fnName || (isMesaPerson || isMesaShift ? 'Coordinación / Mesa' : undefined),
         baseNumber: selectedBaseNumber !== null ? selectedBaseNumber : undefined,
-        roleInBase: fnName || 'Staff General',
+        roleInBase: fnName || defaultRole,
         requirementId: activeRequirement ? activeRequirement.id : undefined,
       });
 
@@ -731,9 +840,43 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             </h3>
           </div>
 
-          <span className="text-xs text-[#64748B] font-mono">
-            {availableShifts.length} turno(s) configurado(s)
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#64748B] font-mono">
+              {availableShifts.length} turno(s) visible(s)
+            </span>
+          </div>
+        </div>
+
+        {/* Filter shifts by GT / MESA / GAP */}
+        <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
+          <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+            Filtrar turnos:
           </span>
+          {[
+            { id: 'ALL', label: `Todos (${allShiftsInDay.length})` },
+            { id: 'GT', label: `GT (${gtShiftsInDay.length})` },
+            { id: 'MESA', label: `MESA (${mesaShiftsInDay.length})` },
+            { id: 'GAP', label: `GAP (${gapShiftsInDay.length})` },
+          ].map((pill) => (
+            <button
+              key={pill.id}
+              type="button"
+              onClick={() => handleShiftCategoryFilterChange(pill.id as any)}
+              className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                shiftCategoryFilter === pill.id
+                  ? pill.id === 'MESA'
+                    ? 'bg-[#C87F17] text-white shadow-2xs'
+                    : pill.id === 'GAP'
+                    ? 'bg-[#16A34A] text-white shadow-2xs'
+                    : pill.id === 'GT'
+                    ? 'bg-[#182535] text-white shadow-2xs'
+                    : 'bg-[#B83A24] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+              }`}
+            >
+              {pill.label}
+            </button>
+          ))}
         </div>
 
         {/* Turnos pills */}
@@ -744,6 +887,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               (a) => a.dayId === selectedDayId && a.shiftId === shift.id
             ).length;
 
+            const isMesaPill =
+              shift.category === 'MESA' ||
+              shift.name.toUpperCase().includes('MESA') ||
+              (shift.label && shift.label.toUpperCase().includes('MESA'));
+
             return (
               <button
                 key={shift.id}
@@ -753,7 +901,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 }}
                 className={`min-h-[40px] flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   isSelected
-                    ? 'bg-[#B83A24] text-white border-[#B83A24] shadow-xs font-montserrat'
+                    ? isMesaPill
+                      ? 'bg-[#C87F17] text-white border-[#C87F17] shadow-xs font-montserrat'
+                      : 'bg-[#B83A24] text-white border-[#B83A24] shadow-xs font-montserrat'
+                    : isMesaPill
+                    ? 'bg-[#FAF6EC] text-[#C87F17] border-[#EADDC7] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat'
                     : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat'
                 }`}
               >
@@ -1093,11 +1245,54 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
           <button
             onClick={() => handleOpenAssignModal()}
-            className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs transition-all self-start sm:self-auto font-dalek tracking-wider"
+            className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs transition-all self-start sm:self-auto font-dalek tracking-wider cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Asignar Persona a Turno</span>
           </button>
+        </div>
+
+        {/* Category Filter Pills: GT / MESA / GAP */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
+            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+              Filtrar personal:
+            </span>
+            {[
+              { id: 'ALL', label: `Todos (${currentShiftAssignments.length})` },
+              { id: 'GT', label: `GT (${assignedGtCount})` },
+              { id: 'MESA', label: `MESA (${assignedMesaCount})` },
+              { id: 'GAP', label: `GAP (${assignedGapCount})` },
+            ].map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setAssignedTypeFilter(pill.id as any)}
+                className={`min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                  assignedTypeFilter === pill.id
+                    ? pill.id === 'MESA'
+                      ? 'bg-[#C87F17] text-white shadow-2xs'
+                      : pill.id === 'GAP'
+                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : pill.id === 'GT'
+                      ? 'bg-[#182535] text-white shadow-2xs'
+                      : 'bg-[#B83A24] text-white shadow-2xs'
+                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                }`}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+
+          {assignedTypeFilter !== 'ALL' && (
+            <button
+              onClick={() => setAssignedTypeFilter('ALL')}
+              className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+            >
+              Ver todos ({currentShiftAssignments.length})
+            </button>
+          )}
         </div>
 
         {currentShiftAssignments.length === 0 ? (
@@ -1108,10 +1303,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               Seleccione una necesidad de cupo arriba o pulse &quot;Asignar Persona a Turno&quot;.
             </p>
           </div>
+        ) : filteredCurrentShiftAssignments.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#64748B] bg-[#FAF6EC]/60 rounded-2xl border border-dashed border-[#EADDC7]">
+            <Users className="w-8 h-8 text-[#C87F17] mx-auto mb-2 opacity-60" />
+            <p className="font-semibold text-[#182535] text-sm">
+              No hay personas con categoría {assignedTypeFilter} asignadas en este turno
+            </p>
+            <button
+              onClick={() => setAssignedTypeFilter('ALL')}
+              className="mt-2 text-xs font-bold text-[#B83A24] hover:underline cursor-pointer"
+            >
+              Mostrar todas las asignaciones ({currentShiftAssignments.length})
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {currentShiftAssignments.map((assign) => {
+            {filteredCurrentShiftAssignments.map((assign) => {
               const person = people.find((p) => p.id === assign.personId);
+              const isMesaAssign = assign.assignedType === 'MESA';
               return (
                 <div
                   key={assign.id}
@@ -1124,7 +1333,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1 mt-1">
-                      <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#FFFDF8] text-[#182535] border border-[#EADDC7]">
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                          isMesaAssign
+                            ? 'bg-[#FEF8EC] text-[#C87F17] border-[#FDE68A]'
+                            : assign.assignedType === 'GAP'
+                            ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]'
+                            : 'bg-[#FFFDF8] text-[#182535] border-[#EADDC7]'
+                        }`}
+                      >
                         {assign.gtSubTeam ? `GT: ${assign.gtSubTeam}` : assign.assignedType}
                       </span>
                       {assign.assignedFunction && (
@@ -1142,7 +1359,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                   <button
                     onClick={() => handleRemoveAssignment(assign.id)}
-                    className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors flex items-center justify-center shrink-0"
+                    className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                     title="Quitar turno"
                   >
                     <Trash2 className="w-4 h-4" />

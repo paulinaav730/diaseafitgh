@@ -198,14 +198,13 @@ export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
     const payload = bases.map((b) => ({
       id: b.id,
       event_id: b.eventId || null,
-      day_id: b.dayId || '',
+      day_id: b.dayId || 'miercoles',
       name: b.name,
-      base_number: b.baseNumber || null,
+      base_number: isNaN(Number(b.baseNumber)) ? null : Number(b.baseNumber),
       category: b.category || null,
       color: b.color || '#B83A24',
       order_index: b.orderIndex || 0,
       is_active: b.isActive !== false,
-      capacity: b.capacity || 2,
       updated_at: new Date().toISOString(),
     }));
     const { error } = await client.from('bases').upsert(payload, { onConflict: 'id' });
@@ -233,7 +232,7 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
       color: r.color || '#B83A24',
       orderIndex: r.order_index || 0,
       isActive: r.is_active !== false,
-      capacity: r.capacity || 2,
+      capacity: 2,
     }));
   } catch (err) {
     console.warn('Exception pulling bases:', err);
@@ -555,6 +554,22 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       }
     }
 
+    // 2. Ensure the person exists in Supabase to strictly prevent foreign key constraint violations (assignments_person_id_fkey)
+    const { data: personRow } = await client.from('people').select('id').eq('id', a.personId).maybeSingle();
+    if (!personRow) {
+      const { getPeople } = await import('./storageService');
+      const allPeople = getPeople();
+      const matchingPerson = allPeople.find((p) => p.id === a.personId);
+      if (matchingPerson) {
+        await client.from('people').upsert(personToPostgres(matchingPerson), { onConflict: 'document_id' });
+      }
+    }
+
+    const cleanBaseId =
+      a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== 'null' && a.baseNumber !== ''
+        ? String(a.baseNumber)
+        : null;
+
     const payload = {
       id: a.id,
       person_id: a.personId,
@@ -562,7 +577,7 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       shift_id: a.shiftId,
       assigned_type: a.assignedType || 'GAP',
       gt_sub_team: a.gtSubTeam || null,
-      base_id: a.baseNumber !== undefined ? String(a.baseNumber) : null,
+      base_id: cleanBaseId,
       base_name: a.baseName || null,
       function_id: a.assignedFunction || null,
       role_in_base: a.roleInBase || null,
