@@ -53,6 +53,7 @@ import {
   AlertCircle,
   UserCheck,
   Sliders,
+  MapPin,
 } from 'lucide-react';
 
 interface AssignmentViewProps {
@@ -79,10 +80,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   onNavigateToConfig,
 }) => {
   const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
-  // Sub-category selector for CARNIVAL: GAP, GT, MESA
-  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT' | 'MESA'>('GAP');
+  // Sub-category selector for CARNIVAL: GAP, GT (MESA removed as separate category, behaves as GT)
+  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT'>('GAP');
   const [selectedShiftId, setSelectedShiftId] = useState<string>('miercoles-gap-t1');
   const [selectedBaseNumber, setSelectedBaseNumber] = useState<number | string | null>(null);
+  const [modalBase, setModalBase] = useState<PhysicalBase | null>(null);
+  const [baseAssignTab, setBaseAssignTab] = useState<'GAP' | 'GT'>('GAP');
 
   // Requirement Creation Modal State
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
@@ -106,8 +109,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [isContinuityLocked, setIsContinuityLocked] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
-  const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
-  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
+  const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
+  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
@@ -126,11 +129,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   }, [shifts, selectedDayId, isCarnival, isDivided, currentDay]);
 
   const gtShiftsInDay = useMemo(() => {
-    return allShiftsInDay.filter((s) => s.category === 'GT' && !s.hasBases);
-  }, [allShiftsInDay]);
-
-  const mesaShiftsInDay = useMemo(() => {
-    return allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+    return allShiftsInDay.filter((s) => (s.category === 'GT' || s.category === 'MESA') && !s.hasBases);
   }, [allShiftsInDay]);
 
   const gapShiftsInDay = useMemo(() => {
@@ -146,22 +145,17 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       } else if (carnivalCategory === 'GT') {
         const filtered = allShiftsInDay.filter((s) => s.category === 'GT' && !s.hasBases);
         if (filtered.length > 0) return filtered;
-      } else if (carnivalCategory === 'MESA') {
-        const filtered = allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
-        if (filtered.length > 0) return filtered;
       }
     }
 
     if (shiftCategoryFilter === 'GT') {
       return gtShiftsInDay.length > 0 ? gtShiftsInDay : allShiftsInDay;
-    } else if (shiftCategoryFilter === 'MESA') {
-      return mesaShiftsInDay.length > 0 ? mesaShiftsInDay : allShiftsInDay;
     } else if (shiftCategoryFilter === 'GAP') {
       return gapShiftsInDay.length > 0 ? gapShiftsInDay : allShiftsInDay;
     }
 
     return allShiftsInDay;
-  }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, mesaShiftsInDay, gapShiftsInDay]);
+  }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, gapShiftsInDay]);
 
   // Current active shift object
   const activeShift =
@@ -179,17 +173,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleDaySelect = (dayId: string) => {
     setSelectedDayId(dayId);
     setSelectedBaseNumber(null);
+    setModalBase(null);
     const dayShifts = (shifts && shifts.length > 0 ? shifts : EVENT_SCHEDULE.find((d) => d.dayId === dayId)?.shifts || [])
       .filter((s) => s.dayId === dayId && s.isActive !== false);
 
-    if (shiftCategoryFilter === 'MESA') {
-      const mesaShift = dayShifts.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
-      if (mesaShift) {
-        setSelectedShiftId(mesaShift.id);
-        return;
-      }
-    } else if (shiftCategoryFilter === 'GT') {
-      const gtShift = dayShifts.find((s) => s.category === 'GT' && !s.hasBases);
+    if (shiftCategoryFilter === 'GT') {
+      const gtShift = dayShifts.find((s) => (s.category === 'GT' || s.category === 'MESA') && !s.hasBases);
       if (gtShift) {
         setSelectedShiftId(gtShift.id);
         return;
@@ -206,12 +195,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (carnivalCategory === 'GAP') {
         const gapShift = dayShifts.find((s) => s.category === 'GAP' || s.hasBases);
         setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
-      } else if (carnivalCategory === 'GT') {
+      } else {
         const gtShift = dayShifts.find((s) => s.category === 'GT' && !s.hasBases);
         setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
-      } else {
-        const mesaShift = dayShifts.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
-        setSelectedShiftId(mesaShift ? mesaShift.id : (dayShifts[0]?.id || 'miercoles-gt-t1'));
       }
     } else {
       if (dayShifts.length > 0) {
@@ -220,30 +206,26 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     }
   };
 
-  const handleCarnivalCategorySelect = (cat: 'GAP' | 'GT' | 'MESA') => {
+  const handleCarnivalCategorySelect = (cat: 'GAP' | 'GT') => {
     setCarnivalCategory(cat);
     setShiftCategoryFilter(cat);
     setSelectedBaseNumber(null);
+    setModalBase(null);
     if (cat === 'GAP') {
       const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
       setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
-    } else if (cat === 'GT') {
+    } else {
       const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
       setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
-    } else {
-      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
-      setSelectedShiftId(mesaShift ? mesaShift.id : (allShiftsInDay[0]?.id || 'miercoles-gt-t1'));
     }
   };
 
-  const handleShiftCategoryFilterChange = (cat: 'ALL' | 'GT' | 'GAP' | 'MESA') => {
+  const handleShiftCategoryFilterChange = (cat: 'ALL' | 'GT' | 'GAP') => {
     setShiftCategoryFilter(cat);
     setSelectedBaseNumber(null);
-    if (cat === 'MESA') {
-      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
-      if (mesaShift) setSelectedShiftId(mesaShift.id);
-    } else if (cat === 'GT') {
-      const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
+    setModalBase(null);
+    if (cat === 'GT') {
+      const gtShift = allShiftsInDay.find((s) => (s.category === 'GT' || s.category === 'MESA') && !s.hasBases);
       if (gtShift) setSelectedShiftId(gtShift.id);
     } else if (cat === 'GAP') {
       const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
@@ -254,27 +236,60 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Determine physical bases for current day & category (dynamically uses configurable bases if present)
   const physicalBases: PhysicalBase[] = useMemo(() => {
     if (bases && bases.length > 0) {
-      if (activeShift?.hasBases || (isDivided && carnivalCategory === 'GAP') || selectedDayId === 'jueves') {
+      if (
+        activeShift?.hasBases ||
+        (isDivided && carnivalCategory === 'GAP') ||
+        selectedDayId === 'jueves' ||
+        selectedDayId === 'viernes'
+      ) {
         const eventIdFilter = selectedDayId === 'miercoles' ? 'carnival' : 'the-games';
-        return bases
-          .filter((b) => b.isActive && (b.eventId === eventIdFilter || (!b.eventId && selectedDayId === 'miercoles')))
-          .map((b) => ({
-            baseNumber: b.baseNumber,
+        const matched = bases.filter(
+          (b) => b.isActive && (b.eventId === eventIdFilter || b.dayId === selectedDayId)
+        );
+        if (matched.length > 0) {
+          return matched.map((b) => ({
+            id: b.id,
+            baseNumber: b.baseNumber || b.id,
             name: b.name,
-            suggestedCapacity: b.suggestedCapacity,
+            defaultCapacity: b.capacity || b.defaultCapacity || 2,
+            suggestedCapacity: b.capacity || b.defaultCapacity || 2,
             isSpecial: b.isSpecial,
           }));
+        }
       }
     }
 
-    if (isDivided && carnivalCategory === 'GAP') {
-      if (selectedDayId === 'miercoles') return CARNIVAL_PHYSICAL_BASES; // 30 bases
-      if (selectedDayId === 'jueves') return THE_GAMES_JUEVES_BASES || []; // Need to import this
-      if (selectedDayId === 'viernes') return THE_GAMES_VIERNES_BASES || []; // Need to import this
+    if (
+      activeShift?.hasBases ||
+      (isDivided && carnivalCategory === 'GAP') ||
+      selectedDayId === 'jueves' ||
+      selectedDayId === 'viernes'
+    ) {
+      if (selectedDayId === 'miercoles') return CARNIVAL_PHYSICAL_BASES;
+      if (selectedDayId === 'jueves') {
+        return THE_GAMES_JUEVES_BASES.map((b) => ({
+          id: b.id,
+          baseNumber: b.baseNumber || b.id,
+          name: b.name,
+          defaultCapacity: b.capacity || b.defaultCapacity || 2,
+          suggestedCapacity: b.capacity || b.defaultCapacity || 2,
+          isSpecial: b.isSpecial,
+        }));
+      }
+      if (selectedDayId === 'viernes') {
+        return THE_GAMES_VIERNES_BASES.map((b) => ({
+          id: b.id,
+          baseNumber: b.baseNumber || b.id,
+          name: b.name,
+          defaultCapacity: b.capacity || b.defaultCapacity || 2,
+          suggestedCapacity: b.capacity || b.defaultCapacity || 2,
+          isSpecial: b.isSpecial,
+        }));
+      }
     }
 
     return [];
-  }, [bases, isDivided, carnivalCategory, selectedDayId]);
+  }, [bases, isDivided, carnivalCategory, selectedDayId, activeShift?.hasBases]);
 
   // Active requirements for this day and shift
   const currentShiftRequirements = useMemo(() => {
@@ -291,11 +306,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   }, [assignments, selectedDayId, activeShift.id]);
 
   const assignedGtCount = useMemo(
-    () => currentShiftAssignments.filter((a) => a.assignedType === 'GT').length,
-    [currentShiftAssignments]
-  );
-  const assignedMesaCount = useMemo(
-    () => currentShiftAssignments.filter((a) => a.assignedType === 'MESA').length,
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'GT' || a.assignedType === 'MESA').length,
     [currentShiftAssignments]
   );
   const assignedGapCount = useMemo(
@@ -305,6 +316,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
   const filteredCurrentShiftAssignments = useMemo(() => {
     if (assignedTypeFilter === 'ALL') return currentShiftAssignments;
+    if (assignedTypeFilter === 'GT') {
+      return currentShiftAssignments.filter((a) => a.assignedType === 'GT' || a.assignedType === 'MESA');
+    }
     return currentShiftAssignments.filter((a) => a.assignedType === assignedTypeFilter);
   }, [currentShiftAssignments, assignedTypeFilter]);
 
@@ -355,19 +369,50 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       setSelectedShiftId(forceShiftId);
     }
     setActiveRequirement(req || null);
-    setSelectedBaseNumber(baseId !== undefined ? baseId : null);
+
+    let targetBase: PhysicalBase | null = null;
+    if (baseId !== undefined) {
+      const foundInPhysical = physicalBases.find(
+        (b) => String(b.id) === String(baseId) || String(b.baseNumber) === String(baseId)
+      );
+      if (foundInPhysical) {
+        targetBase = foundInPhysical;
+      } else {
+        const foundInConfig = (bases || []).find(
+          (b) => String(b.id) === String(baseId) || String(b.baseNumber) === String(baseId)
+        );
+        if (foundInConfig) {
+          targetBase = {
+            id: foundInConfig.id,
+            baseNumber: foundInConfig.baseNumber || foundInConfig.id,
+            name: foundInConfig.name,
+            defaultCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
+            suggestedCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
+            isSpecial: foundInConfig.isSpecial,
+          };
+        } else {
+          targetBase = {
+            id: String(baseId),
+            baseNumber: baseId,
+            name: getBaseDisplayName(baseId),
+            defaultCapacity: 2,
+            suggestedCapacity: 2,
+          };
+        }
+      }
+    }
+
+    setModalBase(targetBase);
+    setSelectedBaseNumber(targetBase ? (targetBase.baseNumber || targetBase.id) : (baseId !== undefined ? baseId : null));
     setModalPersonId('');
     setModalAlert(null);
     setIsContinuityLocked(false);
     setCandidateSearchQuery('');
     setShowOnlyAvailableInModal(true);
 
-    const isMesaShift =
-      activeShift.category === 'MESA' ||
-      activeShift.name.toUpperCase().includes('MESA') ||
-      (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
-
     if (req) {
+      const tabToUse = req.groupType === 'GT' ? 'GT' : 'GAP';
+      setBaseAssignTab(tabToUse);
       setModalAssignedType(req.groupType);
       setModalGtSubTeam(req.gtSubTeam);
       setModalAssignedFunction(
@@ -376,68 +421,68 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           : ''
       );
       setModalRoleInBase(req.groupType === 'GT' ? `GT ${req.gtSubTeam || ''}` : req.groupType);
-    } else if (isMesaShift) {
-      setModalAssignedType('MESA');
+    } else if (baseId !== undefined || targetBase !== null) {
+      setBaseAssignTab('GAP');
+      setModalAssignedType('GAP');
       setModalGtSubTeam(undefined);
-      setModalAssignedFunction('Coordinación / Mesa');
-      setModalRoleInBase('Coordinación / Mesa');
-    } else if (isDivided) {
-      if (carnivalCategory === 'GAP' || baseId !== undefined) {
-        setModalAssignedType('GAP');
-        setModalGtSubTeam(undefined);
-        setModalAssignedFunction('Animación de base');
-        setModalRoleInBase('Encargado de Base');
-      } else if (carnivalCategory === 'MESA') {
-        setModalAssignedType('MESA');
-        setModalGtSubTeam(undefined);
-        setModalAssignedFunction('Coordinación / Mesa');
-        setModalRoleInBase('Coordinación / Mesa');
-      } else {
-        setModalAssignedType('GT');
-        setModalGtSubTeam('Logística');
-        setModalAssignedFunction('Apoyo logístico');
-        setModalRoleInBase('Staff General');
-      }
+      setModalAssignedFunction('Animación de base');
+      setModalRoleInBase('Encargado de Base');
     } else {
-      if (baseId !== undefined || activeShift.hasBases) {
-        setModalAssignedType('GAP');
-        setModalGtSubTeam(undefined);
-        setModalAssignedFunction('Animación de base');
-        setModalRoleInBase('Encargado de Base');
-      } else {
-        setModalAssignedType('GT');
-        setModalGtSubTeam('Logística');
-        setModalAssignedFunction('Apoyo logístico');
-        setModalRoleInBase('Staff General');
-      }
+      setBaseAssignTab('GAP');
+      setModalAssignedType('GAP');
+      setModalGtSubTeam(undefined);
+      setModalAssignedFunction('');
+      setModalRoleInBase('Staff General');
     }
 
     setIsAssignModalOpen(true);
   };
 
-  // Candidate pool calculation based on GT/Group + Availability + Conflict + Functions
+  // Occupants of the currently selected base in the modal
+  const currentBaseOccupants = useMemo(() => {
+    if (!modalBase && selectedBaseNumber === null) return [];
+    const bId = modalBase?.id ? String(modalBase.id) : (selectedBaseNumber !== null ? String(selectedBaseNumber) : undefined);
+    const bNum = modalBase?.baseNumber !== undefined ? String(modalBase.baseNumber) : (selectedBaseNumber !== null ? String(selectedBaseNumber) : undefined);
+    const bName = modalBase?.name;
+
+    return currentShiftAssignments.filter((a) => {
+      if (bId && (a.baseId === bId || String(a.baseId) === bId)) return true;
+      if (bNum && (String(a.baseNumber) === bNum || String(a.baseId) === bNum)) return true;
+      if (bName && a.baseName && a.baseName.toLowerCase() === bName.toLowerCase()) return true;
+      return false;
+    });
+  }, [modalBase, selectedBaseNumber, currentShiftAssignments]);
+
+  const isBaseFull = useMemo(() => {
+    if (!modalBase && selectedBaseNumber === null) return false;
+    const maxCap = modalBase?.defaultCapacity || 2;
+    return currentBaseOccupants.length >= maxCap;
+  }, [modalBase, selectedBaseNumber, currentBaseOccupants]);
+
+  const isShiftFull = useMemo(() => {
+    return Boolean(activeShift.capacity && currentShiftAssignments.length >= activeShift.capacity);
+  }, [activeShift, currentShiftAssignments]);
+
+  // Candidate pool calculation with strict availability, continuity, and GAP/GT rules
   const candidatePool = useMemo(() => {
     return people.map((person) => {
       const isMesa = person.primaryType === 'MESA';
+      const isPersonActive = person.isActive !== false;
 
-      // 1. Group / Subteam matching:
-      // RULE: MESA can be assigned to ANY shift and ANY requirement ("la mesa puede ser asignada a todos los turnos sin importar qué")
-      let matchesGroup = false;
+      // 1. Group / Subteam matching for requirements:
+      let matchesRequirementGroup = true;
       if (activeRequirement) {
         if (activeRequirement.groupType === 'GT') {
-          const isGt = person.primaryType === 'GT';
+          const isGt = person.primaryType === 'GT' || isMesa;
           const matchesSub =
             !activeRequirement.gtSubTeam ||
+            isMesa ||
             person.gtSubTeam === activeRequirement.gtSubTeam ||
             (person.gtTeams && person.gtTeams.includes(activeRequirement.gtSubTeam));
-          matchesGroup = (isGt && matchesSub) || isMesa;
+          matchesRequirementGroup = isGt && matchesSub;
         } else if (activeRequirement.groupType === 'GAP') {
-          matchesGroup = person.primaryType === 'GAP' || person.primaryType === 'GT' || isMesa;
-        } else if (activeRequirement.groupType === 'MESA') {
-          matchesGroup = isMesa;
+          matchesRequirementGroup = person.primaryType === 'GAP' || person.primaryType === 'GT' || isMesa;
         }
-      } else {
-        matchesGroup = true;
       }
 
       // 2. Already assigned to this exact shift
@@ -449,7 +494,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       );
 
       // 3. Overlapping shift conflict on the same day:
-      // MESA has cross-shift leadership and is not blocked by overlapping hours
+      // Note: Thursday morning T1 (06:00-12:00) and afternoon T2 (13:00-21:00) do NOT overlap
       const conflictingAssignment = isMesa
         ? undefined
         : assignments.find((a) => {
@@ -460,99 +505,74 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             ) {
               return false;
             }
-            const otherShift = findShiftById(shifts && shifts.length > 0 ? shifts : currentDay, a.shiftId);
+            const allKnown = shifts && shifts.length > 0 ? shifts : currentDay.shifts;
+            const otherShift = findShiftById(allKnown, a.shiftId);
             return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
           });
 
       // 4. Availability for this shift:
-      // For MESA: ALWAYS available across all shifts, days, and hours without restriction
-      // If the shift is a MESA shift or requirement is MESA: ANY MESA person is available
-      const isMesaShift =
-        activeShift.category === 'MESA' ||
-        activeShift.name.toUpperCase().includes('MESA') ||
-        (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
-
       const availRecord = availabilities.find(
         (av) => av.personId === person.id && av.dayId === selectedDayId
       );
 
       let isAvailableInShift = false;
-      if (isMesa || (isMesaShift && person.primaryType === 'MESA')) {
+      if (isMesa) {
         isAvailableInShift = true;
-      } else {
-        if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
-          // Direct ID match
-          if (availRecord.shiftIds.includes(activeShift.id)) {
-            isAvailableInShift = true;
-          } else {
-            // Check alias and slot / turno matching
-            // Jueves T2 aliases: shift_jueves_mtqcifm4_nt5, jueves-t2, jueves-t2-gt
-            const isJuevesT2 =
-              selectedDayId === 'jueves' &&
-              (activeShift.id === 'shift_jueves_mtqcifm4_nt5' ||
-                activeShift.id === 'jueves-t2' ||
-                activeShift.id === 'jueves-t2-gt' ||
-                activeShift.name.toUpperCase().includes('T2') ||
-                (activeShift.startTime === '13:00' && activeShift.endTime === '21:00'));
+      } else if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
+        if (availRecord.shiftIds.includes(activeShift.id)) {
+          isAvailableInShift = true;
+        } else {
+          // Check Jueves aliases
+          if (selectedDayId === 'jueves') {
+            const isT1 = (sid: string) =>
+              sid === 'jueves-t1' ||
+              sid === 'shift_jueves_gt_mtrxjh9q_r2t' ||
+              /(?:t1|turno\s*1)/i.test(sid);
+            const isT2 = (sid: string) =>
+              sid === 'jueves-t2' ||
+              sid === 'jueves-t2-gt' ||
+              sid === 'shift_jueves_mtqcifm4_nt5' ||
+              sid === 'shift_jueves_gap_mtrxwlwl_l9j' ||
+              /(?:t2|turno\s*2)/i.test(sid);
 
-            if (
-              isJuevesT2 &&
-              availRecord.shiftIds.some(
-                (sid) =>
-                  sid === 'jueves-t2' ||
-                  sid === 'jueves-t2-gt' ||
-                  sid === 'shift_jueves_mtqcifm4_nt5'
-              )
-            ) {
+            if (isT1(activeShift.id) && availRecord.shiftIds.some(isT1)) {
+              isAvailableInShift = true;
+            } else if (isT2(activeShift.id) && availRecord.shiftIds.some(isT2)) {
               isAvailableInShift = true;
             }
+          }
 
-            // Jueves T1 alias
-            const isJuevesT1 =
-              selectedDayId === 'jueves' &&
-              (activeShift.id === 'jueves-t1' ||
-                activeShift.name.toUpperCase().includes('T1') ||
-                (activeShift.startTime === '06:00' && activeShift.endTime === '12:00'));
-
-            if (isJuevesT1 && availRecord.shiftIds.includes('jueves-t1')) {
+          // Check Viernes aliases
+          if (selectedDayId === 'viernes') {
+            if (availRecord.shiftIds.some((sid) => sid === 'viernes-gt' || sid === 'viernes-gap')) {
               isAvailableInShift = true;
             }
+          }
 
-            // Viernes aliases
-            if (
-              selectedDayId === 'viernes' &&
-              availRecord.shiftIds.some((sid) => sid === 'viernes-gt' || sid === 'viernes-gap')
-            ) {
-              isAvailableInShift = true;
-            }
-
-            // Time and Turno matching against all registered shifts
-            if (!isAvailableInShift) {
-              const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
-              for (const regId of availRecord.shiftIds) {
-                const regShift = allKnownShifts.find((s) => s.id === regId);
-                if (regShift && regShift.dayId === selectedDayId) {
-                  // If exact times match
-                  if (
-                    regShift.startTime &&
-                    activeShift.startTime &&
-                    regShift.startTime === activeShift.startTime &&
-                    regShift.endTime === activeShift.endTime
-                  ) {
-                    isAvailableInShift = true;
-                    break;
-                  }
-                  // If same Turno number (e.g. T1, T2, T3)
-                  const extractTurno = (name: string, id: string) => {
-                    const m = (name + ' ' + id).match(/\b(t[1-5]|turno\s*[1-5])\b/i);
-                    return m ? m[0].toUpperCase().replace(/\s+/, '') : null;
-                  };
-                  const tActive = extractTurno(activeShift.name, activeShift.id);
-                  const tReg = extractTurno(regShift.name, regShift.id);
-                  if (tActive && tReg && tActive === tReg) {
-                    isAvailableInShift = true;
-                    break;
-                  }
+          // Time & Turno matching
+          if (!isAvailableInShift) {
+            const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+            for (const regId of availRecord.shiftIds) {
+              const regShift = allKnownShifts.find((s) => s.id === regId);
+              if (regShift && regShift.dayId === selectedDayId) {
+                if (
+                  regShift.startTime &&
+                  activeShift.startTime &&
+                  regShift.startTime === activeShift.startTime &&
+                  regShift.endTime === activeShift.endTime
+                ) {
+                  isAvailableInShift = true;
+                  break;
+                }
+                const extractTurno = (name: string, id: string) => {
+                  const m = (name + ' ' + id).match(/\b(t[1-5]|turno\s*[1-5])\b/i);
+                  return m ? m[0].toUpperCase().replace(/\s+/, '') : null;
+                };
+                const tActive = extractTurno(activeShift.name, activeShift.id);
+                const tReg = extractTurno(regShift.name, regShift.id);
+                if (tActive && tReg && tActive === tReg) {
+                  isAvailableInShift = true;
+                  break;
                 }
               }
             }
@@ -560,20 +580,86 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         }
       }
 
-      // 5. Functions check (Rule 5 & 9)
+      // 5. Carnival continuity validation:
+      // If assigning to a base on Wednesday, person must stay in the same physical base
+      let carnivalContinuityConflict = false;
+      let priorCarnivalBaseName: string | undefined = undefined;
+      if (selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null)) {
+        const priorAssign = assignments.find(
+          (a) =>
+            a.personId === person.id &&
+            a.dayId === 'miercoles' &&
+            a.shiftId !== activeShift.id &&
+            ((a.baseId && a.baseId !== 'null') || (a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== ''))
+        );
+        if (priorAssign) {
+          const priorKey = String(priorAssign.baseId || priorAssign.baseNumber);
+          const targetId = modalBase?.id ? String(modalBase.id) : String(selectedBaseNumber);
+          const targetNum = modalBase?.baseNumber !== undefined ? String(modalBase.baseNumber) : String(selectedBaseNumber);
+          if (priorKey !== targetId && priorKey !== targetNum && priorAssign.baseName !== modalBase?.name) {
+            carnivalContinuityConflict = true;
+            priorCarnivalBaseName = priorAssign.baseName || getBaseDisplayName(priorAssign.baseNumber || priorAssign.baseId);
+          }
+        }
+      }
+
+      // 6. Subteam and category classification
+      const subTeamUpper = (person.gtSubTeam || '').toUpperCase();
+      const isGeneralSubteam =
+        subTeamUpper.includes('GENERAL') ||
+        (person.gtTeams || []).some((t) => t.toUpperCase().includes('GENERAL'));
+      const isCarnivalSubteam =
+        subTeamUpper.includes('CARNIVAL') ||
+        (person.gtTeams || []).some((t) => t.toUpperCase().includes('CARNIVAL'));
+
+      // GAP Eligibility:
+      // - primaryType === 'GAP'
+      // - primaryType === 'GT' or 'MESA':
+      //   * GT Generales or alsoActsAsGap: Wed, Thu, Fri
+      //   * GT Carnival: Thu, Fri (Wed Carnival GT has no GAP)
+      //   * Other GT: only if alsoActsAsGap === true
+      let isCategoryAllowedForGap = false;
+      if (person.primaryType === 'GAP') {
+        isCategoryAllowedForGap = true;
+      } else if (person.primaryType === 'GT' || isMesa) {
+        if (isGeneralSubteam || person.alsoActsAsGap) {
+          if (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') {
+            isCategoryAllowedForGap = true;
+          }
+        } else if (isCarnivalSubteam) {
+          if (selectedDayId === 'jueves' || selectedDayId === 'viernes') {
+            isCategoryAllowedForGap = true;
+          }
+        } else if (person.alsoActsAsGap) {
+          isCategoryAllowedForGap = true;
+        }
+      }
+
+      // GT Eligibility:
+      // - primaryType === 'GT' or 'MESA'
+      // - Must match activeRequirement gtSubTeam if specified
+      let isCategoryAllowedForGt = false;
+      if (person.primaryType === 'GT' || isMesa) {
+        if (activeRequirement && activeRequirement.groupType === 'GT' && activeRequirement.gtSubTeam) {
+          if (
+            isMesa ||
+            person.gtSubTeam === activeRequirement.gtSubTeam ||
+            (person.gtTeams || []).includes(activeRequirement.gtSubTeam)
+          ) {
+            isCategoryAllowedForGt = true;
+          }
+        } else {
+          isCategoryAllowedForGt = true;
+        }
+      }
+
+      // Functions check
       let matchesFunctions = true;
       let matchingFunctionsList: string[] = [];
       if (isMesa) {
         matchesFunctions = true;
-        matchingFunctionsList =
-          person.functions && person.functions.length > 0
-            ? person.functions
-            : ['Coordinación / Mesa'];
-      } else if (
-        activeRequirement &&
-        activeRequirement.specificFunctions &&
-        activeRequirement.specificFunctions.length > 0
-      ) {
+        matchingFunctionsList = person.functions && person.functions.length > 0 ? person.functions : ['Coordinación'];
+      } else if (activeRequirement && activeRequirement.specificFunctions && activeRequirement.specificFunctions.length > 0) {
         matchingFunctionsList = (person.functions || []).filter((f) =>
           activeRequirement.specificFunctions!.includes(f)
         );
@@ -582,22 +668,31 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         matchingFunctionsList = person.functions || [];
       }
 
-      const matchesPrerequisites =
-        matchesGroup && !isAlreadyAssigned && !conflictingAssignment && matchesFunctions;
+      // Base prerequisite validity: active, available, not already in this shift, no shift overlap, no carnival conflict
+      const baseAvailable =
+        isPersonActive &&
+        isAvailableInShift &&
+        !isAlreadyAssigned &&
+        !conflictingAssignment &&
+        !carnivalContinuityConflict;
 
-      const isEligible = matchesPrerequisites && isAvailableInShift;
+      const isEligibleForGap = baseAvailable && isCategoryAllowedForGap && matchesFunctions;
+      const isEligibleForGt = baseAvailable && isCategoryAllowedForGt && matchesFunctions;
 
       return {
         person,
-        matchesGroup,
+        isPersonActive,
         isAlreadyAssigned,
         conflictingAssignment,
         isAvailableInShift,
-        hasAvailRecord: isMesa || Boolean(availRecord && availRecord.shiftIds && availRecord.shiftIds.length > 0),
-        matchesFunctions,
+        carnivalContinuityConflict,
+        priorCarnivalBaseName,
+        isCategoryAllowedForGap,
+        isCategoryAllowedForGt,
+        isEligibleForGap,
+        isEligibleForGt,
+        matchesRequirementGroup,
         matchingFunctionsList,
-        matchesPrerequisites,
-        isEligible,
       };
     });
   }, [
@@ -607,22 +702,43 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     selectedDayId,
     activeShift,
     activeRequirement,
-    currentDay,
+    modalBase,
+    selectedBaseNumber,
     shifts,
+    currentDay,
   ]);
 
-  const availableCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligible).length;
+  const gapCandidatesCount = useMemo(() => {
+    return candidatePool.filter((c) => c.isEligibleForGap).length;
   }, [candidatePool]);
 
+  const gtCandidatesCount = useMemo(() => {
+    return candidatePool.filter((c) => c.isEligibleForGt).length;
+  }, [candidatePool]);
+
+  // Filter candidates based on active tab [GAP] or [GT]
   const filteredCandidates = useMemo(() => {
     const q = candidateSearchQuery.trim().toLowerCase();
-    return candidatePool.filter((c) => {
-      // Must match group, not already assigned, no overlapping conflict, and match functions
-      if (!c.matchesPrerequisites) return false;
 
-      // If toggle is active (default = true), only show people with confirmed shift availability
-      if (showOnlyAvailableInModal && !c.isAvailableInShift) return false;
+    return candidatePool.filter((c) => {
+      // Must be active
+      if (!c.isPersonActive) return false;
+
+      // Exclude anyone not available in this shift (strictly no "Sin turno registrado" or "No disponible" candidates)
+      if (!c.isAvailableInShift) return false;
+
+      // Exclude already assigned or shift overlap conflict
+      if (c.isAlreadyAssigned || c.conflictingAssignment) return false;
+
+      // Exclude continuity conflicts
+      if (c.carnivalContinuityConflict) return false;
+
+      // Filter by active Tab [GAP] vs [GT]
+      if (baseAssignTab === 'GAP') {
+        if (!c.isEligibleForGap) return false;
+      } else {
+        if (!c.isEligibleForGt) return false;
+      }
 
       // Search query filter
       if (q) {
@@ -634,31 +750,52 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       return true;
     });
-  }, [candidatePool, candidateSearchQuery, showOnlyAvailableInModal]);
+  }, [candidatePool, baseAssignTab, candidateSearchQuery]);
 
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
     try {
       const isMesaPerson = candidatePerson.primaryType === 'MESA';
-      const isMesaShift =
-        activeShift.category === 'MESA' ||
-        activeShift.name.toUpperCase().includes('MESA') ||
-        (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
 
-      const assignedTypeToUse: PersonType = activeRequirement
-        ? activeRequirement.groupType
-        : (isMesaShift || isMesaPerson ? 'MESA' : candidatePerson.primaryType);
+      // Tab or requirement determines assigned type; MESA always assigned as GT
+      let assignedTypeToUse: PersonType = baseAssignTab;
+      if (activeRequirement) {
+        assignedTypeToUse = activeRequirement.groupType;
+      }
+      if (isMesaPerson && assignedTypeToUse === 'MESA') {
+        assignedTypeToUse = 'GT';
+      }
 
-      const defaultRole = isMesaPerson || isMesaShift ? 'Coordinación / Mesa' : 'Staff General';
+      // Base identification
+      const targetBaseObj = modalBase || (selectedBaseNumber !== null
+        ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+           (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+        : null);
+
+      const baseIdToUse = targetBaseObj?.id ? String(targetBaseObj.id) : (selectedBaseNumber !== null ? String(selectedBaseNumber) : undefined);
+      const baseNumToUse = targetBaseObj?.baseNumber !== undefined ? targetBaseObj.baseNumber : (selectedBaseNumber !== null ? selectedBaseNumber : undefined);
+      const baseNameToUse = targetBaseObj?.name || (baseNumToUse !== undefined ? getBaseDisplayName(baseNumToUse) : undefined);
+
+      // MANDATORY base_id check when assigning to a base
+      if ((modalBase !== null || selectedBaseNumber !== null) && !baseIdToUse) {
+        setModalAlert('Error: No se pudo resolver un base_id físico válido para esta base.');
+        return;
+      }
+
+      const defaultRole = assignedTypeToUse === 'GAP'
+        ? 'Encargado de Base'
+        : (isMesaPerson ? 'Coordinación' : 'Staff General');
 
       const result = await assignPerson({
         personId: candidatePerson.id,
         dayId: selectedDayId,
         shiftId: activeShift.id,
         assignedType: assignedTypeToUse,
-        gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam) : undefined,
-        assignedFunction: fnName || (isMesaPerson || isMesaShift ? 'Coordinación / Mesa' : undefined),
-        baseNumber: selectedBaseNumber !== null ? selectedBaseNumber : undefined,
+        gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam || 'Logística') : undefined,
+        assignedFunction: fnName || defaultRole,
+        baseId: baseIdToUse,
+        baseNumber: baseNumToUse,
+        baseName: baseNameToUse,
         roleInBase: fnName || defaultRole,
         requirementId: activeRequirement ? activeRequirement.id : undefined,
       });
@@ -764,7 +901,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </p>
             </div>
 
-            {/* Sub-Category Switcher for Carnival */}
+            {/* Sub-Category Switcher for Carnival: GAP and GT */}
             <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] self-start lg:self-center">
               <button
                 onClick={() => handleCarnivalCategorySelect('GAP')}
@@ -789,24 +926,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 <Shield className="w-3.5 h-3.5" />
                 <span>GT {isCarnival ? "(5 Turnos)" : "(Soporte General)"}</span>
               </button>
-
-              <button
-                onClick={() => handleCarnivalCategorySelect('MESA')}
-                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  carnivalCategory === 'MESA'
-                    ? 'bg-[#C87F17] text-white shadow-xs font-montserrat'
-                    : 'text-[#64748B] hover:text-[#182535] font-montserrat'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>MESA (Flexible)</span>
-              </button>
             </div>
           </div>
 
           {/* Visual Blueprint Diagram */}
           {isCarnival && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1 text-xs font-montserrat">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1 text-xs font-montserrat">
             <div
               className={`p-4 rounded-2xl border transition-all ${
                 carnivalCategory === 'GT'
@@ -817,7 +942,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               <div className="flex items-center justify-between font-bold text-[#182535] mb-2">
                 <span className="flex items-center gap-1.5 text-[#182535]">
                   <Shield className="w-4 h-4" />
-                  CARNIVAL — GT
+                  CARNIVAL — GT (GRUPO DE TRABAJO & MESA)
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#182535] text-white font-mono">
                   5 TURNOS
@@ -857,7 +982,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               <div className="flex items-center justify-between font-bold text-[#B83A24] mb-2">
                 <span className="flex items-center gap-1.5 text-[#B83A24]">
                   <Grid className="w-4 h-4" />
-                  CARNIVAL — GAP
+                  CARNIVAL — GAP (BASES FÍSICAS)
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#B83A24] text-white font-mono">
                   3 TURNOS • 30 BASES
@@ -879,31 +1004,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </ul>
               <div className="mt-2 text-[10px] text-[#B83A24] font-medium">
                 <strong>30 Bases Físicas:</strong> Base 1..27 + Toro, Speedway, Arcade.
-              </div>
-            </div>
-
-            <div
-              className={`p-4 rounded-2xl border transition-all ${
-                carnivalCategory === 'MESA'
-                  ? 'bg-[#FEF8EC] border-[#C87F17] shadow-2xs'
-                  : 'bg-[#FFFDF8] border-[#EADDC7] text-[#64748B]'
-              }`}
-            >
-              <div className="flex items-center justify-between font-bold text-[#C87F17] mb-2">
-                <span className="flex items-center gap-1.5 text-[#C87F17]">
-                  <Layers className="w-4 h-4" />
-                  CARNIVAL — MESA
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C87F17] text-white font-mono">
-                  CUALQUIER TURNO
-                </span>
-              </div>
-              <p className="text-[11px] text-[#475569] leading-relaxed">
-                MESA puede ser asignada a <b>cualquiera de los turnos</b> de Carnival (GT T1..T5 o GAP T1..T3), siempre que exista cupo y disponibilidad.
-              </p>
-              <div className="mt-2.5 p-2 rounded-xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[10px] text-[#C87F17] font-semibold flex items-center gap-1.5">
-                <Lock className="w-3 h-3 shrink-0" />
-                <span>Continuidad obligatoria si opera en bases GAP.</span>
               </div>
             </div>
           </div>
@@ -930,7 +1030,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
         </div>
 
-        {/* Filter shifts by GT / MESA / GAP */}
+        {/* Filter shifts by GT / GAP */}
         <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
           <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
             Filtrar turnos:
@@ -938,7 +1038,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           {[
             { id: 'ALL', label: `Todos (${allShiftsInDay.length})` },
             { id: 'GT', label: `GT (${gtShiftsInDay.length})` },
-            { id: 'MESA', label: `MESA (${mesaShiftsInDay.length})` },
             { id: 'GAP', label: `GAP (${gapShiftsInDay.length})` },
           ].map((pill) => (
             <button
@@ -947,9 +1046,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               onClick={() => handleShiftCategoryFilterChange(pill.id as any)}
               className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
                 shiftCategoryFilter === pill.id
-                  ? pill.id === 'MESA'
-                    ? 'bg-[#C87F17] text-white shadow-2xs'
-                    : pill.id === 'GAP'
+                  ? pill.id === 'GAP'
                     ? 'bg-[#16A34A] text-white shadow-2xs'
                     : pill.id === 'GT'
                     ? 'bg-[#182535] text-white shadow-2xs'
@@ -1199,8 +1296,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             {physicalBases.map((base) => {
               const baseAssignments = currentShiftAssignments.filter(
                 (a) =>
+                  String(a.baseId) === String(base.id) ||
                   String(a.baseNumber) === String(base.id) ||
-                  a.baseName === base.name ||
+                  (base.baseNumber !== undefined && String(a.baseNumber) === String(base.baseNumber)) ||
+                  (a.baseName && base.name && a.baseName.toLowerCase() === base.name.toLowerCase()) ||
                   (base.code && a.baseNumber === base.code)
               );
               const isFull = baseAssignments.length >= base.defaultCapacity;
@@ -1344,7 +1443,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             {[
               { id: 'ALL', label: `Todos (${currentShiftAssignments.length})` },
               { id: 'GT', label: `GT (${assignedGtCount})` },
-              { id: 'MESA', label: `MESA (${assignedMesaCount})` },
               { id: 'GAP', label: `GAP (${assignedGapCount})` },
             ].map((pill) => (
               <button
@@ -1353,9 +1451,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 onClick={() => setAssignedTypeFilter(pill.id as any)}
                 className={`min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
                   assignedTypeFilter === pill.id
-                    ? pill.id === 'MESA'
-                      ? 'bg-[#C87F17] text-white shadow-2xs'
-                      : pill.id === 'GAP'
+                    ? pill.id === 'GAP'
                       ? 'bg-[#16A34A] text-white shadow-2xs'
                       : pill.id === 'GT'
                       ? 'bg-[#182535] text-white shadow-2xs'
@@ -1672,259 +1768,379 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         </div>
       )}
 
-      {/* MODAL 2: ASIGNAR PERSONAS AL TURNO / CUPO (CON FILTRO DE FUNCIONES) */}
-      {isAssignModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between pb-3 border-b border-[#EADDC7] shrink-0">
-              <div>
-                <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
-                  {currentDay.eventName} • {activeShift.name} ({activeShift.label})
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek">
-                  {activeRequirement
-                    ? `ASIGNAR A: ${
-                        activeRequirement.groupType === 'GT'
-                          ? `GT ${activeRequirement.gtSubTeam}`
-                          : activeRequirement.groupType
-                      }`
-                    : selectedBaseNumber !== null
-                    ? `ASIGNAR A ${getBaseDisplayName(selectedBaseNumber).toUpperCase()}`
-                    : `ASIGNAR A ${activeShift.name}`}
-                </h3>
-                {activeRequirement && (
-                  <p className="text-xs text-[#64748B] mt-0.5">
-                    Cupo objetivo: <b>{activeRequirement.capacity} personas</b> •{' '}
-                    {activeRequirement.specificFunctions &&
-                    activeRequirement.specificFunctions.length > 0 ? (
-                      <span>
-                        Filtro de funciones activas:{' '}
-                        <b>{activeRequirement.specificFunctions.join(' · ')}</b>
-                      </span>
-                    ) : (
-                      <span>Sin filtro: cualquier integrante del grupo</span>
-                    )}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => setIsAssignModalOpen(false)}
-                className="p-1 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* MODAL 2: ASIGNAR PERSONAS AL TURNO / CUPO / BASE */}
+      {isAssignModalOpen && (() => {
+        const shiftRequiresBase = Boolean(activeShift.hasBases || modalBase !== null);
+        const hasValidBase = Boolean(modalBase || selectedBaseNumber !== null);
 
-            {/* Modal Alert if continuity or error */}
-            {modalAlert && (
-              <div className="my-3 p-3 rounded-2xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs flex items-start gap-2 leading-relaxed shrink-0">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#C87F17]" />
-                <span>{modalAlert}</span>
-              </div>
-            )}
-
-            {/* Search & Availability Toggle Controls */}
-            <div className="space-y-2 pt-2 pb-2 shrink-0 border-b border-[#EADDC7]/60">
-              <div className="relative">
-                <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Buscar candidato por nombre, cédula o usuario..."
-                  value={candidateSearchQuery}
-                  onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
-                />
-                {candidateSearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setCandidateSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between flex-wrap gap-2 px-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
-                  <input
-                    type="checkbox"
-                    checked={showOnlyAvailableInModal}
-                    onChange={(e) => setShowOnlyAvailableInModal(e.target.checked)}
-                    className="w-4 h-4 accent-[#B83A24] rounded cursor-pointer"
-                  />
-                  <span className="font-semibold text-[#182535]">
-                    Solo personas con disponibilidad confirmada en este turno ({availableCandidatesCount})
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+            <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-3 border-b border-[#EADDC7] shrink-0">
+                <div>
+                  <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                    {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                   </span>
-                </label>
-
-                <span className="text-[11px] text-[#64748B]">
-                  Mostrando: <b>{filteredCandidates.length}</b> candidatos
-                </span>
-              </div>
-            </div>
-
-            {/* Candidate Pool List */}
-            <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
-              {filteredCandidates.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
-                  <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
-                  <p className="font-bold text-[#182535] text-xs">
-                    {showOnlyAvailableInModal
-                      ? 'No hay personas con disponibilidad confirmada para este turno'
-                      : 'No se encontraron candidatos que coincidan con los filtros'}
-                  </p>
-                  <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
-                    {showOnlyAvailableInModal
-                      ? 'Puede desmarcar la casilla "Solo personas con disponibilidad confirmada" arriba si desea asignar a un integrante sin horario registrado.'
-                      : 'Verifique si las personas del grupo tienen las funciones requeridas o amplíe la búsqueda.'}
-                  </p>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek">
+                    {activeRequirement
+                      ? `ASIGNAR A: ${
+                          activeRequirement.groupType === 'GT'
+                            ? `GT ${activeRequirement.gtSubTeam}`
+                            : activeRequirement.groupType
+                        }`
+                      : modalBase
+                      ? `ASIGNAR A ${modalBase.name.toUpperCase()}`
+                      : selectedBaseNumber !== null
+                      ? `ASIGNAR A ${getBaseDisplayName(selectedBaseNumber).toUpperCase()}`
+                      : `ASIGNAR A ${activeShift.name}`}
+                  </h3>
+                  {activeRequirement && (
+                    <p className="text-xs text-[#64748B] mt-0.5">
+                      Cupo objetivo: <b>{activeRequirement.capacity} personas</b> •{' '}
+                      {activeRequirement.specificFunctions &&
+                      activeRequirement.specificFunctions.length > 0 ? (
+                        <span>
+                          Filtro de funciones activas:{' '}
+                          <b>{activeRequirement.specificFunctions.join(' · ')}</b>
+                        </span>
+                      ) : (
+                        <span>Sin filtro: cualquier integrante del grupo</span>
+                      )}
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredCandidates.map(({ person, matchingFunctionsList, isAvailableInShift }) => {
-                    const isSelected = modalPersonId === person.id;
-                    const selectedFunctionToUse =
-                      isSelected && modalAssignedFunction
-                        ? modalAssignedFunction
-                        : matchingFunctionsList[0] || '';
+                <button
+                  onClick={() => setIsAssignModalOpen(false)}
+                  className="p-1 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-                    return (
-                      <div
-                        key={person.id}
-                        className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                          isSelected
-                            ? 'bg-[#FEF8EC] border-[#B83A24] shadow-xs'
-                            : 'bg-[#FFFDF8] border-[#EADDC7] hover:border-[#B83A24]/50'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-[#182535]">
-                              {person.name}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                person.primaryType === 'GT'
-                                  ? 'bg-[#FDF2EE] text-[#B83A24]'
-                                  : 'bg-[#FEF8EC] text-[#C87F17]'
-                              }`}
-                            >
-                              {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
-                            </span>
-                            {person.primaryType === 'MESA' && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
-                                Flexible (Todos los turnos)
-                              </span>
-                            )}
-                            {person.primaryType === 'GT' && person.alsoActsAsGap && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#EADDC7]">
-                                + GAP Generales
-                              </span>
-                            )}
-                            {!isAvailableInShift && (
-                              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3 text-amber-600" />
-                                Sin turno registrado
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
-                            ID: {person.documentId} • @{person.username || person.documentId}
-                          </div>
-
-                          {/* Show functions of person */}
-                          <div className="flex items-center gap-1 flex-wrap mt-1.5">
-                            <span className="text-[10px] text-[#64748B] font-bold">
-                              Funciones:
-                            </span>
-                            {person.functions && person.functions.length > 0 ? (
-                              person.functions.map((f, i) => {
-                                const isMatchingReq =
-                                  activeRequirement?.specificFunctions?.includes(f);
-                                return (
-                                  <span
-                                    key={i}
-                                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                                      isMatchingReq
-                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                        : 'bg-[#FAF6EC] text-[#475569] border border-[#EADDC7]'
-                                    }`}
-                                  >
-                                    {f}
-                                  </span>
-                                );
-                              })
-                            ) : (
-                              <span className="text-[10px] text-[#94A3B8]">Sin funciones</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Function selection and Assign action */}
-                        <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
-                          {/* Selector for which function to register in assignment */}
-                          {matchingFunctionsList.length > 1 ? (
-                            <select
-                              value={selectedFunctionToUse}
-                              onChange={(e) => {
-                                setModalPersonId(person.id);
-                                setModalAssignedFunction(e.target.value);
-                              }}
-                              className="px-2.5 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
-                            >
-                              {matchingFunctionsList.map((fn) => (
-                                <option key={fn} value={fn}>
-                                  Asignar: {fn}
-                                </option>
-                              ))}
-                            </select>
-                          ) : matchingFunctionsList.length === 1 ? (
-                            <span className="px-2 py-1 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-bold text-[#16A34A]">
-                              {matchingFunctionsList[0]}
-                            </span>
-                          ) : null}
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleQuickAssignCandidate(
-                                person,
-                                selectedFunctionToUse || matchingFunctionsList[0] || ''
-                              );
-                            }}
-                            disabled={isSubmitting}
-                            className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1 shadow-2xs transition-all"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Asignar Cupo</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Modal Alert if continuity or error */}
+              {modalAlert && (
+                <div className="my-2.5 p-3 rounded-2xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs flex items-start gap-2 leading-relaxed shrink-0">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#C87F17]" />
+                  <span>{modalAlert}</span>
                 </div>
               )}
-            </div>
 
-            {/* Modal Footer */}
-            <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
-              <span className="text-xs text-[#64748B]">
-                {currentShiftAssignments.length} persona(s) asignadas en este turno
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsAssignModalOpen(false)}
-                className="min-h-[40px] px-5 py-2 rounded-xl bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold font-montserrat"
-              >
-                Cerrar
-              </button>
+              {/* MANDATORY BASE SELECTION (for shifts requiring a base) */}
+              {shiftRequiresBase && (
+                <div className="mt-3 p-3.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] space-y-2 shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-bold text-[#182535] flex items-center gap-1.5 font-montserrat">
+                      <MapPin className="w-3.5 h-3.5 text-[#B83A24]" />
+                      <span>Base Física Obligatoria *</span>
+                    </label>
+                    {modalBase && (
+                      <span
+                        className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full font-bold border ${
+                          isBaseFull
+                            ? 'bg-rose-100 text-rose-800 border-rose-300'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        }`}
+                      >
+                        Ocupación: {currentBaseOccupants.length} / {modalBase.defaultCapacity} personas
+                      </span>
+                    )}
+                  </div>
+
+                  <select
+                    value={
+                      modalBase?.id
+                        ? String(modalBase.id)
+                        : selectedBaseNumber !== null
+                        ? String(selectedBaseNumber)
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setModalBase(null);
+                        setSelectedBaseNumber(null);
+                        return;
+                      }
+                      const found = physicalBases.find(
+                        (b) => String(b.id) === val || String(b.baseNumber) === val
+                      );
+                      if (found) {
+                        setModalBase(found);
+                        setSelectedBaseNumber(found.baseNumber || found.id);
+                      } else {
+                        setModalBase({
+                          id: val,
+                          baseNumber: val,
+                          name: getBaseDisplayName(val),
+                          defaultCapacity: 2,
+                          suggestedCapacity: 2,
+                        });
+                        setSelectedBaseNumber(val);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-[#FFFDF8] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                  >
+                    <option value="">-- Seleccionar Base Física (Obligatorio) --</option>
+                    {physicalBases.map((b) => (
+                      <option key={b.id} value={String(b.id)}>
+                        {b.name} (Capacidad: {b.defaultCapacity})
+                      </option>
+                    ))}
+                  </select>
+
+                  {!hasValidBase && (
+                    <p className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      Debe seleccionar una base física antes de poder asignar a un candidato.
+                    </p>
+                  )}
+
+                  {isBaseFull && (
+                    <p className="text-[11px] text-amber-800 font-semibold flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      Esta base ha alcanzado su capacidad máxima ({modalBase?.defaultCapacity || 2} personas).
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* [GAP] / [GT] TABS */}
+              {!activeRequirement && (
+                <div className="mt-3 flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBaseAssignTab('GAP');
+                      setModalAssignedType('GAP');
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                      baseAssignTab === 'GAP'
+                        ? 'bg-[#B83A24] text-white shadow-xs'
+                        : 'text-[#64748B] hover:text-[#182535]'
+                    }`}
+                  >
+                    <Grid className="w-3.5 h-3.5" />
+                    <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBaseAssignTab('GT');
+                      setModalAssignedType('GT');
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                      baseAssignTab === 'GT'
+                        ? 'bg-[#182535] text-white shadow-xs'
+                        : 'text-[#64748B] hover:text-[#182535]'
+                    }`}
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>[GT] Apoyo / Logística / MESA ({gtCandidatesCount})</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Search Control */}
+              <div className="pt-3 pb-2 shrink-0 border-b border-[#EADDC7]/60">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Buscar candidato por nombre, cédula o usuario..."
+                    value={candidateSearchQuery}
+                    onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                  />
+                  {candidateSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCandidateSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
+                  <span>
+                    Mostrando candidatos disponibles: <b>{filteredCandidates.length}</b>
+                  </span>
+                  <span>
+                    Categoría activa: <b>{baseAssignTab}</b>
+                  </span>
+                </div>
+              </div>
+
+              {/* Candidate Pool List */}
+              <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
+                {filteredCandidates.length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
+                    <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
+                    <p className="font-bold text-[#182535] text-xs font-montserrat">
+                      No hay candidatos disponibles en {baseAssignTab} para este turno
+                    </p>
+                    <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
+                      Solo se muestran integrantes activos con turno registrado confirmado y sin conflictos de horario o continuidad.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredCandidates.map(({ person, matchingFunctionsList }) => {
+                      const isSelected = modalPersonId === person.id;
+                      const selectedFunctionToUse =
+                        isSelected && modalAssignedFunction
+                          ? modalAssignedFunction
+                          : matchingFunctionsList[0] || '';
+
+                      const cannotAssign =
+                        isSubmitting ||
+                        isBaseFull ||
+                        (shiftRequiresBase && !hasValidBase);
+
+                      return (
+                        <div
+                          key={person.id}
+                          className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-[#FEF8EC] border-[#B83A24] shadow-xs'
+                              : 'bg-[#FFFDF8] border-[#EADDC7] hover:border-[#B83A24]/50'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-sm text-[#182535]">
+                                {person.name}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                  person.primaryType === 'GT'
+                                    ? 'bg-[#FDF2EE] text-[#B83A24]'
+                                    : 'bg-[#FEF8EC] text-[#C87F17]'
+                                }`}
+                              >
+                                {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
+                              </span>
+                              {person.primaryType === 'MESA' && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
+                                  MESA
+                                </span>
+                              )}
+                              {person.primaryType === 'GT' && person.alsoActsAsGap && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+                                  + GAP Habilitado
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
+                              C.C: {person.documentId || 'S/N'} • @{person.username || person.documentId}
+                            </div>
+
+                            {/* Show functions of person */}
+                            <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                              <span className="text-[10px] text-[#64748B] font-bold">
+                                Funciones:
+                              </span>
+                              {person.functions && person.functions.length > 0 ? (
+                                person.functions.map((f, i) => {
+                                  const isMatchingReq =
+                                    activeRequirement?.specificFunctions?.includes(f);
+                                  return (
+                                    <span
+                                      key={i}
+                                      className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                                        isMatchingReq
+                                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                          : 'bg-[#FAF6EC] text-[#475569] border border-[#EADDC7]'
+                                      }`}
+                                    >
+                                      {f}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-[10px] text-[#94A3B8]">Sin funciones registradas</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Function selection and Assign action */}
+                          <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
+                            {matchingFunctionsList.length > 1 ? (
+                              <select
+                                value={selectedFunctionToUse}
+                                onChange={(e) => {
+                                  setModalPersonId(person.id);
+                                  setModalAssignedFunction(e.target.value);
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
+                              >
+                                {matchingFunctionsList.map((fn) => (
+                                  <option key={fn} value={fn}>
+                                    {fn}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : matchingFunctionsList.length === 1 ? (
+                              <span className="px-2 py-1 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-bold text-[#16A34A]">
+                                {matchingFunctionsList[0]}
+                              </span>
+                            ) : null}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleQuickAssignCandidate(
+                                  person,
+                                  selectedFunctionToUse || matchingFunctionsList[0] || ''
+                                );
+                              }}
+                              disabled={cannotAssign}
+                              className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-2xs transition-all ${
+                                cannotAssign
+                                  ? 'bg-[#FAF6EC] text-[#94A3B8] border border-[#EADDC7] cursor-not-allowed'
+                                  : baseAssignTab === 'GAP'
+                                  ? 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white cursor-pointer'
+                                  : 'bg-[#182535] hover:bg-[#2A3F55] text-white cursor-pointer'
+                              }`}
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>
+                                {isBaseFull
+                                  ? 'Base Llena'
+                                  : shiftRequiresBase && !hasValidBase
+                                  ? 'Seleccione Base'
+                                  : `Asignar ${baseAssignTab}`}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
+                <span className="text-xs text-[#64748B]">
+                  {currentShiftAssignments.length} persona(s) asignadas en este turno
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAssignModalOpen(false)}
+                  className="min-h-[40px] px-5 py-2 rounded-xl bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold font-montserrat cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

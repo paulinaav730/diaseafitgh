@@ -679,64 +679,117 @@ export async function assignPerson(
   initializeStorage();
 
   const { personId, dayId, shiftId, assignedType } = assignmentData;
-  let baseNumber = assignmentData.baseNumber;
+  let rawBaseNumber = assignmentData.baseNumber;
+  let rawBaseId = assignmentData.baseId;
 
+  // Clean strings
+  if (rawBaseNumber === 'null' || rawBaseNumber === 'undefined' || rawBaseNumber === '') {
+    rawBaseNumber = undefined;
+  }
+  if (rawBaseId === 'null' || rawBaseId === 'undefined' || rawBaseId === '') {
+    rawBaseId = undefined;
+  }
+
+  // Active person check
+  const person = peopleCache.find((p) => p.id === personId);
+  if (person && person.isActive === false) {
+    return {
+      success: false,
+      alertMessage: 'La persona seleccionada se encuentra inactiva.',
+    };
+  }
+
+  // Find base object if base assignment
+  let resolvedBaseId: string | undefined = rawBaseId;
+  let resolvedBaseNumber: number | string | undefined = rawBaseNumber;
+  let resolvedBaseName: string | undefined = assignmentData.baseName;
+  let maxCapacity = 2;
+
+  if (rawBaseId || rawBaseNumber !== undefined) {
+    const targetBaseObj = basesCache.find(
+      (b) =>
+        (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
+        (rawBaseNumber !== undefined &&
+          (String(b.baseNumber) === String(rawBaseNumber) ||
+            String(b.id) === String(rawBaseNumber) ||
+            b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
+    );
+
+    if (targetBaseObj) {
+      resolvedBaseId = String(targetBaseObj.id);
+      resolvedBaseNumber = targetBaseObj.baseNumber || targetBaseObj.id;
+      resolvedBaseName = targetBaseObj.name;
+      maxCapacity = targetBaseObj.capacity || targetBaseObj.defaultCapacity || 2;
+    } else {
+      if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
+        resolvedBaseName = getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
+      }
+    }
+  }
+
+  // Base continuity check for Carnival
   if (dayId === 'miercoles') {
     const existingCarnivalWithBase = assignmentCache.find(
       (a) =>
         a.personId === personId &&
         a.dayId === 'miercoles' &&
         a.shiftId !== shiftId &&
-        a.baseNumber !== undefined &&
-        a.baseNumber !== null &&
-        a.baseNumber !== ''
+        ((a.baseId && a.baseId !== 'null') || (a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== ''))
     );
 
-    if (existingCarnivalWithBase && existingCarnivalWithBase.baseNumber !== undefined) {
-      const priorBase = existingCarnivalWithBase.baseNumber;
-      const priorBaseName = getBaseDisplayName(priorBase);
+    if (existingCarnivalWithBase) {
+      const priorBase = existingCarnivalWithBase.baseNumber || existingCarnivalWithBase.baseId;
+      const priorBaseName = existingCarnivalWithBase.baseName || getBaseDisplayName(priorBase);
 
-      if (baseNumber !== undefined && baseNumber !== null && baseNumber !== '') {
-        if (String(baseNumber) !== String(priorBase)) {
+      if (resolvedBaseNumber !== undefined || resolvedBaseId) {
+        const currentBaseIdOrNum = resolvedBaseId || resolvedBaseNumber;
+        if (String(currentBaseIdOrNum) !== String(priorBase) && String(resolvedBaseNumber) !== String(priorBase)) {
           return {
             success: false,
             alertMessage: `REGLA DE CONTINUIDAD EN CARNIVAL: Esta persona ya está asignada a ${priorBaseName} en otro turno de Carnival. En Carnival debe permanecer en la MISMA base física en todos sus turnos (aplica para Base 1..27, Base Toro, Base Speedway y Base Arcade). Asignación rechazada.`,
           };
         }
       } else {
-        baseNumber = priorBase;
+        resolvedBaseId = existingCarnivalWithBase.baseId;
+        resolvedBaseNumber = existingCarnivalWithBase.baseNumber;
+        resolvedBaseName = existingCarnivalWithBase.baseName;
       }
     }
   }
 
-  if (baseNumber !== undefined && baseNumber !== null && baseNumber !== '') {
-    let maxCapacity = 2;
-    const targetBaseObj = basesCache.find(
-      (b) =>
-        b.dayId === dayId &&
-        (String(b.baseNumber) === String(baseNumber) ||
-          String(b.id) === String(baseNumber) ||
-          b.name.toLowerCase() === String(baseNumber).toLowerCase())
-    );
-    
-    if (targetBaseObj) {
-      maxCapacity = targetBaseObj.capacity || 2;
-    }
-
+  // Base capacity validation
+  if (resolvedBaseId || resolvedBaseNumber !== undefined) {
     const currentOccupants = assignmentCache.filter(
       (a) =>
         a.dayId === dayId &&
         a.shiftId === shiftId &&
-        (String(a.baseNumber) === String(baseNumber) ||
-          (targetBaseObj && a.baseName === targetBaseObj.name)) &&
+        (
+          (resolvedBaseId && a.baseId === resolvedBaseId) ||
+          (resolvedBaseNumber !== undefined && String(a.baseNumber) === String(resolvedBaseNumber)) ||
+          (resolvedBaseName && a.baseName === resolvedBaseName)
+        ) &&
         a.personId !== personId
     );
 
     if (currentOccupants.length >= maxCapacity) {
-      const displayName = getBaseDisplayName(baseNumber);
+      const displayName = resolvedBaseName || getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
       return {
         success: false,
-        alertMessage: `ALERTA DE CUPO: ${displayName} no tiene cupo suficiente en este turno (Capacidad máxima de ${maxCapacity} alcanzada). Por favor libere un cupo o seleccione otra base.`,
+        alertMessage: `CUPO COMPLETO: ${displayName} ya alcanzó su capacidad máxima de ${maxCapacity} personas en este turno.`,
+      };
+    }
+  }
+
+  // Shift total capacity validation
+  const currentShift = shiftsCache.find((s) => s.id === shiftId);
+  if (currentShift && currentShift.capacity) {
+    const totalOccupantsInShift = assignmentCache.filter(
+      (a) => a.dayId === dayId && a.shiftId === shiftId && a.personId !== personId
+    );
+    if (totalOccupantsInShift.length >= currentShift.capacity) {
+      return {
+        success: false,
+        alertMessage: 'CUPO COMPLETO — NO HAY MÁS CUPOS DISPONIBLES en este turno.',
       };
     }
   }
@@ -745,10 +798,7 @@ export async function assignPerson(
     (a) => a.personId === personId && a.dayId === dayId && a.shiftId === shiftId
   );
 
-  const baseName =
-    baseNumber !== undefined && baseNumber !== null && baseNumber !== ''
-      ? getBaseDisplayName(baseNumber)
-      : undefined;
+  const normalizedAssignedType = assignedType === 'MESA' ? 'GT' : (assignedType || 'GT');
 
   const newAssignment: Assignment = {
     id:
@@ -758,10 +808,11 @@ export async function assignPerson(
     personId,
     dayId,
     shiftId,
-    assignedType,
+    assignedType: normalizedAssignedType,
     gtSubTeam: assignmentData.gtSubTeam,
-    baseNumber,
-    baseName,
+    baseId: resolvedBaseId,
+    baseNumber: resolvedBaseNumber,
+    baseName: resolvedBaseName,
     assignedFunction: assignmentData.assignedFunction,
     roleInBase: assignmentData.roleInBase || assignmentData.assignedFunction,
     requirementId: assignmentData.requirementId,

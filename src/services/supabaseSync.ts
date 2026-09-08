@@ -1,5 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord, ConfigurableShift } from '../types';
+import { getBaseDisplayName } from '../data/eventStructure';
 
 export interface SupabaseSyncStatus {
   isConfigured: boolean;
@@ -160,21 +161,32 @@ export async function pushAssignmentsToSupabase(assignments: Assignment[]): Prom
   if (!client || assignments.length === 0) return false;
 
   try {
-    const payload = assignments.map((a) => ({
-      id: a.id,
-      person_id: a.personId,
-      day_id: a.dayId,
-      shift_id: a.shiftId,
-      assigned_type: a.assignedType || 'GAP',
-      gt_sub_team: a.gtSubTeam || null,
-      base_id: a.baseNumber !== undefined ? String(a.baseNumber) : null,
-      base_name: a.baseName || null,
-      function_id: a.assignedFunction || null,
-      role_in_base: a.roleInBase || null,
-      requirement_id: a.requirementId || null,
-      notes: a.notes || null,
-      updated_at: a.updatedAt || new Date().toISOString(),
-    }));
+    const payload = assignments.map((a) => {
+      const validBaseId =
+        a.baseId && a.baseId !== 'null' && a.baseId !== 'undefined' && a.baseId.trim() !== ''
+          ? a.baseId.trim()
+          : a.baseNumber !== undefined && a.baseNumber !== null && String(a.baseNumber) !== 'null' && String(a.baseNumber) !== 'undefined' && String(a.baseNumber).trim() !== ''
+          ? String(a.baseNumber).trim()
+          : null;
+
+      const validBaseName = validBaseId ? (a.baseName || getBaseDisplayName(validBaseId) || null) : null;
+
+      return {
+        id: a.id,
+        person_id: a.personId,
+        day_id: a.dayId,
+        shift_id: a.shiftId,
+        assigned_type: a.assignedType === 'MESA' ? 'GT' : (a.assignedType || 'GT'),
+        gt_sub_team: a.gtSubTeam || null,
+        base_id: validBaseId,
+        base_name: validBaseName,
+        function_id: a.assignedFunction || null,
+        role_in_base: a.roleInBase || null,
+        requirement_id: a.requirementId || null,
+        notes: a.notes || null,
+        updated_at: a.updatedAt || new Date().toISOString(),
+      };
+    });
 
     const { error } = await client.from('assignments').upsert(payload, { onConflict: 'id' });
     if (error) {
@@ -227,12 +239,14 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
       eventId: r.event_id || undefined,
       dayId: r.day_id || '',
       name: r.name,
-      baseNumber: r.base_number || undefined,
+      baseNumber: r.base_number !== null && r.base_number !== undefined ? String(r.base_number) : (r.id ? String(r.id).replace(/^[a-z_]+_/, '') : undefined),
       category: r.category || undefined,
       color: r.color || '#B83A24',
       orderIndex: r.order_index || 0,
       isActive: r.is_active !== false,
       capacity: 2,
+      defaultCapacity: 2,
+      isSpecial: r.name?.toLowerCase().includes('toro') || r.name?.toLowerCase().includes('speedway') || r.name?.toLowerCase().includes('arcade'),
     }));
   } catch (err) {
     console.warn('Exception pulling bases:', err);
@@ -389,21 +403,42 @@ export async function pullAssignmentsFromSupabase(): Promise<Assignment[] | null
       console.warn('Error pulling assignments from Supabase:', error);
       return null;
     }
-    return data.map((r: any) => ({
-      id: r.id,
-      personId: r.person_id,
-      dayId: r.day_id,
-      shiftId: r.shift_id,
-      assignedType: r.assigned_type || 'GAP',
-      gtSubTeam: r.gt_sub_team || undefined,
-      baseNumber: r.base_id !== null && r.base_id !== undefined ? (isNaN(Number(r.base_id)) ? r.base_id : Number(r.base_id)) : undefined,
-      baseName: r.base_name || undefined,
-      assignedFunction: r.function_id || undefined,
-      roleInBase: r.role_in_base || undefined,
-      requirementId: r.requirement_id || undefined,
-      notes: r.notes || undefined,
-      updatedAt: r.updated_at || new Date().toISOString(),
-    }));
+    return data.map((r: any) => {
+      const validBaseId =
+        r.base_id && r.base_id !== 'null' && r.base_id !== 'undefined' && String(r.base_id).trim() !== ''
+          ? String(r.base_id).trim()
+          : undefined;
+
+      const validBaseName =
+        r.base_name && r.base_name !== 'null' && r.base_name !== 'undefined' && String(r.base_name).trim() !== ''
+          ? String(r.base_name).trim()
+          : validBaseId
+          ? getBaseDisplayName(validBaseId)
+          : undefined;
+
+      const parsedBaseNumber = validBaseId
+        ? isNaN(Number(validBaseId))
+          ? validBaseId
+          : Number(validBaseId)
+        : undefined;
+
+      return {
+        id: r.id,
+        personId: r.person_id,
+        dayId: r.day_id,
+        shiftId: r.shift_id,
+        assignedType: r.assigned_type === 'MESA' ? 'GT' : (r.assigned_type || 'GT'),
+        gtSubTeam: r.gt_sub_team || undefined,
+        baseId: validBaseId,
+        baseNumber: parsedBaseNumber,
+        baseName: validBaseName,
+        assignedFunction: r.function_id || undefined,
+        roleInBase: r.role_in_base || undefined,
+        requirementId: r.requirement_id || undefined,
+        notes: r.notes || undefined,
+        updatedAt: r.updated_at || new Date().toISOString(),
+      };
+    });
   } catch (err) {
     console.warn('Exception pulling assignments from Supabase:', err);
     return null;
@@ -566,19 +601,23 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
     }
 
     const cleanBaseId =
-      a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== 'null' && a.baseNumber !== ''
-        ? String(a.baseNumber)
+      a.baseId && a.baseId !== 'null' && a.baseId !== 'undefined' && a.baseId.trim() !== ''
+        ? a.baseId.trim()
+        : a.baseNumber !== undefined && a.baseNumber !== null && String(a.baseNumber) !== 'null' && String(a.baseNumber) !== 'undefined' && String(a.baseNumber).trim() !== ''
+        ? String(a.baseNumber).trim()
         : null;
+
+    const cleanBaseName = cleanBaseId ? (a.baseName || getBaseDisplayName(cleanBaseId) || null) : null;
 
     const payload = {
       id: a.id,
       person_id: a.personId,
       day_id: a.dayId,
       shift_id: a.shiftId,
-      assigned_type: a.assignedType || 'GAP',
+      assigned_type: a.assignedType === 'MESA' ? 'GT' : (a.assignedType || 'GT'),
       gt_sub_team: a.gtSubTeam || null,
       base_id: cleanBaseId,
-      base_name: a.baseName || null,
+      base_name: cleanBaseName,
       function_id: a.assignedFunction || null,
       role_in_base: a.roleInBase || null,
       requirement_id: a.requirementId || null,

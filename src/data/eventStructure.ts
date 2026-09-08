@@ -46,12 +46,22 @@ export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
 
 // Helper to format base display name reliably
 export function getBaseDisplayName(base: number | string | undefined | null): string {
-  if (base === undefined || base === null || base === '') return '';
-  if (base === 28 || base === '28' || base === 'toro' || base === 'Base Toro') return 'Base Toro';
-  if (base === 29 || base === '29' || base === 'speedway' || base === 'Base Speedway') return 'Base Speedway';
-  if (base === 30 || base === '30' || base === 'arcade' || base === 'Base Arcade') return 'Base Arcade';
-  if (typeof base === 'string' && base.toLowerCase().startsWith('base')) return base;
-  return `Base ${base}`;
+  if (base === undefined || base === null || base === '' || base === 'null' || base === 'undefined') return '';
+  const s = String(base).trim();
+  if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
+  if (s === '28' || s.toLowerCase() === 'toro' || s.toLowerCase() === 'base toro' || s === 'carnival_28') return 'Base Toro';
+  if (s === '29' || s.toLowerCase() === 'speedway' || s.toLowerCase() === 'base speedway' || s === 'carnival_29') return 'Base Speedway';
+  if (s === '30' || s.toLowerCase() === 'arcade' || s.toLowerCase() === 'base arcade' || s === 'carnival_30') return 'Base Arcade';
+  if (s.toLowerCase().startsWith('base ')) return s;
+  const match = s.match(/(?:carnival|games_jueves|games_viernes)_(\d+)/i);
+  if (match) {
+    const num = Number(match[1]);
+    if (num === 28) return 'Base Toro';
+    if (num === 29) return 'Base Speedway';
+    if (num === 30) return 'Base Arcade';
+    return `Base ${num}`;
+  }
+  return `Base ${s}`;
 }
 
 // 15 Physical Bases for The Games
@@ -522,8 +532,12 @@ export function findShiftById(
   if (shiftId === 'miercoles-t1') return shifts.find((s) => s.id === 'miercoles-gap-t1');
   if (shiftId === 'miercoles-t2') return shifts.find((s) => s.id === 'miercoles-gap-t2');
   if (shiftId === 'miercoles-t3') return shifts.find((s) => s.id === 'miercoles-gap-t3');
-  if (shiftId === 'jueves-t2-gt' || shiftId === 'shift_jueves_mtqcifm4_nt5') {
-    const s = shifts.find((x) => x.id === 'shift_jueves_mtqcifm4_nt5' || x.id === 'jueves-t2-gt' || x.id === 'jueves-t2');
+  if (shiftId === 'jueves-t2-gt' || shiftId === 'shift_jueves_mtqcifm4_nt5' || shiftId === 'jueves-t2' || shiftId === 'shift_jueves_gap_mtrxwlwl_l9j') {
+    const s = shifts.find((x) => x.id === shiftId || x.id === 'shift_jueves_mtqcifm4_nt5' || x.id === 'shift_jueves_gap_mtrxwlwl_l9j' || x.id === 'jueves-t2-gt' || x.id === 'jueves-t2');
+    if (s) return s;
+  }
+  if (shiftId === 'jueves-t1' || shiftId === 'shift_jueves_gt_mtrxjh9q_r2t') {
+    const s = shifts.find((x) => x.id === shiftId || x.id === 'shift_jueves_gt_mtrxjh9q_r2t' || x.id === 'jueves-t1');
     if (s) return s;
   }
 

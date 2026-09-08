@@ -93,6 +93,7 @@ export interface Person {
   shirtSize?: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | string; // Talla de camiseta
   dietaryRestrictions?: string;
   notes?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -188,6 +189,7 @@ export interface Assignment {
   shiftId: string;
   assignedType: PersonType; // GT, GAP, or MESA
   gtSubTeam?: GtSubTeam | string; // e.g. "Logística"
+  baseId?: string; // Real Supabase base_id: e.g. "carnival_4", "games_jueves_4"
   baseNumber?: number | string; // 1 to 27 or 28, 29, 30, 'toro', 'speedway', 'arcade'
   baseName?: string; // "Base 1", "Base Toro", "Base Speedway", "Base Arcade"
   assignedFunction?: string; // Specific function assigned for this shift (e.g. "Montaje")
