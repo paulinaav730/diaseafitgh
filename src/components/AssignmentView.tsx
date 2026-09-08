@@ -187,7 +187,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Determine physical bases for current day & category (dynamically uses configurable bases if present)
   const physicalBases: PhysicalBase[] = useMemo(() => {
     if (bases && bases.length > 0) {
-      if (isDivided && carnivalCategory === 'GAP') {
+      if (activeShift?.hasBases || (isDivided && carnivalCategory === 'GAP') || selectedDayId === 'jueves') {
         const eventIdFilter = selectedDayId === 'miercoles' ? 'carnival' : 'the-games';
         return bases
           .filter((b) => b.isActive && (b.eventId === eventIdFilter || (!b.eventId && selectedDayId === 'miercoles')))
@@ -931,7 +931,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       </div>
 
       {/* CONDITIONAL: 30 PHYSICAL BASES FOR CARNIVAL GAP */}
-      {isDivided && carnivalCategory === 'GAP' && activeShift.hasBases && physicalBases.length > 0 && (
+      {activeShift.hasBases && physicalBases.length > 0 && (
         <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EADDC7]">
             <div>
