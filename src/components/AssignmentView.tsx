@@ -328,9 +328,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // 1. Group / Subteam matching:
       // RULE: MESA can be assigned to ANY shift and ANY requirement ("la mesa puede ser asignada a todos los turnos sin importar qué")
       let matchesGroup = false;
-      if (isMesa) {
-        matchesGroup = true;
-      } else if (activeRequirement) {
+      if (activeRequirement) {
         if (activeRequirement.groupType === 'GT') {
           const isGt = person.primaryType === 'GT';
           const matchesSub =
