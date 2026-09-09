@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Person, AvailabilityRecord } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Person, AvailabilityRecord, ConfigurableShift, Shift } from '../types';
 import {
   EVENT_SCHEDULE,
   CARNIVAL_GT_SHIFTS,
@@ -18,16 +18,19 @@ import {
   Grid,
   Layers,
   AlertCircle,
+  Crown,
 } from 'lucide-react';
 
 interface AvailabilityViewProps {
   people: Person[];
   availabilities: AvailabilityRecord[];
+  shifts?: (ConfigurableShift | Shift)[];
 }
 
 export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   people,
   availabilities,
+  shifts,
 }) => {
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
@@ -36,6 +39,38 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const selectedPerson = people.find((p) => p.id === selectedPersonId);
+
+  const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
+  const isCarnival = currentDay.isCarnival;
+
+  // MESA shifts for Carnival
+  const carnivalMesaShifts = useMemo(() => {
+    const configuredMesa = (shifts || []).filter(
+      (s) =>
+        s.dayId === 'miercoles' &&
+        s.isActive !== false &&
+        (s.category === 'MESA' || s.name.toUpperCase().includes('MESA'))
+    );
+    if (configuredMesa.length > 0) {
+      return configuredMesa;
+    }
+    return CARNIVAL_GT_SHIFTS.map((s) => ({
+      ...s,
+      category: 'MESA' as const,
+      forTypes: ['MESA' as const],
+    }));
+  }, [shifts]);
+
+  // Non-Carnival day shifts
+  const currentDayShifts = useMemo(() => {
+    const configured = (shifts || []).filter(
+      (s) => s.dayId === selectedDayId && s.isActive !== false
+    );
+    if (configured.length > 0) {
+      return configured;
+    }
+    return currentDay.shifts;
+  }, [shifts, selectedDayId, currentDay]);
 
   // When person or day changes, prefill current availability if already saved
   const handlePersonOrDayChange = (personId: string, dayId: string) => {
@@ -79,9 +114,6 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
       alert('Error al guardar la disponibilidad.');
     }
   };
-
-  const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
-  const isCarnival = currentDay.isCarnival;
 
   return (
     <div className="space-y-6 text-[#182535]">
@@ -319,6 +351,78 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* MESA SHIFTS (Shown if MESA or no person selected) */}
+              {(!selectedPerson || selectedPerson.primaryType === 'MESA') && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                    <div className="flex items-center gap-2">
+                      <span className="p-1 rounded-md bg-purple-100 text-purple-700">
+                        <Crown className="w-4 h-4" />
+                      </span>
+                      <h4 className="text-sm font-bold text-[#182535] font-dalek tracking-wider">
+                        CARNIVAL — MESA DIRECTIVA ({carnivalMesaShifts.length} TURNOS)
+                      </h4>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-700 text-white font-mono font-bold">
+                        EXCLUSIVO MESA
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mesaIds = carnivalMesaShifts.map((s) => s.id);
+                          const remaining = selectedShifts.filter((id) => !mesaIds.includes(id));
+                          setSelectedShifts([...remaining, ...mesaIds]);
+                        }}
+                        className="text-[11px] font-bold text-purple-700 hover:underline"
+                      >
+                        Marcar todos MESA
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {carnivalMesaShifts.map((shift) => {
+                      const isChecked = selectedShifts.includes(shift.id);
+                      return (
+                        <div
+                          key={shift.id}
+                          onClick={() => handleToggleShift(shift.id)}
+                          className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 select-none ${
+                            isChecked
+                              ? 'bg-purple-50 border-purple-700 shadow-xs ring-1 ring-purple-600/30'
+                              : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-purple-400 hover:bg-[#FFFDF8]'
+                          }`}
+                        >
+                          <div className="mt-0.5 text-purple-700">
+                            {isChecked ? (
+                              <CheckSquare className="w-5 h-5 text-purple-700" />
+                            ) : (
+                              <Square className="w-5 h-5 text-[#94A3B8]" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-[#182535]">{shift.name}</span>
+                              <span className="text-[10px] font-mono text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">
+                                MESA
+                              </span>
+                            </div>
+                            <div className="text-sm font-bold text-[#182535] mt-1 font-mono">
+                              {shift.label}
+                            </div>
+                            <div className="text-[10px] text-[#64748B] mt-1">
+                              {shift.startTime} - {shift.endTime} • Coordinación General
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* OTHER DAYS (Lunes, Martes, Jueves, Viernes) */
@@ -341,8 +445,10 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedShifts(currentDay.shifts.map((s) => s.id))}
-                    className="text-[11px] font-bold text-[#B83A24] hover:underline"
+                    onClick={() => setSelectedShifts(currentDayShifts.map((s) => s.id))}
+                    className={`text-[11px] font-bold hover:underline ${
+                      selectedPerson?.primaryType === 'MESA' ? 'text-purple-700' : 'text-[#B83A24]'
+                    }`}
                   >
                     Marcar todos
                   </button>
@@ -358,21 +464,24 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {currentDay.shifts.map((shift) => {
+                {currentDayShifts.map((shift) => {
                   const isChecked = selectedShifts.includes(shift.id);
+                  const isMesaPerson = selectedPerson?.primaryType === 'MESA';
                   return (
                     <div
                       key={shift.id}
                       onClick={() => handleToggleShift(shift.id)}
                       className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 select-none ${
                         isChecked
-                          ? 'bg-[#FDF2EE] border-[#B83A24] shadow-xs'
+                          ? isMesaPerson
+                            ? 'bg-purple-50 border-purple-700 shadow-xs ring-1 ring-purple-600/30'
+                            : 'bg-[#FDF2EE] border-[#B83A24] shadow-xs'
                           : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-[#B83A24]/40 hover:bg-[#FFFDF8]'
                       }`}
                     >
-                      <div className="mt-0.5 text-[#B83A24]">
+                      <div className={`mt-0.5 ${isMesaPerson ? 'text-purple-700' : 'text-[#B83A24]'}`}>
                         {isChecked ? (
-                          <CheckSquare className="w-5 h-5 text-[#B83A24]" />
+                          <CheckSquare className={`w-5 h-5 ${isMesaPerson ? 'text-purple-700' : 'text-[#B83A24]'}`} />
                         ) : (
                           <Square className="w-5 h-5 text-[#94A3B8]" />
                         )}
@@ -388,7 +497,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           {shift.label}
                         </div>
                         <div className="text-[11px] text-[#64748B] mt-1">
-                          Apto para: {shift.forTypes.join(' / ')}
+                          {isMesaPerson ? 'Apto para: MESA' : `Apto para: ${(shift.forTypes || ['GT']).join(' / ')}`}
                         </div>
                       </div>
                     </div>

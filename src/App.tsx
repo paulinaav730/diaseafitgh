@@ -268,7 +268,11 @@ export default function App() {
             )}
 
             {currentTab === 'availability' && (
-              <AvailabilityView people={people} availabilities={availabilities} />
+              <AvailabilityView
+                people={people}
+                availabilities={availabilities}
+                shifts={shifts}
+              />
             )}
 
             {currentTab === 'attendance' && (

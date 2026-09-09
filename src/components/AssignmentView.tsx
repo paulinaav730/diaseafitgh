@@ -577,9 +577,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       );
 
       let isAvailableInShift = false;
-      if (isMesa) {
-        isAvailableInShift = true;
-      } else if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
+      // RULE: MESA members must strictly have this shift or matching schedule registered in their availability
+      if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
         if (availRecord.shiftIds.includes(activeShift.id)) {
           isAvailableInShift = true;
         } else {
@@ -613,14 +612,25 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           // Time & Turno matching
           if (!isAvailableInShift) {
             const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+            const normTime = (t?: string) => {
+              if (!t) return '';
+              const clean = t.replace(/(?:a\.\s*m\.|p\.\s*m\.|am|pm)/gi, '').trim();
+              const parts = clean.split(':');
+              if (parts.length < 2) return clean;
+              const h = parseInt(parts[0], 10);
+              const m = parseInt(parts[1], 10);
+              if (isNaN(h) || isNaN(m)) return clean;
+              return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            };
+
             for (const regId of availRecord.shiftIds) {
               const regShift = allKnownShifts.find((s) => s.id === regId);
               if (regShift && regShift.dayId === selectedDayId) {
                 if (
                   regShift.startTime &&
                   activeShift.startTime &&
-                  regShift.startTime === activeShift.startTime &&
-                  regShift.endTime === activeShift.endTime
+                  normTime(regShift.startTime) === normTime(activeShift.startTime) &&
+                  normTime(regShift.endTime) === normTime(activeShift.endTime)
                 ) {
                   isAvailableInShift = true;
                   break;
@@ -846,6 +856,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
     try {
+      const candidateInfo = candidatePool.find((c) => c.person.id === candidatePerson.id);
+      if (candidateInfo && !candidateInfo.isAvailableInShift) {
+        setModalAlert(
+          `Esta persona (${candidatePerson.name}) no tiene registrado este turno (${activeShift.name}) en su horario de disponibilidad.`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const isMesaPerson = candidatePerson.primaryType === 'MESA';
 
       // Tab or requirement determines assigned type; MESA is strictly assigned as MESA
@@ -2212,6 +2231,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   ? 'bg-[#FAF6EC] text-[#94A3B8] border border-[#EADDC7] cursor-not-allowed'
                                   : baseAssignTab === 'GAP'
                                   ? 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white cursor-pointer'
+                                  : isShiftMesa || baseAssignTab === 'MESA' || activeRequirement?.groupType === 'MESA'
+                                  ? 'bg-purple-700 hover:bg-purple-800 text-white cursor-pointer'
                                   : 'bg-[#182535] hover:bg-[#2A3F55] text-white cursor-pointer'
                               }`}
                             >
@@ -2223,6 +2244,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   ? 'Seleccione Base'
                                   : activeRequirement
                                   ? `Asignar a ${activeRequirement.gtSubTeam || activeRequirement.groupType}`
+                                  : isShiftMesa || baseAssignTab === 'MESA'
+                                  ? 'Asignar a MESA'
                                   : `Asignar ${baseAssignTab}`}
                               </span>
                             </button>
