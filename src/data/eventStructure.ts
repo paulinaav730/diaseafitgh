@@ -186,7 +186,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 19,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'lunes-t2',
@@ -200,7 +200,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 30,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'lunes-t3',
@@ -214,7 +214,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 36,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'lunes-t4',
@@ -228,7 +228,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 36,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'lunes-t5',
@@ -242,7 +242,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 42,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
 
   // MARTES - THE ZONE (4 turnos GT)
@@ -258,7 +258,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'martes-t2',
@@ -272,7 +272,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'martes-t3',
@@ -286,7 +286,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'martes-t4',
@@ -300,7 +300,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 19,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
 
   // MIÉRCOLES - CARNIVAL (GT: 5 turnos)
@@ -316,7 +316,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 19,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'miercoles-gt-t2',
@@ -330,7 +330,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'miercoles-gt-t3',
@@ -344,7 +344,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'miercoles-gt-t4',
@@ -358,7 +358,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'miercoles-gt-t5',
@@ -372,7 +372,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 19,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
 
   // JUEVES - THE CHALLENGE & THE GAMES (GT)
@@ -388,7 +388,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
   {
     id: 'jueves-t2-gt',
@@ -402,7 +402,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 50,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
 
   // VIERNES - THE GAMES (GT)
@@ -418,7 +418,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 58,
     isActive: true,
     hasBases: false,
-    forTypes: ['GT', 'MESA'],
+    forTypes: ['GT'],
   },
 ];
 

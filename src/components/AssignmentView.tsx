@@ -54,6 +54,7 @@ import {
   UserCheck,
   Sliders,
   MapPin,
+  Crown,
 } from 'lucide-react';
 
 interface AssignmentViewProps {
@@ -85,7 +86,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [selectedShiftId, setSelectedShiftId] = useState<string>('lunes-t1');
   const [selectedBaseNumber, setSelectedBaseNumber] = useState<number | string | null>(null);
   const [modalBase, setModalBase] = useState<PhysicalBase | null>(null);
-  const [baseAssignTab, setBaseAssignTab] = useState<'GAP' | 'GT'>('GT');
+  const [baseAssignTab, setBaseAssignTab] = useState<'GAP' | 'GT' | 'MESA'>('GT');
 
   // Requirement Creation Modal State
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
@@ -110,7 +111,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
   const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
-  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
+  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
@@ -284,27 +285,41 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   }, [assignments, selectedDayId, activeShift.id]);
 
   const assignedGtCount = useMemo(
-    () => currentShiftAssignments.filter((a) => a.assignedType === 'GT' || a.assignedType === 'MESA').length,
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'GT').length,
     [currentShiftAssignments]
   );
   const assignedGapCount = useMemo(
     () => currentShiftAssignments.filter((a) => a.assignedType === 'GAP').length,
     [currentShiftAssignments]
   );
+  const assignedMesaCount = useMemo(
+    () => currentShiftAssignments.filter((a) => a.assignedType === 'MESA').length,
+    [currentShiftAssignments]
+  );
 
   const filteredCurrentShiftAssignments = useMemo(() => {
     if (assignedTypeFilter === 'ALL') return currentShiftAssignments;
-    if (assignedTypeFilter === 'GT') {
-      return currentShiftAssignments.filter((a) => a.assignedType === 'GT' || a.assignedType === 'MESA');
-    }
     return currentShiftAssignments.filter((a) => a.assignedType === assignedTypeFilter);
   }, [currentShiftAssignments, assignedTypeFilter]);
 
+  // Whether current active shift is specifically for MESA
+  const isShiftMesa = useMemo(() => {
+    return (
+      activeShift.category === 'MESA' ||
+      activeShift.name.toUpperCase().includes('MESA') ||
+      Boolean(activeShift.label && activeShift.label.toUpperCase().includes('MESA')) ||
+      (Array.isArray(activeShift.forTypes) &&
+        activeShift.forTypes.includes('MESA') &&
+        !activeShift.forTypes.includes('GT') &&
+        !activeShift.forTypes.includes('GAP'))
+    );
+  }, [activeShift]);
+
   // Open Requirement Creation Modal
   const handleOpenCreateRequirement = () => {
-    setReqGroupType(isDivided && carnivalCategory === 'GAP' ? 'GAP' : 'GT');
+    setReqGroupType(isShiftMesa ? 'MESA' : isDivided && carnivalCategory === 'GAP' ? 'GAP' : 'GT');
     setReqGtSubTeam('Logística');
-    setReqCapacity(10);
+    setReqCapacity(isShiftMesa ? 18 : 10);
     setReqShowSpecificFunctions(false);
     setReqSelectedFunctions([]);
     setReqNotes('');
@@ -389,7 +404,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     setShowOnlyAvailableInModal(true);
 
     if (req) {
-      const tabToUse = req.groupType === 'GT' ? 'GT' : 'GAP';
+      const tabToUse: 'GAP' | 'GT' | 'MESA' =
+        req.groupType === 'MESA' ? 'MESA' : req.groupType === 'GT' ? 'GT' : 'GAP';
       setBaseAssignTab(tabToUse);
       setModalAssignedType(req.groupType);
       setModalGtSubTeam(req.gtSubTeam);
@@ -398,7 +414,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           ? req.specificFunctions[0]
           : ''
       );
-      setModalRoleInBase(req.groupType === 'GT' ? `GT ${req.gtSubTeam || ''}` : req.groupType);
+      setModalRoleInBase(
+        req.groupType === 'MESA'
+          ? 'MESA'
+          : req.groupType === 'GT'
+          ? `GT ${req.gtSubTeam || ''}`
+          : req.groupType
+      );
     } else if (baseId !== undefined || targetBase !== null) {
       setBaseAssignTab('GAP');
       setModalAssignedType('GAP');
@@ -406,11 +428,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       setModalAssignedFunction('Animación de base');
       setModalRoleInBase('Encargado de Base');
     } else {
-      setBaseAssignTab('GAP');
-      setModalAssignedType('GAP');
+      const isShiftMesa =
+        activeShift.category === 'MESA' ||
+        activeShift.name.toUpperCase().includes('MESA') ||
+        (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
+      const defaultTab: 'GAP' | 'GT' | 'MESA' = isShiftMesa ? 'MESA' : 'GT';
+      setBaseAssignTab(defaultTab);
+      setModalAssignedType(defaultTab);
       setModalGtSubTeam(undefined);
       setModalAssignedFunction('');
-      setModalRoleInBase('Staff General');
+      setModalRoleInBase(isShiftMesa ? 'MESA' : 'Staff General');
     }
 
     setIsAssignModalOpen(true);
@@ -442,25 +469,80 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     return Boolean(activeShift.capacity && currentShiftAssignments.length >= activeShift.capacity);
   }, [activeShift, currentShiftAssignments]);
 
-  // Candidate pool calculation with strict availability, continuity, and GAP/GT rules
+  // Candidate pool calculation with strict availability, continuity, and GAP/GT/MESA rules
   const candidatePool = useMemo(() => {
+    const isReqMesa = activeRequirement?.groupType === 'MESA';
+    const isMesaContext = isReqMesa || (!activeRequirement && isShiftMesa);
+
     return people.map((person) => {
       const isMesa = person.primaryType === 'MESA';
       const isPersonActive = person.isActive !== false;
 
+      // RULE: MESA members ONLY appear for MESA shifts/requirements ("solo para los turnos que sea mesa")
+      // And in MESA shifts/requirements, ONLY MESA members appear
+      if (isMesaContext) {
+        if (!isMesa) {
+          return {
+            person,
+            isPersonActive,
+            isAlreadyAssigned: false,
+            conflictingAssignment: undefined,
+            isAvailableInShift: false,
+            carnivalContinuityConflict: false,
+            priorCarnivalBaseName: undefined,
+            isCategoryAllowedForGap: false,
+            isCategoryAllowedForGt: false,
+            isCategoryAllowedForMesa: false,
+            isEligibleForGap: false,
+            isEligibleForGt: false,
+            isEligibleForMesa: false,
+            matchesRequirementGroup: false,
+            matchingFunctionsList: [],
+          };
+        }
+      } else {
+        if (isMesa) {
+          return {
+            person,
+            isPersonActive,
+            isAlreadyAssigned: false,
+            conflictingAssignment: undefined,
+            isAvailableInShift: false,
+            carnivalContinuityConflict: false,
+            priorCarnivalBaseName: undefined,
+            isCategoryAllowedForGap: false,
+            isCategoryAllowedForGt: false,
+            isCategoryAllowedForMesa: false,
+            isEligibleForGap: false,
+            isEligibleForGt: false,
+            isEligibleForMesa: false,
+            matchesRequirementGroup: false,
+            matchingFunctionsList: [],
+          };
+        }
+      }
+
       // 1. Group / Subteam matching for requirements:
       let matchesRequirementGroup = true;
       if (activeRequirement) {
-        if (activeRequirement.groupType === 'GT') {
-          const isGt = person.primaryType === 'GT' || isMesa;
+        if (activeRequirement.groupType === 'MESA') {
+          matchesRequirementGroup = isMesa;
+        } else if (activeRequirement.groupType === 'GT') {
+          const isGt = person.primaryType === 'GT';
           const matchesSub =
             !activeRequirement.gtSubTeam ||
-            isMesa ||
             person.gtSubTeam === activeRequirement.gtSubTeam ||
             (person.gtTeams && person.gtTeams.includes(activeRequirement.gtSubTeam));
           matchesRequirementGroup = isGt && matchesSub;
         } else if (activeRequirement.groupType === 'GAP') {
-          matchesRequirementGroup = person.primaryType === 'GAP' || person.primaryType === 'GT' || isMesa;
+          matchesRequirementGroup =
+            person.primaryType === 'GAP' || (person.primaryType === 'GT' && Boolean(person.alsoActsAsGap));
+        }
+      } else {
+        if (isShiftMesa) {
+          matchesRequirementGroup = isMesa;
+        } else {
+          matchesRequirementGroup = !isMesa;
         }
       }
 
@@ -593,14 +675,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       // GAP Eligibility:
       // - primaryType === 'GAP'
-      // - primaryType === 'GT' or 'MESA':
+      // - primaryType === 'GT' with dual role:
       //   * GT Generales or alsoActsAsGap: Wed, Thu, Fri
-      //   * GT Carnival: Thu, Fri (Wed Carnival GT has no GAP)
-      //   * Other GT: only if alsoActsAsGap === true
+      //   * GT Carnival: Thu, Fri
+      //   * MESA is NEVER allowed for GAP
       let isCategoryAllowedForGap = false;
       if (person.primaryType === 'GAP') {
         isCategoryAllowedForGap = true;
-      } else if (person.primaryType === 'GT' || isMesa) {
+      } else if (person.primaryType === 'GT') {
         if (isGeneralSubteam || person.alsoActsAsGap) {
           if (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') {
             isCategoryAllowedForGap = true;
@@ -615,13 +697,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
 
       // GT Eligibility:
-      // - primaryType === 'GT' or 'MESA'
-      // - Must match activeRequirement gtSubTeam if specified
+      // - strictly primaryType === 'GT' (MESA is NEVER allowed for GT)
       let isCategoryAllowedForGt = false;
-      if (person.primaryType === 'GT' || isMesa) {
+      if (person.primaryType === 'GT') {
         if (activeRequirement && activeRequirement.groupType === 'GT' && activeRequirement.gtSubTeam) {
           if (
-            isMesa ||
             person.gtSubTeam === activeRequirement.gtSubTeam ||
             (person.gtTeams || []).includes(activeRequirement.gtSubTeam)
           ) {
@@ -632,12 +712,23 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         }
       }
 
+      // MESA Eligibility:
+      // - strictly primaryType === 'MESA' (only MESA candidates)
+      const isCategoryAllowedForMesa = isMesa;
+
       // Functions check
       let matchesFunctions = true;
       let matchingFunctionsList: string[] = [];
       if (isMesa) {
-        matchesFunctions = true;
-        matchingFunctionsList = person.functions && person.functions.length > 0 ? person.functions : ['Coordinación'];
+        if (activeRequirement && activeRequirement.specificFunctions && activeRequirement.specificFunctions.length > 0) {
+          matchingFunctionsList = (person.functions || []).filter((f) =>
+            activeRequirement.specificFunctions!.includes(f)
+          );
+          matchesFunctions = matchingFunctionsList.length > 0;
+        } else {
+          matchingFunctionsList = person.functions && person.functions.length > 0 ? person.functions : ['MESA'];
+          matchesFunctions = true;
+        }
       } else if (activeRequirement && activeRequirement.specificFunctions && activeRequirement.specificFunctions.length > 0) {
         matchingFunctionsList = (person.functions || []).filter((f) =>
           activeRequirement.specificFunctions!.includes(f)
@@ -655,8 +746,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         !conflictingAssignment &&
         !carnivalContinuityConflict;
 
-      const isEligibleForGap = baseAvailable && isCategoryAllowedForGap && matchesFunctions;
-      const isEligibleForGt = baseAvailable && isCategoryAllowedForGt && matchesFunctions;
+      const isEligibleForGap = baseAvailable && isCategoryAllowedForGap && matchesRequirementGroup && matchesFunctions;
+      const isEligibleForGt = baseAvailable && isCategoryAllowedForGt && matchesRequirementGroup && matchesFunctions;
+      const isEligibleForMesa = baseAvailable && isCategoryAllowedForMesa && matchesRequirementGroup && matchesFunctions;
 
       return {
         person,
@@ -668,8 +760,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         priorCarnivalBaseName,
         isCategoryAllowedForGap,
         isCategoryAllowedForGt,
+        isCategoryAllowedForMesa,
         isEligibleForGap,
         isEligibleForGt,
+        isEligibleForMesa,
         matchesRequirementGroup,
         matchingFunctionsList,
       };
@@ -685,6 +779,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     selectedBaseNumber,
     shifts,
     currentDay,
+    isShiftMesa,
   ]);
 
   const gapCandidatesCount = useMemo(() => {
@@ -695,7 +790,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     return candidatePool.filter((c) => c.isEligibleForGt).length;
   }, [candidatePool]);
 
-  // Filter candidates based on active tab [GAP] or [GT]
+  const mesaCandidatesCount = useMemo(() => {
+    return candidatePool.filter((c) => c.isEligibleForMesa).length;
+  }, [candidatePool]);
+
+  // Filter candidates based on active requirement or active tab [GAP] vs [GT] vs [MESA]
   const filteredCandidates = useMemo(() => {
     const q = candidateSearchQuery.trim().toLowerCase();
 
@@ -712,11 +811,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // Exclude continuity conflicts
       if (c.carnivalContinuityConflict) return false;
 
-      // Filter by active Tab [GAP] vs [GT]
-      if (baseAssignTab === 'GAP') {
-        if (!c.isEligibleForGap) return false;
+      // Filter by requirement or active Tab [GAP] vs [GT] vs [MESA]
+      if (activeRequirement) {
+        if (!c.matchesRequirementGroup) return false;
+        if (activeRequirement.groupType === 'MESA') {
+          if (!c.isEligibleForMesa) return false;
+        } else if (activeRequirement.groupType === 'GT') {
+          if (!c.isEligibleForGt) return false;
+        } else if (activeRequirement.groupType === 'GAP') {
+          if (!c.isEligibleForGap) return false;
+        }
       } else {
-        if (!c.isEligibleForGt) return false;
+        if (isShiftMesa || baseAssignTab === 'MESA') {
+          if (!c.isEligibleForMesa) return false;
+        } else if (baseAssignTab === 'GAP') {
+          if (!c.isEligibleForGap) return false;
+        } else {
+          if (!c.isEligibleForGt) return false;
+        }
       }
 
       // Search query filter
@@ -729,20 +841,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       return true;
     });
-  }, [candidatePool, baseAssignTab, candidateSearchQuery]);
+  }, [candidatePool, baseAssignTab, activeRequirement, candidateSearchQuery, isShiftMesa]);
 
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
     try {
       const isMesaPerson = candidatePerson.primaryType === 'MESA';
 
-      // Tab or requirement determines assigned type; MESA always assigned as GT
+      // Tab or requirement determines assigned type; MESA is strictly assigned as MESA
       let assignedTypeToUse: PersonType = baseAssignTab;
       if (activeRequirement) {
         assignedTypeToUse = activeRequirement.groupType;
       }
-      if (isMesaPerson && assignedTypeToUse === 'MESA') {
-        assignedTypeToUse = 'GT';
+      if (isMesaPerson) {
+        assignedTypeToUse = 'MESA';
       }
 
       // Base identification
@@ -1425,6 +1537,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               { id: 'ALL', label: `Todos (${currentShiftAssignments.length})` },
               { id: 'GT', label: `GT (${assignedGtCount})` },
               { id: 'GAP', label: `GAP (${assignedGapCount})` },
+              ...(assignedMesaCount > 0 || currentShiftRequirements.some((r) => r.groupType === 'MESA')
+                ? [{ id: 'MESA', label: `MESA (${assignedMesaCount})` }]
+                : []),
             ].map((pill) => (
               <button
                 key={pill.id}
@@ -1434,6 +1549,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   assignedTypeFilter === pill.id
                     ? pill.id === 'GAP'
                       ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : pill.id === 'MESA'
+                      ? 'bg-purple-700 text-white shadow-2xs'
                       : pill.id === 'GT'
                       ? 'bg-[#182535] text-white shadow-2xs'
                       : 'bg-[#B83A24] text-white shadow-2xs'
@@ -1751,8 +1868,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       {/* MODAL 2: ASIGNAR PERSONAS AL TURNO / CUPO / BASE */}
       {isAssignModalOpen && (() => {
-        const shiftRequiresBase = Boolean(activeShift.hasBases || modalBase !== null);
-        const hasValidBase = Boolean(modalBase || selectedBaseNumber !== null);
+        const isContextMesa = activeRequirement?.groupType === 'MESA' || baseAssignTab === 'MESA' || isShiftMesa;
+        const shiftRequiresBase = isContextMesa ? false : Boolean(activeShift.hasBases || modalBase !== null);
+        const hasValidBase = isContextMesa ? true : Boolean(modalBase || selectedBaseNumber !== null);
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
@@ -1886,40 +2004,49 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 </div>
               )}
 
-              {/* [GAP] / [GT] TABS */}
+              {/* [GAP] / [GT] / [MESA] TABS */}
               {!activeRequirement && (
                 <div className="mt-3 flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBaseAssignTab('GAP');
-                      setModalAssignedType('GAP');
-                    }}
-                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                      baseAssignTab === 'GAP'
-                        ? 'bg-[#B83A24] text-white shadow-xs'
-                        : 'text-[#64748B] hover:text-[#182535]'
-                    }`}
-                  >
-                    <Grid className="w-3.5 h-3.5" />
-                    <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
-                  </button>
+                  {isShiftMesa ? (
+                    <div className="flex-1 py-2 px-3 rounded-xl text-xs font-bold font-montserrat flex items-center justify-center gap-2 bg-purple-700 text-white shadow-xs">
+                      <Crown className="w-3.5 h-3.5" />
+                      <span>[MESA] Integrantes de MESA ({mesaCandidatesCount})</span>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBaseAssignTab('GAP');
+                          setModalAssignedType('GAP');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                          baseAssignTab === 'GAP'
+                            ? 'bg-[#B83A24] text-white shadow-xs'
+                            : 'text-[#64748B] hover:text-[#182535]'
+                        }`}
+                      >
+                        <Grid className="w-3.5 h-3.5" />
+                        <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBaseAssignTab('GT');
-                      setModalAssignedType('GT');
-                    }}
-                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                      baseAssignTab === 'GT'
-                        ? 'bg-[#182535] text-white shadow-xs'
-                        : 'text-[#64748B] hover:text-[#182535]'
-                    }`}
-                  >
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>[GT] Apoyo / Logística / MESA ({gtCandidatesCount})</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBaseAssignTab('GT');
+                          setModalAssignedType('GT');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                          baseAssignTab === 'GT'
+                            ? 'bg-[#182535] text-white shadow-xs'
+                            : 'text-[#64748B] hover:text-[#182535]'
+                        }`}
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>[GT] Apoyo / Logística ({gtCandidatesCount})</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

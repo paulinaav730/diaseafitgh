@@ -844,7 +844,7 @@ export async function assignPerson(
     (a) => a.personId === personId && a.dayId === dayId && a.shiftId === shiftId
   );
 
-  const normalizedAssignedType = assignedType === 'MESA' ? 'GT' : (assignedType || 'GT');
+  const normalizedAssignedType = assignedType || 'GT';
 
   const newAssignment: Assignment = {
     id:
@@ -1181,7 +1181,7 @@ export async function saveShift(
     baseIds: shiftData.baseIds,
     specificFunctions: shiftData.specificFunctions || [],
     notes: shiftData.notes || '',
-    forTypes: [shiftData.category, 'MESA'],
+    forTypes: [shiftData.category],
     createdAt: existingIndex >= 0 ? shiftsCache[existingIndex].createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

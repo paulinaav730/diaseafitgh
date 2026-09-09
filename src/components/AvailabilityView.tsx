@@ -176,12 +176,12 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   {selectedPerson?.primaryType === 'GT' && selectedPerson?.alsoActsAsGap &&
                     ' Este integrante de GT también actúa como GAP (ej: GAP Generales Miércoles, Jueves y Viernes): puede registrar turnos tanto de GT como de GAP.'}
                   {selectedPerson?.primaryType === 'MESA' &&
-                    ' Como integrante de MESA, puede seleccionar cualquier turno válido de GT o GAP.'}
+                    ' Como integrante de MESA, sus asignaciones aplican exclusivamente para turnos y requerimientos de MESA.'}
                 </p>
               </div>
 
-              {/* GAP SHIFTS (Shown if GAP, MESA, GT dual, or no person selected) */}
-              {(!selectedPerson || selectedPerson.primaryType === 'GAP' || selectedPerson.primaryType === 'MESA' || selectedPerson.alsoActsAsGap) && (
+              {/* GAP SHIFTS (Shown if GAP, GT dual, or no person selected) */}
+              {(!selectedPerson || selectedPerson.primaryType === 'GAP' || selectedPerson.alsoActsAsGap) && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
                     <div className="flex items-center gap-2">
@@ -250,8 +250,8 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                 </div>
               )}
 
-              {/* GT SHIFTS (Shown if GT, MESA, or no person selected) */}
-              {(!selectedPerson || selectedPerson.primaryType === 'GT' || selectedPerson.primaryType === 'MESA') && (
+              {/* GT SHIFTS (Shown if GT or no person selected) */}
+              {(!selectedPerson || selectedPerson.primaryType === 'GT') && (
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
                     <div className="flex items-center gap-2">
