@@ -79,13 +79,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   bases,
   onNavigateToConfig,
 }) => {
-  const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
-  // Sub-category selector for CARNIVAL: GAP, GT (MESA removed as separate category, behaves as GT)
-  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT'>('GAP');
-  const [selectedShiftId, setSelectedShiftId] = useState<string>('miercoles-gap-t1');
+  const [selectedDayId, setSelectedDayId] = useState<string>('lunes');
+  // Sub-category selector for CARNIVAL: GT (default)
+  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT'>('GT');
+  const [selectedShiftId, setSelectedShiftId] = useState<string>('lunes-t1');
   const [selectedBaseNumber, setSelectedBaseNumber] = useState<number | string | null>(null);
   const [modalBase, setModalBase] = useState<PhysicalBase | null>(null);
-  const [baseAssignTab, setBaseAssignTab] = useState<'GAP' | 'GT'>('GAP');
+  const [baseAssignTab, setBaseAssignTab] = useState<'GAP' | 'GT'>('GT');
 
   // Requirement Creation Modal State
   const [isReqModalOpen, setIsReqModalOpen] = useState(false);
@@ -177,32 +177,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     const dayShifts = (shifts && shifts.length > 0 ? shifts : EVENT_SCHEDULE.find((d) => d.dayId === dayId)?.shifts || [])
       .filter((s) => s.dayId === dayId && s.isActive !== false);
 
-    if (shiftCategoryFilter === 'GT') {
-      const gtShift = dayShifts.find((s) => (s.category === 'GT' || s.category === 'MESA') && !s.hasBases);
-      if (gtShift) {
-        setSelectedShiftId(gtShift.id);
-        return;
-      }
-    } else if (shiftCategoryFilter === 'GAP') {
-      const gapShift = dayShifts.find((s) => s.category === 'GAP' || s.hasBases);
-      if (gapShift) {
-        setSelectedShiftId(gapShift.id);
-        return;
-      }
-    }
-
-    if (dayId === 'miercoles') {
-      if (carnivalCategory === 'GAP') {
-        const gapShift = dayShifts.find((s) => s.category === 'GAP' || s.hasBases);
-        setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
-      } else {
-        const gtShift = dayShifts.find((s) => s.category === 'GT' && !s.hasBases);
-        setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
-      }
-    } else {
-      if (dayShifts.length > 0) {
-        setSelectedShiftId(dayShifts[0].id);
-      }
+    if (dayShifts.length > 0) {
+      setSelectedShiftId(dayShifts[0].id);
     }
   };
 
@@ -213,10 +189,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     setModalBase(null);
     if (cat === 'GAP') {
       const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
-      setSelectedShiftId(gapShift ? gapShift.id : 'miercoles-gap-t1');
+      if (gapShift) {
+        setSelectedShiftId(gapShift.id);
+      }
     } else {
       const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
-      setSelectedShiftId(gtShift ? gtShift.id : 'miercoles-gt-t1');
+      setSelectedShiftId(gtShift ? gtShift.id : (allShiftsInDay[0]?.id || 'miercoles-gt-t1'));
     }
   };
 
@@ -454,10 +432,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   }, [modalBase, selectedBaseNumber, currentShiftAssignments]);
 
   const isBaseFull = useMemo(() => {
+    if (!activeShift?.hasBases && !modalBase) return false;
     if (!modalBase && selectedBaseNumber === null) return false;
     const maxCap = modalBase?.defaultCapacity || 2;
     return currentBaseOccupants.length >= maxCap;
-  }, [modalBase, selectedBaseNumber, currentBaseOccupants]);
+  }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants]);
 
   const isShiftFull = useMemo(() => {
     return Boolean(activeShift.capacity && currentShiftAssignments.length >= activeShift.capacity);
@@ -1030,34 +1009,36 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
         </div>
 
-        {/* Filter shifts by GT / GAP */}
-        <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
-          <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
-            Filtrar turnos:
-          </span>
-          {[
-            { id: 'ALL', label: `Todos (${allShiftsInDay.length})` },
-            { id: 'GT', label: `GT (${gtShiftsInDay.length})` },
-            { id: 'GAP', label: `GAP (${gapShiftsInDay.length})` },
-          ].map((pill) => (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => handleShiftCategoryFilterChange(pill.id as any)}
-              className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
-                shiftCategoryFilter === pill.id
-                  ? pill.id === 'GAP'
-                    ? 'bg-[#16A34A] text-white shadow-2xs'
-                    : pill.id === 'GT'
-                    ? 'bg-[#182535] text-white shadow-2xs'
-                    : 'bg-[#B83A24] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
-              }`}
-            >
-              {pill.label}
-            </button>
-          ))}
-        </div>
+        {/* Filter shifts by GT / GAP (only if GAP shifts exist) */}
+        {gapShiftsInDay.length > 0 && (
+          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
+            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+              Filtrar turnos:
+            </span>
+            {[
+              { id: 'ALL', label: `Todos (${allShiftsInDay.length})` },
+              { id: 'GT', label: `GT (${gtShiftsInDay.length})` },
+              { id: 'GAP', label: `GAP (${gapShiftsInDay.length})` },
+            ].map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => handleShiftCategoryFilterChange(pill.id as any)}
+                className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                  shiftCategoryFilter === pill.id
+                    ? pill.id === 'GAP'
+                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : pill.id === 'GT'
+                      ? 'bg-[#182535] text-white shadow-2xs'
+                      : 'bg-[#B83A24] text-white shadow-2xs'
+                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                }`}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Turnos pills */}
         <div className="flex flex-wrap items-center gap-2">
@@ -1997,7 +1978,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                       const cannotAssign =
                         isSubmitting ||
-                        isBaseFull ||
+                        (shiftRequiresBase && isBaseFull) ||
                         (shiftRequiresBase && !hasValidBase);
 
                       return (
@@ -2109,10 +2090,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>
-                                {isBaseFull
+                                {shiftRequiresBase && isBaseFull
                                   ? 'Base Llena'
                                   : shiftRequiresBase && !hasValidBase
                                   ? 'Seleccione Base'
+                                  : activeRequirement
+                                  ? `Asignar a ${activeRequirement.gtSubTeam || activeRequirement.groupType}`
                                   : `Asignar ${baseAssignTab}`}
                               </span>
                             </button>

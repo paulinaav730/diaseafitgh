@@ -45,7 +45,8 @@ export interface ShiftRequirement {
   capacity: number; // e.g. 10 personas
   specificFunctions?: string[]; // array of function names (OPCIONAL filter)
   notes?: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type AttendanceStatus =

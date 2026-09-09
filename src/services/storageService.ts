@@ -13,10 +13,11 @@ import {
 import { ExcelMaestroParsedRow } from './excelService';
 import {
   CARNIVAL_PHYSICAL_BASES,
-    getBaseDisplayName,
+  getBaseDisplayName,
   DEFAULT_INITIAL_EVENTS,
   DEFAULT_INITIAL_SHIFTS,
   DEFAULT_INITIAL_BASES,
+  DEFAULT_INITIAL_REQUIREMENTS,
   formatTimeRangeLabel,
   doShiftsOverlap,
 } from '../data/eventStructure';
@@ -138,29 +139,69 @@ export function initializeStorage(): void {
       localStorage.setItem(STORAGE_KEYS.FUNCTIONS, JSON.stringify(functionCache));
     }
 
-    requirementCache = rawRequirements ? JSON.parse(rawRequirements) : [];
+    // Initialize requirements with official defaults
+    requirementCache = [...DEFAULT_INITIAL_REQUIREMENTS];
+    localStorage.setItem(STORAGE_KEYS.REQUIREMENTS, JSON.stringify(requirementCache));
 
-    // Initialize events with defaults if not set
-    if (rawEvents) {
-      eventsCache = JSON.parse(rawEvents);
-    } else {
-      eventsCache = [...DEFAULT_INITIAL_EVENTS];
-      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
+    // Initialize events with clean non-divided defaults
+    eventsCache = [...DEFAULT_INITIAL_EVENTS];
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
+
+    // Initialize shifts with defaults: ONLY keep the created shifts across all days
+    // and completely delete any previous obsolete/legacy shifts from localStorage
+    shiftsCache = DEFAULT_INITIAL_SHIFTS.map((s) => ({ ...s }));
+    localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+
+    // Migration map for old shift IDs to their new corresponding shift
+    const SHIFT_MIGRATION_MAP: Record<string, string> = {
+      'miercoles-gap-t1': 'miercoles-gt-t2',
+      'miercoles-gap-t2': 'miercoles-gt-t3',
+      'miercoles-gap-t3': 'miercoles-gt-t4',
+      'miercoles-t1': 'miercoles-gt-t1',
+      'miercoles-t2': 'miercoles-gt-t2',
+      'miercoles-t3': 'miercoles-gt-t3',
+      'miercoles-t4': 'miercoles-gt-t4',
+      'miercoles-t5': 'miercoles-gt-t5',
+      'jueves-t2': 'jueves-t2-gt',
+      'shift_jueves_mtqcifm4_nt5': 'jueves-t2-gt',
+      'shift_jueves_gap_mtrxwlwl_l9j': 'jueves-t2-gt',
+      'shift_jueves_gt_mtrxjh9q_r2t': 'jueves-t1',
+      'viernes-gap': 'viernes-gt',
+    };
+
+    // Migrate any assignments that referenced old shifts
+    let hasMigratedAssignments = false;
+    assignmentCache = assignmentCache.map((a) => {
+      const targetId = SHIFT_MIGRATION_MAP[a.shiftId];
+      if (targetId) {
+        hasMigratedAssignments = true;
+        return {
+          ...a,
+          shiftId: targetId,
+        };
+      }
+      return a;
+    });
+    if (hasMigratedAssignments) {
+      localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
     }
 
-    // Initialize shifts with defaults if not set
-    if (rawShifts) {
-      shiftsCache = JSON.parse(rawShifts);
-      // Auto-migrate martes-t1 to 08:30 if it was stored with the old 07:00
-      const martesT1 = shiftsCache.find((s) => s.id === 'martes-t1');
-      if (martesT1 && (martesT1.startTime === '07:00' || martesT1.startTime === '7:00')) {
-        martesT1.startTime = '08:30';
-        martesT1.label = '8:30 AM – 12:30 PM';
-        localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+    // Migrate any availabilities referencing old shift IDs
+    let hasMigratedAvail = false;
+    availabilityCache = availabilityCache.map((av) => {
+      if (Array.isArray(av.shiftIds)) {
+        const mapped = Array.from(
+          new Set(av.shiftIds.map((sid) => SHIFT_MIGRATION_MAP[sid] || sid))
+        );
+        if (JSON.stringify(mapped) !== JSON.stringify(av.shiftIds)) {
+          hasMigratedAvail = true;
+          return { ...av, shiftIds: mapped };
+        }
       }
-    } else {
-      shiftsCache = [...DEFAULT_INITIAL_SHIFTS];
-      localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+      return av;
+    });
+    if (hasMigratedAvail) {
+      localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
     }
 
     // Initialize bases with defaults if not set
@@ -699,13 +740,18 @@ export async function assignPerson(
     };
   }
 
+  // Check if shift operates with physical bases
+  const currentShift = shiftsCache.find((s) => s.id === shiftId);
+  const officialShift = DEFAULT_INITIAL_SHIFTS.find((s) => s.id === shiftId);
+  const shiftHasBases = currentShift?.hasBases ?? false;
+
   // Find base object if base assignment
-  let resolvedBaseId: string | undefined = rawBaseId;
-  let resolvedBaseNumber: number | string | undefined = rawBaseNumber;
-  let resolvedBaseName: string | undefined = assignmentData.baseName;
+  let resolvedBaseId: string | undefined = shiftHasBases ? rawBaseId : undefined;
+  let resolvedBaseNumber: number | string | undefined = shiftHasBases ? rawBaseNumber : undefined;
+  let resolvedBaseName: string | undefined = shiftHasBases ? assignmentData.baseName : undefined;
   let maxCapacity = 2;
 
-  if (rawBaseId || rawBaseNumber !== undefined) {
+  if (shiftHasBases && (rawBaseId || rawBaseNumber !== undefined)) {
     const targetBaseObj = basesCache.find(
       (b) =>
         (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
@@ -727,8 +773,8 @@ export async function assignPerson(
     }
   }
 
-  // Base continuity check for Carnival
-  if (dayId === 'miercoles') {
+  // Base continuity check for Carnival (only applies to shifts using bases)
+  if (dayId === 'miercoles' && shiftHasBases) {
     const existingCarnivalWithBase = assignmentCache.find(
       (a) =>
         a.personId === personId &&
@@ -746,7 +792,7 @@ export async function assignPerson(
         if (String(currentBaseIdOrNum) !== String(priorBase) && String(resolvedBaseNumber) !== String(priorBase)) {
           return {
             success: false,
-            alertMessage: `REGLA DE CONTINUIDAD EN CARNIVAL: Esta persona ya está asignada a ${priorBaseName} en otro turno de Carnival. En Carnival debe permanecer en la MISMA base física en todos sus turnos (aplica para Base 1..27, Base Toro, Base Speedway y Base Arcade). Asignación rechazada.`,
+            alertMessage: `REGLA DE CONTINUIDAD EN CARNIVAL: Esta persona ya está asignada a ${priorBaseName} en otro turno de Carnival. En Carnival debe permanecer en la MISMA base física en todos sus turnos. Asignación rechazada.`,
           };
         }
       } else {
@@ -757,8 +803,8 @@ export async function assignPerson(
     }
   }
 
-  // Base capacity validation
-  if (resolvedBaseId || resolvedBaseNumber !== undefined) {
+  // Base capacity validation (only applies to shifts using bases)
+  if (shiftHasBases && (resolvedBaseId || resolvedBaseNumber !== undefined)) {
     const currentOccupants = assignmentCache.filter(
       (a) =>
         a.dayId === dayId &&
@@ -781,15 +827,15 @@ export async function assignPerson(
   }
 
   // Shift total capacity validation
-  const currentShift = shiftsCache.find((s) => s.id === shiftId);
-  if (currentShift && currentShift.capacity) {
+  const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
+  if (effectiveCapacity) {
     const totalOccupantsInShift = assignmentCache.filter(
       (a) => a.dayId === dayId && a.shiftId === shiftId && a.personId !== personId
     );
-    if (totalOccupantsInShift.length >= currentShift.capacity) {
+    if (totalOccupantsInShift.length >= effectiveCapacity) {
       return {
         success: false,
-        alertMessage: 'CUPO COMPLETO — NO HAY MÁS CUPOS DISPONIBLES en este turno.',
+        alertMessage: `CUPO COMPLETO — Este turno ya alcanzó su capacidad máxima (${totalOccupantsInShift.length}/${effectiveCapacity}).`,
       };
     }
   }
@@ -820,12 +866,7 @@ export async function assignPerson(
     updatedAt: new Date().toISOString(),
   };
 
-  // ----- SUPABASE DIRECT INSERTION -----
-  const supabaseRes = await insertSingleAssignmentToSupabase(newAssignment);
-  if (!supabaseRes.success) {
-    return { success: false, alertMessage: `Error de Supabase: ${supabaseRes.error}` };
-  }
-
+  // 1. Immediately save locally to ensure UI and persistence are instant and 100% reliable
   if (existingIndex >= 0) {
     assignmentCache = assignmentCache.map((a, idx) =>
       idx === existingIndex ? newAssignment : a
@@ -837,7 +878,26 @@ export async function assignPerson(
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   assignmentListeners.forEach((fn) => fn([...assignmentCache]));
 
+  // 2. Sync to Supabase in the background
+  insertSingleAssignmentToSupabase(newAssignment).catch((err) => {
+    console.warn('Background Supabase assignment sync:', err);
+  });
+
   return { success: true, assignment: newAssignment };
+}
+
+export async function removeAssignment(assignmentId: string): Promise<void> {
+  initializeStorage();
+  
+  // 1. Immediately remove locally to ensure UI and persistence are instant
+  assignmentCache = assignmentCache.filter((a) => a.id !== assignmentId);
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+
+  // 2. Remove in Supabase in background
+  deleteSingleAssignmentFromSupabase(assignmentId).catch((err) => {
+    console.warn('Background Supabase delete sync:', err);
+  });
 }
 
 
@@ -1476,22 +1536,6 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
   shiftsCache = newShifts;
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
-}
-
-
-export async function removeAssignment(assignmentId: string): Promise<void> {
-  initializeStorage();
-  
-  // ----- SUPABASE DIRECT DELETION -----
-  const supabaseRes = await deleteSingleAssignmentFromSupabase(assignmentId);
-  if (!supabaseRes.success) {
-    alert(`Error eliminando en Supabase: ${supabaseRes.error}`);
-    return;
-  }
-
-  assignmentCache = assignmentCache.filter((a) => a.id !== assignmentId);
-  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
-  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
 }
 
 

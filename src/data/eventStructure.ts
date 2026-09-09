@@ -1,4 +1,4 @@
-import { AppEvent, ConfigurableBase, ConfigurableShift, EventDayDefinition, PhysicalBase, Shift } from '../types';
+import { AppEvent, ConfigurableBase, ConfigurableShift, EventDayDefinition, PhysicalBase, Shift, ShiftRequirement } from '../types';
 
 // Helper to format 24h hour to AM/PM nicely
 export function formatHourAMPM(time24: string): string {
@@ -140,10 +140,10 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'CARNIVAL',
     dayId: 'miercoles',
     dayName: 'Miércoles',
-    description: 'Día de actividades simultáneas. Estructura diferenciada: GRUPO DE TRABAJO (GT) con 5 turnos y GRUPO DE APOYO (GAP) con 3 turnos en 30 bases físicas únicas.',
-    notes: 'CARNIVAL GT: 5 turnos (6:50 AM – 9:00 PM). CARNIVAL GAP: 3 turnos (8:50 AM – 6:10 PM) con 30 bases físicas (Base 1-27 + Toro, Speedway, Arcade). MESA: Asignable a cualquier turno.',
-    isCarnival: true,
-    isDivided: true,
+    description: 'Día de actividades simultáneas en campus con equipo GRUPO DE TRABAJO (GT).',
+    notes: '5 turnos programados para GRUPO DE TRABAJO (GT).',
+    isCarnival: false,
+    isDivided: false,
     isActive: true,
     order: 3,
   },
@@ -151,10 +151,10 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     id: 'the-challenge',
     name: 'THE CHALLENGE & THE GAMES',
     dayId: 'jueves',
-      dayName: 'Jueves',
-      description: 'Mañana: The Challenge (GT). Tarde: The Games (GAP)',
-      notes: 'Turno T1: GT. Turno T2: GAP.',
-      isDivided: false,
+    dayName: 'Jueves',
+    description: 'Turno 1: The Challenge (GT). Turno 2: The Games (GT).',
+    notes: '2 turnos programados para GRUPO DE TRABAJO (GT).',
+    isDivided: false,
     isActive: true,
     order: 4,
   },
@@ -163,9 +163,9 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE GAMES',
     dayId: 'viernes',
     dayName: 'Viernes',
-    description: 'Gran final de competencias. Equipo GRUPO DE TRABAJO (GT) todo el día y 15 bases físicas GRUPO DE APOYO (GAP).',
-    notes: 'GAP opera en 15 bases físicas. GT da soporte de 6:00 AM a 9:30 PM.',
-    isDivided: true,
+    description: 'Gran final de competencias con equipo GRUPO DE TRABAJO (GT).',
+    notes: 'Turno programado para GRUPO DE TRABAJO (GT).',
+    isDivided: false,
     isActive: true,
     order: 5,
   },
@@ -176,70 +176,70 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   // LUNES - THE SHOW (5 turnos GT)
   {
     id: 'lunes-t1',
-    name: 'T1',
+    name: 'Turno 1',
     dayId: 'lunes',
     eventId: 'the-show',
     category: 'GT',
     startTime: '06:00',
     endTime: '08:00',
-    label: '6:00 AM – 8:00 AM',
-    capacity: 10,
+    label: '6:00 a. m. a 8:00 a. m.',
+    capacity: 19,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'lunes-t2',
-    name: 'T2',
+    name: 'Turno 2',
     dayId: 'lunes',
     eventId: 'the-show',
     category: 'GT',
     startTime: '08:00',
     endTime: '12:30',
-    label: '8:00 AM – 12:30 PM',
-    capacity: 12,
+    label: '8:00 a. m. a 12:30 p. m.',
+    capacity: 30,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'lunes-t3',
-    name: 'T3',
+    name: 'Turno 3',
     dayId: 'lunes',
     eventId: 'the-show',
     category: 'GT',
     startTime: '12:30',
     endTime: '16:00',
-    label: '12:30 PM – 4:00 PM',
-    capacity: 12,
+    label: '12:30 p. m. a 4:00 p. m.',
+    capacity: 36,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'lunes-t4',
-    name: 'T4',
+    name: 'Turno 4',
     dayId: 'lunes',
     eventId: 'the-show',
     category: 'GT',
     startTime: '16:00',
     endTime: '19:30',
-    label: '4:00 PM – 7:30 PM',
-    capacity: 12,
+    label: '4:00 p. m. a 7:30 p. m.',
+    capacity: 36,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'lunes-t5',
-    name: 'T5',
+    name: 'Turno 5',
     dayId: 'lunes',
     eventId: 'the-show',
     category: 'GT',
     startTime: '19:30',
     endTime: '22:30',
-    label: '7:30 PM – 10:30 PM',
-    capacity: 10,
+    label: '7:30 p. m. a 10:30 p. m.',
+    capacity: 42,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
@@ -248,56 +248,56 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   // MARTES - THE ZONE (4 turnos GT)
   {
     id: 'martes-t1',
-    name: 'T1',
+    name: 'Turno 1',
     dayId: 'martes',
     eventId: 'the-zone',
     category: 'GT',
     startTime: '08:30',
     endTime: '12:30',
-    label: '8:30 AM – 12:30 PM',
-    capacity: 12,
+    label: '8:30 a. m. a 12:30 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'martes-t2',
-    name: 'T2',
+    name: 'Turno 2',
     dayId: 'martes',
     eventId: 'the-zone',
     category: 'GT',
     startTime: '12:30',
     endTime: '16:00',
-    label: '12:30 PM – 4:00 PM',
-    capacity: 12,
+    label: '12:30 p. m. a 4:00 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'martes-t3',
-    name: 'T3',
+    name: 'Turno 3',
     dayId: 'martes',
     eventId: 'the-zone',
     category: 'GT',
     startTime: '16:00',
-    endTime: '18:00',
-    label: '4:00 PM – 6:00 PM',
-    capacity: 12,
+    endTime: '19:30',
+    label: '4:00 p. m. a 7:30 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'martes-t4',
-    name: 'T4',
+    name: 'Turno 4',
     dayId: 'martes',
     eventId: 'the-zone',
     category: 'GT',
-    startTime: '18:00',
-    endTime: '19:30',
-    label: '6:00 PM – 7:30 PM',
-    capacity: 12,
+    startTime: '19:30',
+    endTime: '21:00',
+    label: '7:30 p. m. a 9:00 p. m.',
+    capacity: 19,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
@@ -306,192 +306,235 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
   // MIÉRCOLES - CARNIVAL (GT: 5 turnos)
   {
     id: 'miercoles-gt-t1',
-    name: 'T1',
+    name: 'Turno 1',
     dayId: 'miercoles',
     eventId: 'carnival',
     category: 'GT',
     startTime: '06:50',
     endTime: '09:00',
-    label: '6:50 AM – 9:00 AM',
-    capacity: 15,
+    label: '6:50 a. m. a 9:00 a. m.',
+    capacity: 19,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'miercoles-gt-t2',
-    name: 'T2',
+    name: 'Turno 2',
     dayId: 'miercoles',
     eventId: 'carnival',
     category: 'GT',
     startTime: '08:50',
     endTime: '12:10',
-    label: '8:50 AM – 12:10 PM',
-    capacity: 15,
+    label: '8:50 a. m. a 12:10 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'miercoles-gt-t3',
-    name: 'T3',
+    name: 'Turno 3',
     dayId: 'miercoles',
     eventId: 'carnival',
     category: 'GT',
     startTime: '12:00',
     endTime: '15:10',
-    label: '12:00 PM – 3:10 PM',
-    capacity: 15,
+    label: '12:00 m. a 3:10 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'miercoles-gt-t4',
-    name: 'T4',
+    name: 'Turno 4',
     dayId: 'miercoles',
     eventId: 'carnival',
     category: 'GT',
     startTime: '15:00',
     endTime: '18:10',
-    label: '3:00 PM – 6:10 PM',
-    capacity: 15,
+    label: '3:00 p. m. a 6:10 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
   {
     id: 'miercoles-gt-t5',
-    name: 'T5',
+    name: 'Turno 5',
     dayId: 'miercoles',
     eventId: 'carnival',
     category: 'GT',
     startTime: '18:00',
     endTime: '21:00',
-    label: '6:00 PM – 9:00 PM',
-    capacity: 15,
+    label: '6:00 p. m. a 9:00 p. m.',
+    capacity: 19,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
 
-  // MIÉRCOLES - CARNIVAL (GAP: 3 turnos con 30 bases)
-  {
-    id: 'miercoles-gap-t1',
-    name: 'T1',
-    dayId: 'miercoles',
-    eventId: 'carnival',
-    category: 'GAP',
-    startTime: '08:50',
-    endTime: '12:10',
-    label: '8:50 AM – 12:10 PM',
-    capacity: 60, // 30 bases x 2
-    isActive: true,
-    hasBases: true,
-    forTypes: ['GAP', 'GT', 'MESA'],
-  },
-  {
-    id: 'miercoles-gap-t2',
-    name: 'T2',
-    dayId: 'miercoles',
-    eventId: 'carnival',
-    category: 'GAP',
-    startTime: '12:00',
-    endTime: '15:10',
-    label: '12:00 PM – 3:10 PM',
-    capacity: 60, // 30 bases x 2
-    isActive: true,
-    hasBases: true,
-    forTypes: ['GAP', 'GT', 'MESA'],
-  },
-  {
-    id: 'miercoles-gap-t3',
-    name: 'T3',
-    dayId: 'miercoles',
-    eventId: 'carnival',
-    category: 'GAP',
-    startTime: '15:00',
-    endTime: '18:10',
-    label: '3:00 PM – 6:10 PM',
-    capacity: 60, // 30 bases x 2
-    isActive: true,
-    hasBases: true,
-    forTypes: ['GAP', 'GT', 'MESA'],
-  },
-
-  // JUEVES - THE CHALLENGE & THE GAMES
+  // JUEVES - THE CHALLENGE & THE GAMES (GT)
   {
     id: 'jueves-t1',
-    name: 'T1 - Mañana GAP',
-    dayId: 'jueves',
-    eventId: 'the-challenge',
-    category: 'GAP',
-    startTime: '06:00',
-    endTime: '12:00',
-    label: '6:00 AM – 12:00 PM (Solo GAP)',
-    capacity: 15,
-    isActive: true,
-    hasBases: false,
-    forTypes: ['GT', 'MESA'],
-  },
-  {
-    id: 'jueves-t2',
-    name: 'T2 - The Games (GAP)',
-    dayId: 'jueves',
-    eventId: 'the-challenge',
-    category: 'GAP',
-    startTime: '13:00',
-    endTime: '21:00',
-    label: '1:00 PM – 9:00 PM (The Games)',
-    capacity: 30, // 15 bases x 2
-    isActive: true,
-    hasBases: true,
-    forTypes: ['GAP', 'GT', 'MESA'],
-  },
-  {
-    id: 'jueves-t2-gt',
-    name: 'T2 - The Games (GT)',
+    name: 'Turno 1 — The Challenge',
     dayId: 'jueves',
     eventId: 'the-challenge',
     category: 'GT',
-    startTime: '13:00',
-    endTime: '21:00',
-    label: '1:00 PM – 9:00 PM (GT)',
-    capacity: 25,
+    startTime: '06:00',
+    endTime: '13:00',
+    label: '6:00 a. m. a 1:00 p. m.',
+    capacity: 50,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['GT', 'MESA'],
+  },
+  {
+    id: 'jueves-t2-gt',
+    name: 'Turno 2 — The Games',
+    dayId: 'jueves',
+    eventId: 'the-challenge',
+    category: 'GT',
+    startTime: '12:30',
+    endTime: '18:00',
+    label: '12:30 p. m. a 6:00 p. m.',
+    capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
 
-  // VIERNES - THE GAMES
+  // VIERNES - THE GAMES (GT)
   {
     id: 'viernes-gt',
-    name: 'T1 - GT General',
+    name: 'Turno 1',
     dayId: 'viernes',
     eventId: 'the-games',
     category: 'GT',
     startTime: '06:00',
     endTime: '21:30',
-    label: 'GT: 6:00 AM – 9:30 PM',
-    capacity: 25,
+    label: '6:00 a. m. a 9:30 p. m.',
+    capacity: 58,
     isActive: true,
     hasBases: false,
     forTypes: ['GT', 'MESA'],
   },
-  {
-    id: 'viernes-gap',
-    name: 'T1 - GAP Bases',
-    dayId: 'viernes',
-    eventId: 'the-games',
-    category: 'GAP',
-    startTime: '07:00',
-    endTime: '21:00',
-    label: 'GAP: 7:00 AM – 9:00 PM (15 bases)',
-    capacity: 30, // 15 bases x 2
-    isActive: true,
-    hasBases: true,
-    forTypes: ['GAP', 'GT', 'MESA'],
-  },
+];
+
+// DEFAULT INITIAL SUBTEAM REQUIREMENTS (Exact quotas requested by user)
+export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
+  // LUNES - THE SHOW
+  // Turno 1 (6:00 - 8:00, cap 19)
+  { id: 'req_lunes_t1_log', dayId: 'lunes', shiftId: 'lunes-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t1_rrpp', dayId: 'lunes', shiftId: 'lunes-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+  // Turno 2 (8:00 - 12:30, cap 30)
+  { id: 'req_lunes_t2_gen', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Generales', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_log', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Logística', capacity: 5, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_rrpp', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_mkt', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_gh', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_seg', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 3, createdAt: new Date().toISOString() },
+  // Turno 3 (12:30 - 16:00, cap 36)
+  { id: 'req_lunes_t3_gen', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 7, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t3_log', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 5, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t3_rrpp', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t3_mkt', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t3_gh', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'GH', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t3_seg', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 8, createdAt: new Date().toISOString() },
+  // Turno 4 (16:00 - 19:30, cap 36)
+  { id: 'req_lunes_t4_gen', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'Generales', capacity: 7, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t4_log', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'Logística', capacity: 5, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t4_rrpp', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t4_mkt', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t4_gh', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'GH', capacity: 4, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t4_seg', dayId: 'lunes', shiftId: 'lunes-t4', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 8, createdAt: new Date().toISOString() },
+  // Turno 5 (19:30 - 22:30, cap 42)
+  { id: 'req_lunes_t5_gen', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'Generales', capacity: 5, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t5_log', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t5_rrpp', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t5_mkt', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t5_gh', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'GH', capacity: 2, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t5_seg', dayId: 'lunes', shiftId: 'lunes-t5', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 8, createdAt: new Date().toISOString() },
+
+  // MARTES - THE ZONE
+  // Turno 1 (8:30 - 12:30, cap 50)
+  { id: 'req_martes_t1_gen', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t1_log', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t1_rrpp', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t1_mkt', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t1_gh', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t1_seg', dayId: 'martes', shiftId: 'martes-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 2 (12:30 - 16:00, cap 50)
+  { id: 'req_martes_t2_gen', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_log', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_rrpp', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_mkt', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_gh', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_seg', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 3 (16:00 - 19:30, cap 50)
+  { id: 'req_martes_t3_gen', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t3_log', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t3_rrpp', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t3_mkt', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t3_gh', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t3_seg', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 4 (19:30 - 21:00, cap 19)
+  { id: 'req_martes_t4_log', dayId: 'martes', shiftId: 'martes-t4', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t4_rrpp', dayId: 'martes', shiftId: 'martes-t4', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+
+  // MIÉRCOLES - CARNIVAL (GT)
+  // Turno 1 (6:50 - 9:00, cap 19)
+  { id: 'req_carnival_t1_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t1_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+  // Turno 2 (8:50 - 12:10, cap 50)
+  { id: 'req_carnival_t2_gen', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_mkt', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_gh', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_seg', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 3 (12:00 - 15:10, cap 50)
+  { id: 'req_carnival_t3_gen', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_mkt', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_gh', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_seg', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 4 (15:00 - 18:10, cap 50)
+  { id: 'req_carnival_t4_gen', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t4_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t4_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t4_mkt', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t4_gh', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t4_seg', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 5 (18:00 - 21:00, cap 19)
+  { id: 'req_carnival_t5_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t5', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t5_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t5', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+
+  // JUEVES - THE CHALLENGE + THE GAMES
+  // Turno 1 — The Challenge (6:00 - 13:00, cap 50)
+  { id: 'req_jueves_t1_gen', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_log', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_rrpp', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_mkt', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_gh', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_seg', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 2 — The Games GT (12:30 - 18:00, cap 50)
+  { id: 'req_jueves_t2_gen', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_log', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_rrpp', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_mkt', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_gh', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_seg', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+
+  // VIERNES - THE GAMES (Turno 1: 6:00 - 21:30, cap 58)
+  { id: 'req_viernes_gen', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_log', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Logística', capacity: 18, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_rrpp', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_mkt', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_gh', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_seg', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
 ];
 
 // Backward-compatible shift lists
@@ -529,15 +572,32 @@ export function findShiftById(
   if (direct) return direct;
 
   // Legacy aliases
-  if (shiftId === 'miercoles-t1') return shifts.find((s) => s.id === 'miercoles-gap-t1');
-  if (shiftId === 'miercoles-t2') return shifts.find((s) => s.id === 'miercoles-gap-t2');
-  if (shiftId === 'miercoles-t3') return shifts.find((s) => s.id === 'miercoles-gap-t3');
-  if (shiftId === 'jueves-t2-gt' || shiftId === 'shift_jueves_mtqcifm4_nt5' || shiftId === 'jueves-t2' || shiftId === 'shift_jueves_gap_mtrxwlwl_l9j') {
-    const s = shifts.find((x) => x.id === shiftId || x.id === 'shift_jueves_mtqcifm4_nt5' || x.id === 'shift_jueves_gap_mtrxwlwl_l9j' || x.id === 'jueves-t2-gt' || x.id === 'jueves-t2');
+  if (shiftId === 'miercoles-t1' || shiftId === 'miercoles-gap-t1') {
+    return shifts.find((s) => s.id === 'miercoles-gt-t1') || shifts.find((s) => s.id === 'miercoles-gt-t2');
+  }
+  if (shiftId === 'miercoles-t2' || shiftId === 'miercoles-gap-t2') {
+    return shifts.find((s) => s.id === 'miercoles-gt-t3');
+  }
+  if (shiftId === 'miercoles-t3' || shiftId === 'miercoles-gap-t3') {
+    return shifts.find((s) => s.id === 'miercoles-gt-t4');
+  }
+  if (shiftId === 'miercoles-t4') return shifts.find((s) => s.id === 'miercoles-gt-t4');
+  if (shiftId === 'miercoles-t5') return shifts.find((s) => s.id === 'miercoles-gt-t5');
+  if (
+    shiftId === 'jueves-t2-gt' ||
+    shiftId === 'shift_jueves_mtqcifm4_nt5' ||
+    shiftId === 'jueves-t2' ||
+    shiftId === 'shift_jueves_gap_mtrxwlwl_l9j'
+  ) {
+    const s = shifts.find((x) => x.id === 'jueves-t2-gt' || x.id === shiftId);
     if (s) return s;
   }
   if (shiftId === 'jueves-t1' || shiftId === 'shift_jueves_gt_mtrxjh9q_r2t') {
-    const s = shifts.find((x) => x.id === shiftId || x.id === 'shift_jueves_gt_mtrxjh9q_r2t' || x.id === 'jueves-t1');
+    const s = shifts.find((x) => x.id === 'jueves-t1' || x.id === shiftId);
+    if (s) return s;
+  }
+  if (shiftId === 'viernes-gap' || shiftId === 'viernes-gt') {
+    const s = shifts.find((x) => x.id === 'viernes-gt' || x.id === shiftId);
     if (s) return s;
   }
 
