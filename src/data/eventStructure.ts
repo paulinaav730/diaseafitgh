@@ -396,9 +396,9 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     dayId: 'jueves',
     eventId: 'the-challenge',
     category: 'GT',
-    startTime: '12:30',
-    endTime: '18:00',
-    label: '12:30 p. m. a 6:00 p. m.',
+    startTime: '13:00',
+    endTime: '21:00',
+    label: '1:00 p. m. a 9:00 p. m.',
     capacity: 50,
     isActive: true,
     hasBases: false,
@@ -520,7 +520,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_jueves_t1_mkt', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t1_gh', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t1_seg', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
-  // Turno 2 — The Games GT (12:30 - 18:00, cap 50)
+  // Turno 2 — The Games GT (13:00 - 21:00, cap 50)
   { id: 'req_jueves_t2_gen', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t2_log', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t2_rrpp', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
@@ -604,6 +604,92 @@ export function findShiftById(
   // Fallback to DEFAULT_INITIAL_SHIFTS if not in passed shifts
   const defaultDirect = DEFAULT_INITIAL_SHIFTS.find((s) => s.id === shiftId);
   if (defaultDirect) return defaultDirect;
+
+  // Fallback for custom or dynamic MESA shifts (e.g. shift_lunes_mesa_..., shift_jueves_mesa_..., shift_viernes_mesa_...)
+  if (shiftId && shiftId.startsWith('shift_')) {
+    const sid = shiftId.toLowerCase();
+    const isMesa = sid.includes('mesa');
+    if (sid.includes('lunes')) {
+      const match = shifts.find((s) => s.dayId === 'lunes' && (isMesa ? s.category === 'MESA' : true));
+      if (match) return match;
+      return {
+        id: shiftId,
+        name: isMesa ? 'Turno 1 — MESA' : 'Turno 1',
+        dayId: 'lunes',
+        eventId: 'the-show',
+        category: (isMesa ? 'MESA' : 'GT') as any,
+        startTime: '06:00',
+        endTime: '08:00',
+        label: '6:00 a. m. a 8:00 a. m.',
+        capacity: 10,
+        isActive: true,
+      };
+    }
+    if (sid.includes('martes')) {
+      const match = shifts.find((s) => s.dayId === 'martes' && (isMesa ? s.category === 'MESA' : true));
+      if (match) return match;
+      return {
+        id: shiftId,
+        name: isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1',
+        dayId: 'martes',
+        eventId: 'the-zone',
+        category: (isMesa ? 'MESA' : 'GT') as any,
+        startTime: '08:30',
+        endTime: '12:30',
+        label: '8:30 a. m. a 12:30 p. m.',
+        capacity: 10,
+        isActive: true,
+      };
+    }
+    if (sid.includes('miercoles')) {
+      const match = shifts.find((s) => s.dayId === 'miercoles' && (isMesa ? s.category === 'MESA' : true));
+      if (match) return match;
+      return {
+        id: shiftId,
+        name: isMesa ? 'Turno 1 — Carnival (MESA)' : 'Turno 1',
+        dayId: 'miercoles',
+        eventId: 'carnival',
+        category: (isMesa ? 'MESA' : 'GT') as any,
+        startTime: '06:00',
+        endTime: '10:00',
+        label: '6:00 a. m. a 10:00 a. m.',
+        capacity: 10,
+        isActive: true,
+      };
+    }
+    if (sid.includes('jueves')) {
+      const match = shifts.find((s) => s.dayId === 'jueves' && (isMesa ? s.category === 'MESA' : true));
+      if (match) return match;
+      return {
+        id: shiftId,
+        name: isMesa ? 'Turno 1 — The Challenge (MESA)' : 'Turno 1 — The Challenge',
+        dayId: 'jueves',
+        eventId: 'the-challenge',
+        category: (isMesa ? 'MESA' : 'GT') as any,
+        startTime: '06:00',
+        endTime: '13:00',
+        label: '6:00 a. m. a 1:00 p. m.',
+        capacity: 10,
+        isActive: true,
+      };
+    }
+    if (sid.includes('viernes')) {
+      const match = shifts.find((s) => s.dayId === 'viernes' && (isMesa ? s.category === 'MESA' : true));
+      if (match) return match;
+      return {
+        id: shiftId,
+        name: isMesa ? 'Turno 1 — The Games (MESA)' : 'Turno 1 — The Games',
+        dayId: 'viernes',
+        eventId: 'the-games',
+        category: (isMesa ? 'MESA' : 'GT') as any,
+        startTime: '06:00',
+        endTime: '21:30',
+        label: '6:00 a. m. a 9:30 p. m.',
+        capacity: 10,
+        isActive: true,
+      };
+    }
+  }
 
   return undefined;
 }

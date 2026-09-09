@@ -147,9 +147,113 @@ export function initializeStorage(): void {
     eventsCache = [...DEFAULT_INITIAL_EVENTS];
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
 
-    // Initialize shifts with defaults: ONLY keep the created shifts across all days
-    // and completely delete any previous obsolete/legacy shifts from localStorage
-    shiftsCache = DEFAULT_INITIAL_SHIFTS.map((s) => ({ ...s }));
+    // Initialize shifts with defaults and preserve user modifications / custom shifts
+    const shiftMap = new Map<string, ConfigurableShift>();
+    DEFAULT_INITIAL_SHIFTS.forEach((ds) => shiftMap.set(ds.id, { ...ds }));
+
+    if (rawShifts) {
+      try {
+        const parsed = JSON.parse(rawShifts);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((s) => {
+            if (s && s.id) {
+              // Ensure Thursday Turno 2 is updated to 13:00 - 21:00 (1 a 9) if still 12:30-18:00
+              if (
+                (s.id === 'jueves-t2-gt' || s.id === 'jueves-t2') &&
+                s.startTime === '12:30' &&
+                s.endTime === '18:00'
+              ) {
+                s.startTime = '13:00';
+                s.endTime = '21:00';
+                s.label = '1:00 p. m. a 9:00 p. m.';
+              }
+              shiftMap.set(s.id, s);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Error parsing rawShifts from localStorage:', e);
+      }
+    }
+
+    shiftsCache = Array.from(shiftMap.values());
+
+    // Heal any missing shifts referenced by assignments (such as dynamic MESA shifts)
+    assignmentCache.forEach((a) => {
+      if (a.shiftId && !shiftsCache.some((s) => s.id === a.shiftId)) {
+        const sid = a.shiftId.toLowerCase();
+        const isMesa = a.assignedType === 'MESA' || sid.includes('mesa');
+        const dayId =
+          a.dayId ||
+          (sid.includes('lunes')
+            ? 'lunes'
+            : sid.includes('martes')
+            ? 'martes'
+            : sid.includes('miercoles')
+            ? 'miercoles'
+            : sid.includes('jueves')
+            ? 'jueves'
+            : sid.includes('viernes')
+            ? 'viernes'
+            : 'lunes');
+
+        let name = isMesa ? 'Turno 1 — MESA' : 'Turno 1';
+        let startTime = '06:00';
+        let endTime = '08:00';
+        let label = '6:00 a. m. a 8:00 a. m.';
+
+        if (dayId === 'jueves') {
+          name = isMesa ? 'Turno 1 — The Challenge (MESA)' : 'Turno 1 — The Challenge';
+          startTime = '06:00';
+          endTime = '13:00';
+          label = '6:00 a. m. a 1:00 p. m.';
+        } else if (dayId === 'viernes') {
+          name = isMesa ? 'Turno 1 — The Games (MESA)' : 'Turno 1 — The Games';
+          startTime = '06:00';
+          endTime = '21:30';
+          label = '6:00 a. m. a 9:30 p. m.';
+        } else if (dayId === 'martes') {
+          name = isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1 — The Zone';
+          startTime = '08:30';
+          endTime = '12:30';
+          label = '8:30 a. m. a 12:30 p. m.';
+        } else if (dayId === 'miercoles') {
+          name = isMesa ? 'Turno 1 — Carnival (MESA)' : 'Turno 1 — Carnival';
+          startTime = '06:00';
+          endTime = '10:00';
+          label = '6:00 a. m. a 10:00 a. m.';
+        }
+
+        const healedShift: ConfigurableShift = {
+          id: a.shiftId,
+          name,
+          dayId,
+          eventId:
+            dayId === 'miercoles'
+              ? 'carnival'
+              : dayId === 'jueves'
+              ? 'the-challenge'
+              : dayId === 'viernes'
+              ? 'the-games'
+              : dayId === 'martes'
+              ? 'the-zone'
+              : 'the-show',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime,
+          endTime,
+          label,
+          capacity: 20,
+          isActive: true,
+          hasBases: false,
+          forTypes: [(isMesa ? 'MESA' : 'GT') as any],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        shiftsCache.push(healedShift);
+      }
+    });
+
     localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
 
     // Migration map for old shift IDs to their new corresponding shift
@@ -1533,7 +1637,25 @@ export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
 }
 
 export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void {
-  shiftsCache = newShifts;
+  if (!newShifts || newShifts.length === 0) return;
+  const shiftMap = new Map<string, ConfigurableShift>();
+  DEFAULT_INITIAL_SHIFTS.forEach((ds) => shiftMap.set(ds.id, { ...ds }));
+  shiftsCache.forEach((cs) => shiftMap.set(cs.id, cs));
+  newShifts.forEach((ns) => {
+    if (ns && ns.id) {
+      if (
+        (ns.id === 'jueves-t2-gt' || ns.id === 'jueves-t2') &&
+        ns.startTime === '12:30' &&
+        ns.endTime === '18:00'
+      ) {
+        ns.startTime = '13:00';
+        ns.endTime = '21:00';
+        ns.label = '1:00 p. m. a 9:00 p. m.';
+      }
+      shiftMap.set(ns.id, ns);
+    }
+  });
+  shiftsCache = Array.from(shiftMap.values());
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 }

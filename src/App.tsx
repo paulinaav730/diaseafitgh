@@ -201,6 +201,9 @@ export default function App() {
             person={currentUser.staffData}
             assignments={assignments}
             attendances={attendances}
+            shifts={shifts}
+            events={events}
+            bases={bases}
             onLogout={handleLogout}
           />
         ) : currentUser?.role === 'admin' ? (

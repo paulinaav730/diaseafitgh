@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Person, Assignment, AttendanceRecord } from '../types';
-import { EVENT_SCHEDULE, getBaseDisplayName, findShiftById } from '../data/eventStructure';
+import { Person, Assignment, AttendanceRecord, ConfigurableShift, AppEvent, ConfigurableBase } from '../types';
+import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import {
   User,
   Calendar,
@@ -18,6 +18,9 @@ interface StaffMyDiasViewProps {
   person: Person;
   assignments: Assignment[];
   attendances: AttendanceRecord[];
+  shifts?: ConfigurableShift[];
+  events?: AppEvent[];
+  bases?: ConfigurableBase[];
   onLogout: () => void;
 }
 
@@ -25,6 +28,9 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
   person,
   assignments,
   attendances,
+  shifts,
+  events,
+  bases,
   onLogout,
 }) => {
   const [activeDayId, setActiveDayId] = useState<string>('lunes');
@@ -32,10 +38,112 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
   // Filter only this staff person's assignments
   const myAssignments = assignments.filter((a) => a.personId === person.id);
 
+  // Helper to resolve shift accurately across configured shifts, schedule, and dynamic IDs
+  const resolveShift = (shiftId: string, dayId: string) => {
+    // 1. Check in configured shifts passed from storage/Supabase
+    if (shifts && shifts.length > 0) {
+      const found = shifts.find((s) => s.id === shiftId);
+      if (found) return found;
+      const fromHelper = findShiftById(shifts, shiftId);
+      if (fromHelper) return fromHelper;
+    }
+    // 2. Check in EVENT_SCHEDULE
+    const dayDef = EVENT_SCHEDULE.find((d) => d.dayId === dayId);
+    if (dayDef) {
+      const fromDayDef = findShiftById(dayDef, shiftId);
+      if (fromDayDef) return fromDayDef;
+    }
+    // 3. Fallback to DEFAULT_INITIAL_SHIFTS
+    const fromDefaults = DEFAULT_INITIAL_SHIFTS.find((s) => s.id === shiftId);
+    if (fromDefaults) return fromDefaults;
+
+    // 4. Fallback for dynamic shift IDs (e.g. shift_lunes_mesa_mtqmx0gh_vxu)
+    if (shiftId && shiftId.startsWith('shift_')) {
+      const sid = shiftId.toLowerCase();
+      const isMesa = sid.includes('mesa');
+      const dId = sid.includes('lunes')
+        ? 'lunes'
+        : sid.includes('martes')
+        ? 'martes'
+        : sid.includes('miercoles')
+        ? 'miercoles'
+        : sid.includes('jueves')
+        ? 'jueves'
+        : sid.includes('viernes')
+        ? 'viernes'
+        : dayId;
+
+      if (dId === 'lunes') {
+        return {
+          id: shiftId,
+          name: isMesa ? 'Turno 1 — MESA' : 'Turno 1',
+          dayId: 'lunes',
+          eventId: 'the-show',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime: '06:00',
+          endTime: '08:00',
+          label: '6:00 a. m. a 8:00 a. m.',
+        };
+      }
+      if (dId === 'martes') {
+        return {
+          id: shiftId,
+          name: isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1',
+          dayId: 'martes',
+          eventId: 'the-zone',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime: '08:30',
+          endTime: '12:30',
+          label: '8:30 a. m. a 12:30 p. m.',
+        };
+      }
+      if (dId === 'miercoles') {
+        return {
+          id: shiftId,
+          name: isMesa ? 'Turno 1 — Carnival (MESA)' : 'Turno 1',
+          dayId: 'miercoles',
+          eventId: 'carnival',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime: '06:00',
+          endTime: '10:00',
+          label: '6:00 a. m. a 10:00 a. m.',
+        };
+      }
+      if (dId === 'jueves') {
+        return {
+          id: shiftId,
+          name: isMesa ? 'Turno 1 — The Challenge (MESA)' : 'Turno 1 — The Challenge',
+          dayId: 'jueves',
+          eventId: 'the-challenge',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime: '06:00',
+          endTime: '13:00',
+          label: '6:00 a. m. a 1:00 p. m.',
+        };
+      }
+      if (dId === 'viernes') {
+        return {
+          id: shiftId,
+          name: isMesa ? 'Turno 1 — The Games (MESA)' : 'Turno 1 — The Games',
+          dayId: 'viernes',
+          eventId: 'the-games',
+          category: (isMesa ? 'MESA' : 'GT') as any,
+          startTime: '06:00',
+          endTime: '21:30',
+          label: '6:00 a. m. a 9:30 p. m.',
+        };
+      }
+    }
+
+    return undefined;
+  };
+
   // Helper to calculate shift duration in minutes
   const getShiftDurationMinutes = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 0;
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
+    if (isNaN(startH) || isNaN(endH)) return 0;
     const startTotal = startH * 60 + (startM || 0);
     const endTotal = endH * 60 + (endM || 0);
     return Math.max(0, endTotal - startTotal);
@@ -44,14 +152,12 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
   // Compute daily totals and food entitlements for this person
   const getDailySummary = (dayId: string) => {
     const dayDef = EVENT_SCHEDULE.find((d) => d.dayId === dayId);
-    if (!dayDef) return { totalHours: 0, lunches: 0, snacks: 0, dayAssignments: [] };
-
     const dayAssignments = myAssignments.filter((a) => a.dayId === dayId);
     let totalMinutes = 0;
 
     dayAssignments.forEach((asgn) => {
-      const shiftDef = findShiftById(dayDef, asgn.shiftId);
-      if (shiftDef) {
+      const shiftDef = resolveShift(asgn.shiftId, dayId);
+      if (shiftDef && shiftDef.startTime && shiftDef.endTime) {
         totalMinutes += getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime);
       }
     });
@@ -226,9 +332,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {currentDaySummary.dayAssignments.map((asgn) => {
-              const shiftDef = currentDaySummary.dayDef
-                ? findShiftById(currentDaySummary.dayDef, asgn.shiftId)
-                : undefined;
+              const shiftDef = resolveShift(asgn.shiftId, activeDayId);
               const attendance = attendances.find(
                 (at) =>
                   at.personId === person.id &&
@@ -236,6 +340,14 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                   at.shiftId === asgn.shiftId
               );
               const status = attendance?.status || 'pendiente';
+              const isMesa = asgn.assignedType === 'MESA' || asgn.roleInBase === 'MESA' || (shiftDef?.category as string) === 'MESA';
+              const roleDisplay = asgn.roleInBase || (isMesa ? 'MESA' : 'Integrante Staff');
+              const shiftNameDisplay = shiftDef?.name || (isMesa ? 'Turno MESA' : asgn.shiftId);
+              const scheduleDisplay =
+                shiftDef?.label ||
+                (shiftDef?.startTime && shiftDef?.endTime
+                  ? `${shiftDef.startTime} – ${shiftDef.endTime}`
+                  : 'Por confirmar');
 
               return (
                 <div
@@ -245,10 +357,10 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                   <div className="flex items-center justify-between gap-2 border-b border-[#EADDC7] pb-3">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-1 rounded-xl bg-[#FDF2EE] text-[#B83A24] font-bold text-xs border border-[#F6C7BA]">
-                        {shiftDef?.name || asgn.shiftId}
+                        {shiftNameDisplay}
                       </span>
                       <h4 className="text-sm font-bold text-[#182535] font-montserrat">
-                        {asgn.roleInBase || 'Integrante Staff'}
+                        {roleDisplay}
                       </h4>
                     </div>
 
@@ -282,7 +394,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                     <div className="flex items-center gap-2 text-[#334155]">
                       <Clock className="w-4 h-4 text-[#B83A24] shrink-0" />
                       <span>
-                        Horario: <strong className="text-[#182535] font-mono">{shiftDef?.label || 'Por confirmar'}</strong>
+                        Horario: <strong className="text-[#182535] font-mono">{scheduleDisplay}</strong>
                       </span>
                     </div>
 
@@ -299,7 +411,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                     ) : (
                       <div className="flex items-center gap-2 text-[#64748B]">
                         <MapPin className="w-4 h-4 text-[#94A3B8] shrink-0" />
-                        <span>Operación general en campus (Sin base fija)</span>
+                        <span>{isMesa ? 'Comité Central / Mesa Directiva' : 'Operación general en campus (Sin base fija)'}</span>
                       </div>
                     )}
 
