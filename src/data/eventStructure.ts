@@ -435,6 +435,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_lunes_t2_mkt', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_lunes_t2_gh', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 4, createdAt: new Date().toISOString() },
   { id: 'req_lunes_t2_seg', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 3, createdAt: new Date().toISOString() },
+  { id: 'req_lunes_t2_mesa', dayId: 'lunes', shiftId: 'lunes-t2', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
   // Turno 3 (12:30 - 16:00, cap 36)
   { id: 'req_lunes_t3_gen', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 7, createdAt: new Date().toISOString() },
   { id: 'req_lunes_t3_log', dayId: 'lunes', shiftId: 'lunes-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 5, createdAt: new Date().toISOString() },
@@ -472,6 +473,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_martes_t2_mkt', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_martes_t2_gh', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_martes_t2_seg', dayId: 'martes', shiftId: 'martes-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_martes_t2_mesa', dayId: 'martes', shiftId: 'martes-t2', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
   // Turno 3 (16:00 - 19:30, cap 50)
   { id: 'req_martes_t3_gen', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_martes_t3_log', dayId: 'martes', shiftId: 'martes-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
@@ -494,6 +496,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_carnival_t2_mkt', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t2_gh', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t2_seg', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t2_mesa', dayId: 'miercoles', shiftId: 'miercoles-gt-t2', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
   // Turno 3 (12:00 - 15:10, cap 50)
   { id: 'req_carnival_t3_gen', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t3_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
@@ -501,6 +504,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_carnival_t3_mkt', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t3_gh', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t3_seg', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_carnival_t3_mesa', dayId: 'miercoles', shiftId: 'miercoles-gt-t3', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
   // Turno 4 (15:00 - 18:10, cap 50)
   { id: 'req_carnival_t4_gen', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t4_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t4', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
@@ -520,6 +524,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_jueves_t1_mkt', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t1_gh', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t1_seg', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_mesa', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
   // Turno 2 — The Games GT (13:00 - 21:00, cap 50)
   { id: 'req_jueves_t2_gen', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t2_log', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
@@ -527,6 +532,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_jueves_t2_mkt', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t2_gh', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_jueves_t2_seg', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_mesa', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
 
   // VIERNES - THE GAMES (Turno 1: 6:00 - 21:30, cap 58)
   { id: 'req_viernes_gen', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
@@ -535,6 +541,7 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_viernes_mkt', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
   { id: 'req_viernes_gh', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
   { id: 'req_viernes_seg', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_viernes_mesa', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
 ];
 
 // Backward-compatible shift lists

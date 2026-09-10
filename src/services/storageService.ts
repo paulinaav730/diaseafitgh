@@ -139,13 +139,83 @@ export function initializeStorage(): void {
       localStorage.setItem(STORAGE_KEYS.FUNCTIONS, JSON.stringify(functionCache));
     }
 
-    // Initialize requirements with official defaults
-    requirementCache = [...DEFAULT_INITIAL_REQUIREMENTS];
+    // Initialize requirements with stored values, defaults, and user modifications
+    const reqMap = new Map<string, ShiftRequirement>();
+    DEFAULT_INITIAL_REQUIREMENTS.forEach((dr) => reqMap.set(dr.id, { ...dr }));
+
+    if (rawRequirements) {
+      try {
+        const parsed = JSON.parse(rawRequirements);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((r) => {
+            if (r && r.id) {
+              reqMap.set(r.id, r);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Error parsing rawRequirements from localStorage:', e);
+      }
+    }
+
+    requirementCache = Array.from(reqMap.values());
+
+    // Auto-heal any MESA or custom requirements referenced by existing assignments
+    const mesaShiftsWithAssignments = new Map<
+      string,
+      { dayId: string; shiftId: string; count: number; reqId?: string }
+    >();
+    assignmentCache.forEach((a) => {
+      if (a.assignedType === 'MESA' && a.shiftId && a.dayId) {
+        const key = `${a.dayId}__${a.shiftId}`;
+        const prev = mesaShiftsWithAssignments.get(key) || {
+          dayId: a.dayId,
+          shiftId: a.shiftId,
+          count: 0,
+          reqId: a.requirementId,
+        };
+        prev.count += 1;
+        if (a.requirementId) prev.reqId = a.requirementId;
+        mesaShiftsWithAssignments.set(key, prev);
+      }
+    });
+
+    mesaShiftsWithAssignments.forEach((info) => {
+      const hasMesaReq = requirementCache.some(
+        (r) => r.dayId === info.dayId && r.shiftId === info.shiftId && r.groupType === 'MESA'
+      );
+      if (!hasMesaReq) {
+        const restoredReq: ShiftRequirement = {
+          id: info.reqId || `req_mesa_${info.dayId}_${info.shiftId}`,
+          dayId: info.dayId,
+          shiftId: info.shiftId,
+          groupType: 'MESA',
+          capacity: Math.max(18, info.count),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          notes: 'MESA Directiva / Coordinación',
+        };
+        requirementCache.push(restoredReq);
+      }
+    });
+
     localStorage.setItem(STORAGE_KEYS.REQUIREMENTS, JSON.stringify(requirementCache));
 
-    // Initialize events with clean non-divided defaults
-    eventsCache = [...DEFAULT_INITIAL_EVENTS];
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
+    // Initialize events with clean non-divided defaults or stored customizations
+    if (rawEvents) {
+      try {
+        const parsedEvents = JSON.parse(rawEvents);
+        eventsCache =
+          Array.isArray(parsedEvents) && parsedEvents.length > 0
+            ? parsedEvents
+            : [...DEFAULT_INITIAL_EVENTS];
+      } catch (e) {
+        eventsCache = [...DEFAULT_INITIAL_EVENTS];
+      }
+    } else {
+      eventsCache = [...DEFAULT_INITIAL_EVENTS];
+      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
+    }
 
     // Initialize shifts with defaults and preserve user modifications / custom shifts
     const shiftMap = new Map<string, ConfigurableShift>();
@@ -454,6 +524,11 @@ export function getAvailabilities(): AvailabilityRecord[] {
 export function getAssignments(): Assignment[] {
   initializeStorage();
   return [...assignmentCache];
+}
+
+export function getShiftRequirements(): ShiftRequirement[] {
+  initializeStorage();
+  return [...requirementCache];
 }
 
 // ----------------- PEOPLE CRUD -----------------
@@ -1145,10 +1220,29 @@ export async function saveShiftRequirement(
   reqData: Omit<ShiftRequirement, 'id' | 'updatedAt'> & { id?: string }
 ): Promise<ShiftRequirement> {
   initializeStorage();
-  const id = reqData.id || 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-  const existingIdx = requirementCache.findIndex((r) => r.id === id);
+
+  let existingIdx = -1;
+  if (reqData.id) {
+    existingIdx = requirementCache.findIndex((r) => r.id === reqData.id);
+  }
+  if (existingIdx < 0) {
+    existingIdx = requirementCache.findIndex(
+      (r) =>
+        r.dayId === reqData.dayId &&
+        r.shiftId === reqData.shiftId &&
+        r.groupType === reqData.groupType &&
+        (reqData.groupType !== 'GT' || r.gtSubTeam === reqData.gtSubTeam)
+    );
+  }
+
+  const id =
+    reqData.id ||
+    (existingIdx >= 0
+      ? requirementCache[existingIdx].id
+      : 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
 
   const newReq: ShiftRequirement = {
+    ...(existingIdx >= 0 ? requirementCache[existingIdx] : {}),
     ...reqData,
     id,
     updatedAt: new Date().toISOString(),

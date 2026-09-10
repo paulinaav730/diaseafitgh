@@ -287,7 +287,12 @@ export default function App() {
             )}
 
             {currentTab === 'food' && (
-              <FoodView people={people} assignments={assignments} />
+              <FoodView
+                people={people}
+                assignments={assignments}
+                shifts={shifts}
+                events={events}
+              />
             )}
           </>
         ) : (
