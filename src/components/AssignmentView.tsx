@@ -111,7 +111,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
   const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
-  const [assignedTypeFilter, setAssignedTypeFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
+  const [activeRosterFilter, setActiveRosterFilter] = useState<string>('ALL');
+  const [assignedRosterSearch, setAssignedRosterSearch] = useState<string>('');
+  const [modalGtSubTeamFilter, setModalGtSubTeamFilter] = useState<string>('ALL');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
@@ -297,10 +299,105 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     [currentShiftAssignments]
   );
 
+  // Lista estándar de Sub-Equipos de GT (con Logística y Mercadeo al frente como pidió el usuario)
+  const PRIMARY_GT_SUBTEAMS = useMemo(
+    () => ['Logística', 'Mercadeo', 'RRPP', 'Generales', 'GH', 'Seguridad', 'The Games', 'Carnival'],
+    []
+  );
+
+  // Conteo en tiempo real de cada sub-equipo GT en el turno activo
+  const gtSubTeamStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    PRIMARY_GT_SUBTEAMS.forEach((st) => {
+      counts[st.toLowerCase()] = 0;
+    });
+
+    const extraTeams: string[] = [];
+
+    currentShiftAssignments.forEach((assign) => {
+      if (assign.assignedType === 'GT') {
+        const person = people.find((p) => p.id === assign.personId);
+        const team = (assign.gtSubTeam || person?.gtSubTeam || 'Generales').trim();
+        const lower = team.toLowerCase();
+        const matchedPrimary = PRIMARY_GT_SUBTEAMS.find((p) => p.toLowerCase() === lower);
+
+        if (matchedPrimary) {
+          counts[matchedPrimary.toLowerCase()] = (counts[matchedPrimary.toLowerCase()] || 0) + 1;
+        } else if (team) {
+          if (!extraTeams.some((e) => e.toLowerCase() === lower)) {
+            extraTeams.push(team);
+          }
+          counts[lower] = (counts[lower] || 0) + 1;
+        }
+      }
+    });
+
+    const primaryList = PRIMARY_GT_SUBTEAMS.map((team) => ({
+      team,
+      filterId: `GT:${team}`,
+      displayLabel: `GT ${team.toUpperCase()}`,
+      count: counts[team.toLowerCase()] || 0,
+    }));
+
+    const extraList = extraTeams.map((team) => ({
+      team,
+      filterId: `GT:${team}`,
+      displayLabel: `GT ${team.toUpperCase()}`,
+      count: counts[team.toLowerCase()] || 0,
+    }));
+
+    return [...primaryList, ...extraList];
+  }, [currentShiftAssignments, people, PRIMARY_GT_SUBTEAMS]);
+
   const filteredCurrentShiftAssignments = useMemo(() => {
-    if (assignedTypeFilter === 'ALL') return currentShiftAssignments;
-    return currentShiftAssignments.filter((a) => a.assignedType === assignedTypeFilter);
-  }, [currentShiftAssignments, assignedTypeFilter]);
+    return currentShiftAssignments.filter((assign) => {
+      const person = people.find((p) => p.id === assign.personId);
+      const effectiveGtSubTeam = (
+        assign.gtSubTeam || (assign.assignedType === 'GT' ? person?.gtSubTeam || 'Generales' : '')
+      ).trim();
+
+      // 1. Filtro principal / Sub-equipo GT
+      if (activeRosterFilter === 'ALL') {
+        // Mostrar todos
+      } else if (activeRosterFilter === 'GT') {
+        if (assign.assignedType !== 'GT') return false;
+      } else if (activeRosterFilter.startsWith('GT:')) {
+        if (assign.assignedType !== 'GT') return false;
+        const targetTeam = activeRosterFilter.replace('GT:', '').toLowerCase();
+        if (effectiveGtSubTeam.toLowerCase() !== targetTeam) return false;
+      } else if (activeRosterFilter === 'MESA') {
+        if (assign.assignedType !== 'MESA') return false;
+      } else if (activeRosterFilter === 'GAP') {
+        if (assign.assignedType !== 'GAP') return false;
+      }
+
+      // 2. Búsqueda rápida por texto
+      if (assignedRosterSearch.trim()) {
+        const q = assignedRosterSearch.toLowerCase().trim();
+        const name = (person?.name || '').toLowerCase();
+        const doc = (person?.documentId || '').toLowerCase();
+        const sub = effectiveGtSubTeam.toLowerCase();
+        const fn = (assign.assignedFunction || '').toLowerCase();
+        const role = (assign.roleInBase || '').toLowerCase();
+        if (!name.includes(q) && !doc.includes(q) && !sub.includes(q) && !fn.includes(q) && !role.includes(q)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [currentShiftAssignments, activeRosterFilter, assignedRosterSearch, people]);
+
+  const activeFilterLabel = useMemo(() => {
+    if (activeRosterFilter === 'ALL') return 'Todos';
+    if (activeRosterFilter === 'GT') return 'Todos los GT';
+    if (activeRosterFilter === 'MESA') return 'MESA';
+    if (activeRosterFilter === 'GAP') return 'GAP';
+    if (activeRosterFilter.startsWith('GT:')) {
+      return `GT ${activeRosterFilter.replace('GT:', '').toUpperCase()}`;
+    }
+    return activeRosterFilter;
+  }, [activeRosterFilter]);
 
   // Whether current active shift is specifically for MESA
   const isShiftMesa = useMemo(() => {
@@ -850,6 +947,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           if (!c.isEligibleForGap) return false;
         } else {
           if (!c.isEligibleForGt) return false;
+          // Filter candidate by GT Sub-team in modal
+          if (modalGtSubTeamFilter !== 'ALL') {
+            const target = modalGtSubTeamFilter.toLowerCase();
+            const pSub = (c.person.gtSubTeam || '').toLowerCase();
+            const pTeams = (c.person.gtTeams || []).map((t: string) => t.toLowerCase());
+            if (pSub !== target && !pTeams.includes(target)) {
+              return false;
+            }
+          }
         }
       }
 
@@ -863,7 +969,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       return true;
     });
-  }, [candidatePool, baseAssignTab, activeRequirement, candidateSearchQuery, isShiftMesa]);
+  }, [
+    candidatePool,
+    baseAssignTab,
+    activeRequirement,
+    candidateSearchQuery,
+    isShiftMesa,
+    modalGtSubTeamFilter,
+  ]);
 
   const handleQuickAssignCandidate = async (candidatePerson: Person, fnName: string) => {
     setIsSubmitting(true);
@@ -1583,49 +1696,173 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </button>
         </div>
 
-        {/* Category Filter Pills: GT / MESA / GAP */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
-            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
-              Filtrar personal:
-            </span>
-            {[
-              { id: 'ALL', label: `Todos (${currentShiftAssignments.length})` },
-              { id: 'GT', label: `GT (${assignedGtCount})` },
-              { id: 'GAP', label: `GAP (${assignedGapCount})` },
-              ...(assignedMesaCount > 0 || currentShiftRequirements.some((r) => r.groupType === 'MESA')
-                ? [{ id: 'MESA', label: `MESA (${assignedMesaCount})` }]
-                : []),
-            ].map((pill) => (
-              <button
-                key={pill.id}
-                type="button"
-                onClick={() => setAssignedTypeFilter(pill.id as any)}
-                className={`min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
-                  assignedTypeFilter === pill.id
-                    ? pill.id === 'GAP'
-                      ? 'bg-[#16A34A] text-white shadow-2xs'
-                      : pill.id === 'MESA'
-                      ? 'bg-purple-700 text-white shadow-2xs'
-                      : pill.id === 'GT'
-                      ? 'bg-[#182535] text-white shadow-2xs'
-                      : 'bg-[#B83A24] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
-                }`}
+        {/* Category & GT Sub-Team Filters */}
+        <div className="space-y-2.5 pt-1">
+          {/* Main Controls: Selector Dropdown + Search + Reset */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            {/* Primary Selector Dropdown ("Seleccionar y no copiar") */}
+            <div className="flex items-center gap-2 bg-[#FAF6EC] p-1.5 px-3 rounded-2xl border border-[#EADDC7] overflow-x-auto">
+              <Filter className="w-4 h-4 text-[#B83A24] shrink-0" />
+              <label htmlFor="roster-filter-select" className="text-[11px] font-bold text-[#64748B] font-montserrat whitespace-nowrap">
+                Seleccionar filtro:
+              </label>
+              <select
+                id="roster-filter-select"
+                value={activeRosterFilter}
+                onChange={(e) => setActiveRosterFilter(e.target.value)}
+                className="min-h-[34px] px-3 py-1.5 rounded-xl bg-white border border-[#EADDC7] text-xs font-bold text-[#182535] font-montserrat cursor-pointer hover:border-[#B83A24] focus:outline-hidden focus:ring-2 focus:ring-[#B83A24]/30"
               >
-                {pill.label}
-              </button>
-            ))}
+                <option value="ALL">Mostrar Todos ({currentShiftAssignments.length})</option>
+                <optgroup label="── SUB-EQUIPOS DE GT ──">
+                  <option value="GT">Todos los GT ({assignedGtCount})</option>
+                  {gtSubTeamStats.map((st) => (
+                    <option key={st.filterId} value={st.filterId}>
+                      {st.displayLabel} ({st.count})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="── OTROS GRUPOS ──">
+                  <option value="MESA">MESA ({assignedMesaCount})</option>
+                  <option value="GAP">GAP ({assignedGapCount})</option>
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Quick Search in Roster */}
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-[200px] sm:w-64">
+                <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Buscar asignado o GT..."
+                  value={assignedRosterSearch}
+                  onChange={(e) => setAssignedRosterSearch(e.target.value)}
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                />
+                {assignedRosterSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setAssignedRosterSearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-0.5 cursor-pointer"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {(activeRosterFilter !== 'ALL' || assignedRosterSearch) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRosterFilter('ALL');
+                    setAssignedRosterSearch('');
+                  }}
+                  className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer whitespace-nowrap hidden sm:inline"
+                >
+                  Ver todos ({currentShiftAssignments.length})
+                </button>
+              )}
+            </div>
           </div>
 
-          {assignedTypeFilter !== 'ALL' && (
+          {/* Quick Click Filter Pills: Direct Selection without typing */}
+          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto pb-2">
+            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat shrink-0">
+              Acceso rápido:
+            </span>
             <button
-              onClick={() => setAssignedTypeFilter('ALL')}
-              className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+              type="button"
+              onClick={() => setActiveRosterFilter('ALL')}
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                activeRosterFilter === 'ALL'
+                  ? 'bg-[#182535] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+              }`}
             >
-              Ver todos ({currentShiftAssignments.length})
+              Todos ({currentShiftAssignments.length})
             </button>
-          )}
+
+            <button
+              type="button"
+              onClick={() => setActiveRosterFilter('GT')}
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                activeRosterFilter === 'GT'
+                  ? 'bg-[#182535] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+              }`}
+            >
+              Todos los GT ({assignedGtCount})
+            </button>
+
+            {/* Direct GT Sub-team Pills (Logística, Mercadeo, RRPP, Generales, etc.) */}
+            {gtSubTeamStats.map((st) => {
+              const isSelected = activeRosterFilter === st.filterId;
+              return (
+                <button
+                  key={st.filterId}
+                  type="button"
+                  onClick={() => setActiveRosterFilter(st.filterId)}
+                  className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[#B83A24] text-white shadow-2xs'
+                      : st.count > 0
+                      ? 'bg-[#FFFDF8] text-[#182535] hover:bg-[#FAF6EC] border border-[#EADDC7]'
+                      : 'text-[#94A3B8] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                  }`}
+                >
+                  <span>{st.displayLabel}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                      isSelected
+                        ? 'bg-white/20 text-white'
+                        : st.count > 0
+                        ? 'bg-[#FAF6EC] text-[#B83A24] font-bold'
+                        : 'bg-[#FAF6EC] text-[#94A3B8]'
+                    }`}
+                  >
+                    {st.count}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* MESA & GAP Pills */}
+            {(assignedMesaCount > 0 || currentShiftRequirements.some((r) => r.groupType === 'MESA')) && (
+              <button
+                type="button"
+                onClick={() => setActiveRosterFilter('MESA')}
+                className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                  activeRosterFilter === 'MESA'
+                    ? 'bg-purple-700 text-white shadow-2xs'
+                    : 'text-[#64748B] hover:text-purple-700 hover:bg-[#FFFDF8]'
+                }`}
+              >
+                MESA ({assignedMesaCount})
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setActiveRosterFilter('GAP')}
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                activeRosterFilter === 'GAP'
+                  ? 'bg-[#16A34A] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#16A34A] hover:bg-[#FFFDF8]'
+              }`}
+            >
+              GAP ({assignedGapCount})
+            </button>
+
+            {activeRosterFilter !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => setActiveRosterFilter('ALL')}
+                className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer ml-auto px-2 whitespace-nowrap"
+              >
+                Quitar filtro ({activeFilterLabel})
+              </button>
+            )}
+          </div>
         </div>
 
         {currentShiftAssignments.length === 0 ? (
@@ -1640,10 +1877,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           <div className="py-8 text-center text-xs text-[#64748B] bg-[#FAF6EC]/60 rounded-2xl border border-dashed border-[#EADDC7]">
             <Users className="w-8 h-8 text-[#C87F17] mx-auto mb-2 opacity-60" />
             <p className="font-semibold text-[#182535] text-sm">
-              No hay personas con categoría {assignedTypeFilter} asignadas en este turno
+              {assignedRosterSearch
+                ? `No hay personas que coincidan con "${assignedRosterSearch}" en este turno`
+                : `No hay personas de ${activeFilterLabel} asignadas en este turno`}
             </p>
             <button
-              onClick={() => setAssignedTypeFilter('ALL')}
+              onClick={() => {
+                setActiveRosterFilter('ALL');
+                setAssignedRosterSearch('');
+              }}
               className="mt-2 text-xs font-bold text-[#B83A24] hover:underline cursor-pointer"
             >
               Mostrar todas las asignaciones ({currentShiftAssignments.length})
@@ -1654,6 +1896,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             {filteredCurrentShiftAssignments.map((assign) => {
               const person = people.find((p) => p.id === assign.personId);
               const isMesaAssign = assign.assignedType === 'MESA';
+              const effectiveGtSubTeam =
+                assign.gtSubTeam || (assign.assignedType === 'GT' ? person?.gtSubTeam || 'Generales' : undefined);
               return (
                 <div
                   key={assign.id}
@@ -1666,8 +1910,19 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1 mt-1">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (assign.assignedType === 'GT') {
+                            setActiveRosterFilter(`GT:${effectiveGtSubTeam || 'Generales'}`);
+                          } else {
+                            setActiveRosterFilter(assign.assignedType);
+                          }
+                        }}
+                        title={`Clic para filtrar por ${
+                          assign.assignedType === 'GT' ? `GT ${effectiveGtSubTeam?.toUpperCase() || 'GENERALES'}` : assign.assignedType
+                        }`}
+                        className={`text-[10px] px-2 py-0.5 rounded font-bold border transition-colors cursor-pointer hover:opacity-80 ${
                           isMesaAssign
                             ? 'bg-[#FEF8EC] text-[#C87F17] border-[#FDE68A]'
                             : assign.assignedType === 'GAP'
@@ -1675,8 +1930,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             : 'bg-[#FFFDF8] text-[#182535] border-[#EADDC7]'
                         }`}
                       >
-                        {assign.gtSubTeam ? `GT: ${assign.gtSubTeam}` : assign.assignedType}
-                      </span>
+                        {assign.assignedType === 'GT'
+                          ? `GT: ${effectiveGtSubTeam || 'Generales'}`
+                          : isMesaAssign
+                          ? 'MESA'
+                          : 'GAP'}
+                      </button>
                       {assign.assignedFunction && (
                         <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
                           {assign.assignedFunction}
@@ -2136,6 +2395,59 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </button>
                   )}
                 </div>
+
+                {/* GT Sub-team Selection in Modal ("Seleccionar y no copiar") */}
+                {!activeRequirement && baseAssignTab === 'GT' && (
+                  <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
+                      <label htmlFor="modal-gt-select" className="text-[10px] font-bold text-[#64748B] font-montserrat">
+                        Filtrar GT:
+                      </label>
+                      <select
+                        id="modal-gt-select"
+                        value={modalGtSubTeamFilter}
+                        onChange={(e) => setModalGtSubTeamFilter(e.target.value)}
+                        className="text-xs px-2 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] font-montserrat font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                      >
+                        <option value="ALL">Todos los GT</option>
+                        {GT_SUBTEAMS.map((st) => (
+                          <option key={st} value={st}>
+                            GT {st.toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setModalGtSubTeamFilter('ALL')}
+                        className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                          modalGtSubTeamFilter === 'ALL'
+                            ? 'bg-[#182535] text-white shadow-2xs'
+                            : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      {GT_SUBTEAMS.map((subteam) => (
+                        <button
+                          key={subteam}
+                          type="button"
+                          onClick={() => setModalGtSubTeamFilter(subteam)}
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                            modalGtSubTeamFilter === subteam
+                              ? 'bg-[#B83A24] text-white shadow-2xs'
+                              : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                          }`}
+                        >
+                          GT {subteam.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
                   <span>
