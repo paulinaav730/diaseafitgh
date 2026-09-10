@@ -58,7 +58,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Jueves: 2 shifts + 15 bases * 2 = 60
   // Viernes: 2 shifts + 15 bases * 2 = 60
   const totalSlotsNeeded = 381;
-  const totalAssigned = assignments.length;
+  // Cupos operativos (GT + GAP): MESA no llena el cupo operativo ("solo al GT")
+  const totalAssigned = assignments.filter((a) => a.assignedType !== 'MESA').length;
   const coveragePct = Math.min(100, Math.round((totalAssigned / (totalSlotsNeeded || 1)) * 100));
   const missingSlots = Math.max(0, totalSlotsNeeded - totalAssigned);
 
@@ -433,6 +434,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               const shiftAssignments = assignments.filter(
                 (a) => a.dayId === currentDay.dayId && a.shiftId === shift.id
               );
+              const isMesaShift = shift.category === 'MESA' || shift.name.toUpperCase().includes('MESA');
+              const gtCount = shiftAssignments.filter((a) => a.assignedType === 'GT').length;
+              const mesaCount = shiftAssignments.filter((a) => a.assignedType === 'MESA').length;
+              const gapCount = shiftAssignments.filter((a) => a.assignedType === 'GAP').length;
+              const relevantCount = isMesaShift ? mesaCount : shift.category === 'GAP' ? gapCount : gtCount;
+
               return (
                 <div
                   key={shift.id}
@@ -448,7 +455,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-[#64748B] pt-1 border-t border-[#E5DAC0]/60">
-                    <span>{shiftAssignments.length} asignados</span>
+                    <span>
+                      {relevantCount} cupos {isMesaShift ? 'MESA' : 'GT'}
+                      {!isMesaShift && mesaCount > 0 ? ` (+${mesaCount} M)` : ''}
+                    </span>
                     <span className="font-semibold text-[#182535]">
                       {shift.hasBases ? 'Con Bases Físicas' : 'Turno Operativo'}
                     </span>

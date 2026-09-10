@@ -645,7 +645,16 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   ) : (
                     filteredShifts.map((shift) => {
                       const eventObj = events.find((e) => e.id === shift.eventId);
-                      const assignedCount = assignments.filter((a) => a.shiftId === shift.id).length;
+                      const isMesaShift = shift.category === 'MESA' || shift.name.toUpperCase().includes('MESA');
+                      const shiftAssigns = assignments.filter((a) => a.shiftId === shift.id);
+                      const gtCount = shiftAssigns.filter((a) => a.assignedType === 'GT').length;
+                      const mesaCount = shiftAssigns.filter((a) => a.assignedType === 'MESA').length;
+                      const gapCount = shiftAssigns.filter((a) => a.assignedType === 'GAP').length;
+                      const cupoCount = isMesaShift
+                        ? mesaCount
+                        : shift.category === 'GAP'
+                        ? gapCount
+                        : gtCount;
                       const durationHours = calculateDurationHours(shift.startTime, shift.endTime);
 
                       return (
@@ -729,11 +738,16 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                             </div>
                             <span
                               className={`text-[11px] font-semibold ${
-                                assignedCount >= shift.capacity ? 'text-[#16A34A]' : 'text-[#EA580C]'
+                                cupoCount >= shift.capacity ? 'text-[#16A34A]' : 'text-[#EA580C]'
                               }`}
                             >
-                              {assignedCount} asignados
+                              {cupoCount} {isMesaShift ? 'MESA' : 'GT'} {cupoCount >= shift.capacity ? 'completos' : 'asignados'}
                             </span>
+                            {!isMesaShift && mesaCount > 0 && (
+                              <span className="text-[10px] text-purple-700 font-medium block">
+                                +{mesaCount} MESA (sin cupo)
+                              </span>
+                            )}
                           </td>
 
                           <td className="py-3 px-4">

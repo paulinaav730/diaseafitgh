@@ -465,9 +465,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     return currentBaseOccupants.length >= maxCap;
   }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants]);
 
+  // Quota calculation: ONLY GT counts towards the GT shift cupo (MESA does NOT consume cupo)
+  const shiftCupoFilledCount = useMemo(() => {
+    if (isShiftMesa) {
+      return assignedMesaCount;
+    }
+    if (activeShift.category === 'GAP') {
+      return assignedGapCount;
+    }
+    // For GT shifts: ONLY GT fills the cupo
+    return assignedGtCount;
+  }, [isShiftMesa, activeShift.category, assignedMesaCount, assignedGapCount, assignedGtCount]);
+
   const isShiftFull = useMemo(() => {
-    return Boolean(activeShift.capacity && currentShiftAssignments.length >= activeShift.capacity);
-  }, [activeShift, currentShiftAssignments]);
+    return Boolean(activeShift.capacity && shiftCupoFilledCount >= activeShift.capacity);
+  }, [activeShift.capacity, shiftCupoFilledCount]);
 
   // Candidate pool calculation with strict availability, continuity, and GAP/GT/MESA rules
   const candidatePool = useMemo(() => {
@@ -1175,14 +1187,25 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           {availableShifts.map((shift) => {
             const isSelected = shift.id === activeShift.id;
-            const shiftAssignCount = assignments.filter(
+            const shiftAssigns = assignments.filter(
               (a) => a.dayId === selectedDayId && a.shiftId === shift.id
-            ).length;
+            );
 
             const isMesaPill =
               shift.category === 'MESA' ||
               shift.name.toUpperCase().includes('MESA') ||
-              (shift.label && shift.label.toUpperCase().includes('MESA'));
+              Boolean(shift.label && shift.label.toUpperCase().includes('MESA'));
+
+            // "el cupo no se llena con la mesa, no cuentes en la mesa en el cupo solo al GT"
+            const shiftGtAssigned = shiftAssigns.filter((a) => a.assignedType === 'GT').length;
+            const shiftMesaAssigned = shiftAssigns.filter((a) => a.assignedType === 'MESA').length;
+            const shiftGapAssigned = shiftAssigns.filter((a) => a.assignedType === 'GAP').length;
+
+            const relevantFilled = isMesaPill
+              ? shiftMesaAssigned
+              : shift.category === 'GAP'
+              ? shiftGapAssigned
+              : shiftGtAssigned;
 
             return (
               <button
@@ -1205,11 +1228,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 <span className="font-bold">{shift.name}</span>
                 <span className="font-mono text-[11px] opacity-80">({shift.label})</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                  className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-[#EAE0CA] text-[#475569]'
                   }`}
+                  title={`${relevantFilled} cupo(s) ocupados${!isMesaPill && shiftMesaAssigned > 0 ? ` (+${shiftMesaAssigned} MESA sin cupo)` : ''}`}
                 >
-                  {shiftAssignCount}
+                  {relevantFilled}{shift.capacity ? `/${shift.capacity}` : ''}
+                  {!isMesaPill && shiftMesaAssigned > 0 ? ` (+${shiftMesaAssigned} M)` : ''}
                 </span>
               </button>
             );
@@ -1261,10 +1286,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentShiftRequirements.map((req) => {
               // Calculate assigned people for this requirement
+              // Strict rule: if requirement is GT, MESA members NEVER count towards this GT requirement
               const assignedToThisReq = currentShiftAssignments.filter(
                 (a) =>
-                  a.requirementId === req.id ||
-                  (a.assignedType === req.groupType &&
+                  a.assignedType === req.groupType &&
+                  (a.requirementId === req.id ||
                     (!req.gtSubTeam || a.gtSubTeam === req.gtSubTeam))
               );
               const progressPct = Math.min(
@@ -1533,9 +1559,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <h4 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
               PERSONAL ASIGNADO A {activeShift.name} ({activeShift.label})
             </h4>
-            <p className="text-xs text-[#64748B] font-montserrat">
-              {currentShiftAssignments.length} / {activeShift.capacity} integrante(s) asignados a este turno general
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+              <p className="text-xs font-montserrat text-[#64748B]">
+                Cupo ocupado:{' '}
+                <strong className={shiftCupoFilledCount >= (activeShift.capacity || 0) ? 'text-[#16A34A]' : 'text-[#182535]'}>
+                  {shiftCupoFilledCount} / {activeShift.capacity || 0}
+                </strong>{' '}
+                {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}
+              </p>
+              {assignedMesaCount > 0 && !isShiftMesa && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-bold">
+                  +{assignedMesaCount} MESA (no ocupan cupo GT)
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={() => handleOpenAssignModal()}
@@ -1913,9 +1950,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       ? `ASIGNAR A ${getBaseDisplayName(selectedBaseNumber).toUpperCase()}`
                       : `ASIGNAR A ${activeShift.name}`}
                   </h3>
-                  {activeRequirement && (
+                  {activeRequirement ? (
                     <p className="text-xs text-[#64748B] mt-0.5">
-                      Cupo objetivo: <b>{activeRequirement.capacity} personas</b> •{' '}
+                      Cupo objetivo: <b>{activeRequirement.capacity} personas ({activeRequirement.groupType})</b> •{' '}
                       {activeRequirement.specificFunctions &&
                       activeRequirement.specificFunctions.length > 0 ? (
                         <span>
@@ -1924,6 +1961,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         </span>
                       ) : (
                         <span>Sin filtro: cualquier integrante del grupo</span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-[#64748B] mt-0.5">
+                      Cupo del turno: <b>{shiftCupoFilledCount} / {activeShift.capacity || 0} {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}</b>
+                      {assignedMesaCount > 0 && !isShiftMesa && (
+                        <span className="ml-1 text-purple-700 font-medium">
+                          ({assignedMesaCount} MESA asignados no ocupan cupo GT)
+                        </span>
                       )}
                     </p>
                   )}
@@ -2260,7 +2306,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               {/* Modal Footer */}
               <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
                 <span className="text-xs text-[#64748B]">
-                  {currentShiftAssignments.length} persona(s) asignadas en este turno
+                  {shiftCupoFilledCount} / {activeShift.capacity || 0} cupos {isShiftMesa ? 'MESA' : 'GT'} ocupados
+                  {assignedMesaCount > 0 && !isShiftMesa && (
+                    <span className="text-purple-700 font-medium ml-1">
+                      (+{assignedMesaCount} MESA asignados)
+                    </span>
+                  )}
                 </span>
                 <button
                   type="button"

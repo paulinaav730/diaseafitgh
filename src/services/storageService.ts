@@ -931,16 +931,46 @@ export async function assignPerson(
   }
 
   // Shift total capacity validation
-  const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
-  if (effectiveCapacity) {
-    const totalOccupantsInShift = assignmentCache.filter(
-      (a) => a.dayId === dayId && a.shiftId === shiftId && a.personId !== personId
-    );
-    if (totalOccupantsInShift.length >= effectiveCapacity) {
-      return {
-        success: false,
-        alertMessage: `CUPO COMPLETO — Este turno ya alcanzó su capacidad máxima (${totalOccupantsInShift.length}/${effectiveCapacity}).`,
-      };
+  // User Rule: "el cupo no se llena con la mesa, no cuentes en la mesa en el cupo solo al GT"
+  const isMesaBeingAssigned = assignedType === 'MESA' || person?.primaryType === 'MESA';
+  const isMesaShift = currentShift?.category === 'MESA' || officialShift?.category === 'MESA';
+
+  // If a MESA member is being assigned, they do NOT consume GT cupo and shouldn't be blocked by GT cupo!
+  // If a GT/GAP member is being assigned, MESA members do NOT count towards filling the shift cupo!
+  if (!isMesaBeingAssigned) {
+    const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
+    if (effectiveCapacity) {
+      const relevantOccupantsInShift = assignmentCache.filter(
+        (a) =>
+          a.dayId === dayId &&
+          a.shiftId === shiftId &&
+          a.personId !== personId &&
+          (currentShift?.category === 'GAP' ? a.assignedType === 'GAP' : a.assignedType === 'GT')
+      );
+      if (relevantOccupantsInShift.length >= effectiveCapacity) {
+        return {
+          success: false,
+          alertMessage: `CUPO COMPLETO — Este turno ya alcanzó su capacidad máxima de cupos GT (${relevantOccupantsInShift.length}/${effectiveCapacity}).`,
+        };
+      }
+    }
+  } else if (isMesaShift) {
+    // If it's a dedicated MESA shift, check MESA capacity if defined
+    const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
+    if (effectiveCapacity) {
+      const mesaOccupants = assignmentCache.filter(
+        (a) =>
+          a.dayId === dayId &&
+          a.shiftId === shiftId &&
+          a.personId !== personId &&
+          a.assignedType === 'MESA'
+      );
+      if (mesaOccupants.length >= effectiveCapacity) {
+        return {
+          success: false,
+          alertMessage: `CUPO COMPLETO — Este turno de MESA ya alcanzó su capacidad máxima (${mesaOccupants.length}/${effectiveCapacity}).`,
+        };
+      }
     }
   }
 
