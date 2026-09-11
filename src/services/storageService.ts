@@ -415,6 +415,9 @@ export function initializeStorage(): void {
     );
 
     const hasInvalidCarnivalCount = carnivalBasesInCache.length !== 22;
+    const hasSpecialWithWrongCap = carnivalBasesInCache.some(
+      (b) => b.isSpecial && (b.capacity !== 1 || b.defaultCapacity !== 1)
+    );
     const hasOldSpecialBases = carnivalBasesInCache.some(
       (b) =>
         ['28', '29', '30', 'carnival_28', 'carnival_29', 'carnival_30'].includes(String(b.id)) ||
@@ -426,7 +429,7 @@ export function initializeStorage(): void {
         (String(b.id) === 'carnival_19' && b.name.toLowerCase().includes('arcade'))
     );
 
-    if (hasInvalidCarnivalCount || hasOldSpecialBases) {
+    if (hasInvalidCarnivalCount || hasOldSpecialBases || hasSpecialWithWrongCap) {
       const specialBaseMap: Record<string, { newId: string; newBaseNumber: string; newName: string }> = {
         '20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
         'carnival_20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
@@ -452,12 +455,13 @@ export function initializeStorage(): void {
             String(eb.baseNumber) === String(b.id) ||
             eb.name.toLowerCase() === b.name.toLowerCase()
         );
+        const cap = b.isSpecial ? 1 : (existing?.capacity || existing?.defaultCapacity || b.defaultCapacity);
         return {
           id: 'carnival_' + b.id,
           name: b.name,
           baseNumber: String(b.id),
-          defaultCapacity: existing?.capacity || existing?.defaultCapacity || b.defaultCapacity,
-          capacity: existing?.capacity || existing?.defaultCapacity || b.defaultCapacity,
+          defaultCapacity: cap,
+          capacity: cap,
           isSpecial: b.isSpecial || false,
           isActive: true,
           eventId: 'carnival',

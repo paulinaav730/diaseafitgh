@@ -267,13 +267,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               String(b.baseNumber) === String(cb.id) ||
               b.name.toLowerCase() === cb.name.toLowerCase())
         );
+        const cap = cb.isSpecial ? 1 : (custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity);
         return {
           id: cb.id,
           baseNumber: cb.id,
           name: custom?.name || cb.name,
           code: cb.code,
-          defaultCapacity: custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity,
-          suggestedCapacity: custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity,
+          defaultCapacity: cap,
+          suggestedCapacity: cap,
           isSpecial: cb.isSpecial,
         };
       });
@@ -1689,13 +1690,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] font-montserrat">
-                Base 1 a 19 + Toro (20), Speedway (21) y Arcade (22) — 22 bases oficiales en total. Cada base admite 2 encargados con continuidad garantizada.
+                Bases 1 a 19 (2 encargados) + Toro, Speedway y Arcade (1 encargado c/u) — 22 bases oficiales en total.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[#B83A24] font-mono bg-[#FDF2EE] border border-[#F6C7BA] px-2.5 py-1 rounded-lg font-bold">
-                Capacidad: 2 personas por base
+                Capacidad: Normales (2) • Especiales (1)
               </span>
             </div>
           </div>

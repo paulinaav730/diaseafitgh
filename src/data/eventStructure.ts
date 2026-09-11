@@ -39,9 +39,9 @@ export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
     isActive: true,
     eventId: 'carnival',
   })),
-  { id: 20, code: 'toro', name: 'Base Toro', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 21, code: 'speedway', name: 'Base Speedway', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 22, code: 'arcade', name: 'Base Arcade', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 20, code: 'toro', name: 'Base Toro', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 21, code: 'speedway', name: 'Base Speedway', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 22, code: 'arcade', name: 'Base Arcade', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
 ];
 
 // Helper to format base display name reliably
