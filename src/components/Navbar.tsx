@@ -23,6 +23,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { CurrentUser } from '../types';
+import { DiasSpartanLogo } from './DiasSpartanLogo';
 
 export type TabType =
   | 'dashboard'
@@ -107,13 +108,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
             {/* Brand Section matching image.png */}
             <div className="flex items-center gap-2.5 sm:gap-3.5">
-              {/* Triangular Emblem / Play Icon */}
+              {/* Official Spartan Helmet Emblem with DÍAS */}
               <button
                 onClick={() => onTabChange('dashboard')}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#FFF9ED] border-2 border-[#D48F20]/50 hover:border-[#B83A24] flex items-center justify-center text-[#B83A24] shadow-xs transition-all group shrink-0"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FFFDF8] border-2 border-[#E2B167]/60 hover:border-[#B83A24] p-1 flex items-center justify-center shadow-xs transition-all group shrink-0 hover:scale-105 cursor-pointer"
                 title="DÍAS EAFIT 2026"
               >
-                <div className="w-0 h-0 border-y-[7px] border-y-transparent border-l-[12px] border-l-[#B83A24] group-hover:border-l-[#8F2714] ml-0.5 transition-colors" />
+                <DiasSpartanLogo className="w-full h-full object-contain" />
               </button>
 
               <div>

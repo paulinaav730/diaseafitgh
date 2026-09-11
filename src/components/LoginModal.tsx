@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Person, CurrentUser } from '../types';
+import { DiasSpartanLogo } from './DiasSpartanLogo';
 import { ShieldCheck, User, Lock, Key, AlertCircle, ArrowRight, X, AlertTriangle, Users, CheckCircle2 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -196,8 +197,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
         {/* Brand Header */}
         <div className="text-center space-y-2 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-[#FEF8EC] border-2 border-[#D48F20]/40 text-[#B83A24] flex items-center justify-center mx-auto shadow-2xs">
-            <div className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[14px] border-l-[#B83A24] ml-1" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#FFFDF8] border-2 border-[#E2B167]/60 p-1 flex items-center justify-center shadow-xs">
+            <DiasSpartanLogo className="w-full h-full object-contain" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#182535] font-dalek tracking-wider">
             ACCESO DÍAS EAFIT

@@ -1,0 +1,357 @@
+import React from 'react';
+
+interface DiasSpartanLogoProps {
+  className?: string;
+  size?: number | string;
+}
+
+export const DiasSpartanLogo: React.FC<DiasSpartanLogoProps> = ({
+  className = 'w-10 h-10',
+  size,
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="20 30 450 505"
+      width={size}
+      height={size}
+      className={className}
+      style={{ overflow: 'visible' }}
+    >
+      <defs>
+        {/* Gold gradient for helmet */}
+        <linearGradient id="diasGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#E0B858" />
+          <stop offset="45%" stopColor="#C29B38" />
+          <stop offset="100%" stopColor="#9A7520" />
+        </linearGradient>
+
+        {/* Crimson gradient for crest plume */}
+        <linearGradient id="diasCrestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#CD3E28" />
+          <stop offset="45%" stopColor="#B83A24" />
+          <stop offset="100%" stopColor="#882210" />
+        </linearGradient>
+
+        {/* Shadow filter */}
+        <filter id="diasLogoShadow" x="-10%" y="-10%" width="125%" height="125%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#4A1E0B" floodOpacity={0.18} />
+        </filter>
+      </defs>
+
+      {/* 1. RED CREST PLUME */}
+      <g id="crest-plume" filter="url(#diasLogoShadow)">
+        {/* Front crest fanning plumes */}
+        <path
+          d="
+            M 148 185
+            C 140 160, 115 125, 65 72
+            C 55 60, 48 54, 46 52
+            C 48 68, 62 96, 75 118
+            C 68 122, 60 128, 56 135
+            C 66 150, 85 180, 102 198
+            C 94 200, 84 205, 80 215
+            C 95 235, 115 258, 140 270
+            C 144 260, 147 245, 148 230
+            L 148 185 Z
+          "
+          fill="url(#diasCrestGrad)"
+        />
+
+        {/* Main plume arching behind DÍAS and flowing down back */}
+        <path
+          d="
+            M 65 72
+            C 85 85, 115 110, 150 115
+            C 155 105, 165 88, 175 75
+            C 188 95, 195 118, 202 125
+            C 215 110, 230 90, 245 78
+            C 255 98, 260 120, 268 132
+            C 285 115, 310 95, 335 88
+            C 345 108, 355 130, 362 142
+            C 380 135, 400 138, 415 152
+            C 432 170, 442 198, 442 228
+            C 442 245, 435 260, 448 275
+            C 438 280, 428 285, 424 295
+            C 438 312, 444 330, 440 348
+            C 430 348, 418 350, 414 360
+            C 426 385, 432 415, 425 445
+            C 415 440, 405 442, 398 450
+            C 412 475, 428 505, 460 522
+            C 440 520, 420 500, 405 478
+            C 390 455, 380 425, 372 390
+            C 365 355, 362 320, 358 290
+            C 350 250, 340 220, 320 200
+            C 285 190, 240 185, 195 185
+            C 170 185, 155 185, 148 185
+            Z
+          "
+          fill="url(#diasCrestGrad)"
+        />
+
+        {/* Feather tuft accents */}
+        <path
+          d="
+            M 85 95 C 100 120, 115 145, 130 165
+            M 70 140 C 85 165, 100 190, 115 210
+            M 95 215 C 110 235, 125 250, 140 260
+            M 430 230 C 420 260, 410 290, 405 320
+            M 425 320 C 410 360, 395 400, 385 440
+            M 410 435 C 395 470, 385 490, 380 505
+          "
+          stroke="#7A1C0D"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.6"
+        />
+      </g>
+
+      {/* 2. GREEK LETTERS DÍAS */}
+      <g id="dias-text" fill="url(#diasGoldGrad)" stroke="#553A0E" strokeWidth="1.5" strokeLinejoin="round">
+        {/* Letter 'D' */}
+        <path
+          d="
+            M 152 75
+            L 218 105
+            L 182 178
+            L 155 178
+            Z
+          "
+        />
+        {/* 'D' inner cutout */}
+        <path
+          d="
+            M 166 98
+            L 200 114
+            L 180 160
+            Z
+          "
+          fill="url(#diasCrestGrad)"
+          stroke="#553A0E"
+          strokeWidth="1.5"
+        />
+
+        {/* Letter 'I' with acute accent (Í) */}
+        <polygon points="236,54 248,46 244,62 232,70" fill="url(#diasGoldGrad)" />
+        <polygon points="234,78 252,78 248,172 230,172" />
+
+        {/* Letter 'A' */}
+        <polygon points="296,96 322,96 352,192 334,192 324,162 292,162 284,192 266,192" />
+        <polygon points="307,118 318,148 297,148" fill="url(#diasCrestGrad)" stroke="#553A0E" strokeWidth="1.5" />
+
+        {/* Letter 'S' */}
+        <polygon
+          points="
+            358,142
+            404,146
+            402,162
+            382,162
+            396,176
+            396,198
+            358,210
+            358,194
+            378,190
+            364,178
+            364,158
+            378,158
+            358,154
+          "
+        />
+
+        {/* Highlights on DÍAS letters */}
+        <path
+          d="
+            M 154 78 L 214 105
+            M 236 82 L 232 168
+            M 298 99 L 320 99 L 348 190
+            M 362 144 L 402 148
+          "
+          stroke="#FFFDF0"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.8"
+        />
+      </g>
+
+      {/* 3. CREST HOLDER / ORNAMENTAL WAVE BAND */}
+      <g id="crest-band" filter="url(#diasLogoShadow)">
+        <path
+          d="
+            M 134 205
+            C 185 185, 260 195, 342 278
+            L 328 300
+            C 250 220, 180 210, 126 230
+            Z
+          "
+          fill="url(#diasGoldGrad)"
+          stroke="#553A0E"
+          strokeWidth="2"
+        />
+
+        {/* Greek wave / spiral pattern */}
+        <path
+          d="
+            M 145 216
+            C 152 208, 162 208, 168 214
+            C 170 216, 172 220, 168 223
+            C 165 225, 160 224, 160 220
+            C 160 216, 164 214, 166 215
+
+            M 178 215
+            C 185 208, 195 210, 202 218
+            C 205 222, 206 226, 201 230
+            C 197 232, 192 230, 192 225
+            C 192 220, 197 218, 200 220
+
+            M 212 220
+            C 220 214, 232 218, 240 228
+            C 244 233, 244 238, 238 242
+            C 233 245, 227 242, 228 236
+            C 228 230, 234 227, 238 230
+
+            M 250 232
+            C 260 228, 272 234, 280 246
+            C 284 252, 283 258, 277 262
+            C 271 264, 265 260, 267 254
+            C 268 248, 274 246, 278 249
+
+            M 288 250
+            C 298 248, 310 256, 318 270
+            C 321 276, 320 282, 314 286
+            C 308 288, 303 283, 305 277
+            C 307 271, 313 270, 316 273
+          "
+          stroke="#FFFDF0"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </g>
+
+      {/* 4. SPARTAN HELMET BOWL & FACE */}
+      <g id="helmet-body" filter="url(#diasLogoShadow)">
+        {/* Helmet Cranium */}
+        <path
+          d="
+            M 126 230
+            C 180 210, 250 220, 328 300
+            C 340 315, 345 340, 340 365
+            C 335 375, 325 385, 315 390
+            L 310 375
+            C 320 370, 324 355, 320 340
+            C 310 300, 260 260, 200 250
+            C 165 245, 140 250, 126 256
+            Z
+          "
+          fill="url(#diasGoldGrad)"
+          stroke="#553A0E"
+          strokeWidth="2"
+        />
+
+        {/* Nasal Guard & Cheek Guard */}
+        <path
+          d="
+            M 126 230
+            C 118 245, 108 260, 104 278
+            L 106 385
+            L 118 385
+            C 120 350, 128 320, 138 302
+            L 198 302
+            C 210 325, 218 360, 220 395
+            L 195 408
+            L 88 488
+            C 86 480, 88 460, 94 430
+            C 100 395, 104 360, 104 320
+            C 104 285, 114 255, 126 230
+            Z
+          "
+          fill="url(#diasGoldGrad)"
+          stroke="#553A0E"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+
+        {/* Helmet Bowl Fill */}
+        <path
+          d="
+            M 126 256
+            C 140 250, 165 245, 200 250
+            C 260 260, 310 300, 320 340
+            C 310 345, 290 350, 275 352
+            C 255 355, 235 365, 220 395
+            C 218 360, 210 325, 198 302
+            L 138 302
+            C 128 320, 120 350, 118 385
+            L 106 385
+            C 106 360, 106 320, 112 285
+            C 116 270, 120 260, 126 256
+            Z
+          "
+          fill="url(#diasGoldGrad)"
+          stroke="#553A0E"
+          strokeWidth="1.5"
+        />
+
+        {/* Eye Opening Cutout */}
+        <polygon
+          points="114,306 194,306 132,342"
+          fill="#FFFDF8"
+          stroke="#553A0E"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+
+        {/* Neck Guard */}
+        <path
+          d="
+            M 315 390
+            C 305 400, 280 405, 260 405
+            C 268 390, 285 378, 305 375
+            Z
+          "
+          fill="url(#diasGoldGrad)"
+          stroke="#553A0E"
+          strokeWidth="2"
+        />
+
+        {/* Cheek Guard Rim */}
+        <path
+          d="
+            M 100 472
+            L 190 402
+            C 190 375, 185 350, 178 335
+            L 136 335
+            C 128 355, 122 380, 120 405
+            L 100 472
+            Z
+          "
+          fill="none"
+          stroke="#E5C368"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          opacity="0.85"
+        />
+
+        {/* Battle Scars / Etched Wear Lines */}
+        <g stroke="#FFFDF0" strokeWidth="2" strokeLinecap="round" fill="none">
+          <path d="M 270 270 C 275 282, 282 290, 290 300 M 278 284 L 285 280" />
+          <path d="M 195 265 L 210 280 M 205 270 L 212 274" />
+          <path d="M 125 285 L 135 295" />
+          <path d="M 135 370 L 148 385 M 142 376 L 148 372" />
+          <path d="M 115 440 L 125 452" />
+          <path d="M 94 430 L 89 486 L 192 406" stroke="#FFFDF0" strokeWidth="2.5" />
+          <path d="M 105 280 L 107 384" stroke="#FFFDF0" strokeWidth="2" />
+        </g>
+
+        {/* Deep Shadow Accent Lines */}
+        <g stroke="#553A0E" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6">
+          <path d="M 136 304 L 196 304" />
+          <path d="M 196 304 C 206 335, 214 365, 216 395" />
+          <path d="M 260 404 C 240 404, 225 398, 220 395" />
+        </g>
+      </g>
+    </svg>
+  );
+};

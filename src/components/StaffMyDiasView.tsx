@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Person, Assignment, AttendanceRecord, ConfigurableShift, AppEvent, ConfigurableBase } from '../types';
+import { DiasSpartanLogo } from './DiasSpartanLogo';
 import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import {
   User,
@@ -187,17 +188,22 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
       {/* Top Welcome Card */}
       <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden text-[#182535]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs font-bold uppercase tracking-wider font-montserrat">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Portal de Staff • DÍAS EAFIT</span>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#FFFDF8] border-2 border-[#E2B167]/60 p-1 flex items-center justify-center shadow-xs shrink-0 hidden xs:flex">
+              <DiasSpartanLogo className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#182535] font-dalek tracking-wider">
-              HOLA, {person.name.toUpperCase()}
-            </h1>
-            <p className="text-xs sm:text-sm text-[#64748B] font-montserrat">
-              Consulta tu horario oficial, bases asignadas, alimentación y registro de asistencia.
-            </p>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs font-bold uppercase tracking-wider font-montserrat">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Portal de Staff • DÍAS EAFIT</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-[#182535] font-dalek tracking-wider">
+                HOLA, {person.name.toUpperCase()}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#64748B] font-montserrat">
+                Consulta tu horario oficial, bases asignadas, alimentación y registro de asistencia.
+              </p>
+            </div>
           </div>
 
           <button
