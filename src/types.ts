@@ -148,9 +148,9 @@ export type Shift = ConfigurableShift;
 export type ShiftDefinition = ConfigurableShift;
 
 export interface PhysicalBase {
-  id: number | string; // 1 to 27, 28, 29, 30 or 'toro', 'speedway', 'arcade'
+  id: number | string; // 1 to 19, 20, 21, 22 or 'toro', 'speedway', 'arcade'
   baseNumber?: number | string;
-  name: string; // e.g. "Base 1" ... "Base 27", "Base Toro", "Base Speedway", "Base Arcade"
+  name: string; // e.g. "Base 1" ... "Base 19", "Base Toro", "Base Speedway", "Base Arcade"
   code?: string;
   defaultCapacity: number; // default capacity per base (e.g. 2)
   capacity?: number;

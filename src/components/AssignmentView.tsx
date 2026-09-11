@@ -256,61 +256,53 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
   // Determine physical bases for current day & category (dynamically uses configurable bases if present)
   const physicalBases: PhysicalBase[] = useMemo(() => {
-    if (bases && bases.length > 0) {
-      if (
-        activeShift?.hasBases ||
-        (isDivided && carnivalCategory === 'GAP') ||
-        selectedDayId === 'jueves' ||
-        selectedDayId === 'viernes'
-      ) {
-        const eventIdFilter = selectedDayId === 'miercoles' ? 'carnival' : 'the-games';
-        const matched = bases.filter(
-          (b) => b.isActive && (b.eventId === eventIdFilter || b.dayId === selectedDayId)
+    if (selectedDayId === 'miercoles') {
+      // Carnival ALWAYS has exactly 22 physical bases: 1 to 19 regular, and 20 (Toro), 21 (Speedway), 22 (Arcade)
+      return CARNIVAL_PHYSICAL_BASES.map((cb) => {
+        const custom = (bases || []).find(
+          (b) =>
+            b.isActive &&
+            (b.eventId === 'carnival' || b.dayId === 'miercoles') &&
+            (String(b.id) === `carnival_${cb.id}` ||
+              String(b.baseNumber) === String(cb.id) ||
+              b.name.toLowerCase() === cb.name.toLowerCase())
         );
-        if (matched.length > 0) {
-          return matched.map((b) => ({
-            id: b.id,
-            baseNumber: b.baseNumber || b.id,
-            name: b.name,
-            defaultCapacity: b.capacity || b.defaultCapacity || 2,
-            suggestedCapacity: b.capacity || b.defaultCapacity || 2,
-            isSpecial: b.isSpecial,
-          }));
-        }
-      }
+        return {
+          id: cb.id,
+          baseNumber: cb.id,
+          name: custom?.name || cb.name,
+          code: cb.code,
+          defaultCapacity: custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity,
+          suggestedCapacity: custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity,
+          isSpecial: cb.isSpecial,
+        };
+      });
     }
 
-    if (
-      activeShift?.hasBases ||
-      (isDivided && carnivalCategory === 'GAP') ||
-      selectedDayId === 'jueves' ||
-      selectedDayId === 'viernes'
-    ) {
-      if (selectedDayId === 'miercoles') return CARNIVAL_PHYSICAL_BASES;
-      if (selectedDayId === 'jueves') {
-        return THE_GAMES_JUEVES_BASES.map((b) => ({
-          id: b.id,
-          baseNumber: b.baseNumber || b.id,
-          name: b.name,
-          defaultCapacity: b.capacity || b.defaultCapacity || 2,
-          suggestedCapacity: b.capacity || b.defaultCapacity || 2,
-          isSpecial: b.isSpecial,
-        }));
-      }
-      if (selectedDayId === 'viernes') {
-        return THE_GAMES_VIERNES_BASES.map((b) => ({
-          id: b.id,
-          baseNumber: b.baseNumber || b.id,
-          name: b.name,
-          defaultCapacity: b.capacity || b.defaultCapacity || 2,
-          suggestedCapacity: b.capacity || b.defaultCapacity || 2,
-          isSpecial: b.isSpecial,
-        }));
-      }
+    if (selectedDayId === 'jueves') {
+      return THE_GAMES_JUEVES_BASES.map((b) => ({
+        id: b.id,
+        baseNumber: b.baseNumber || b.id,
+        name: b.name,
+        defaultCapacity: b.capacity || b.defaultCapacity || 2,
+        suggestedCapacity: b.capacity || b.defaultCapacity || 2,
+        isSpecial: b.isSpecial,
+      }));
+    }
+
+    if (selectedDayId === 'viernes') {
+      return THE_GAMES_VIERNES_BASES.map((b) => ({
+        id: b.id,
+        baseNumber: b.baseNumber || b.id,
+        name: b.name,
+        defaultCapacity: b.capacity || b.defaultCapacity || 2,
+        suggestedCapacity: b.capacity || b.defaultCapacity || 2,
+        isSpecial: b.isSpecial,
+      }));
     }
 
     return [];
-  }, [bases, isDivided, carnivalCategory, selectedDayId, activeShift?.hasBases]);
+  }, [bases, selectedDayId]);
 
   // Active requirements for this day and shift
   const currentShiftRequirements = useMemo(() => {
@@ -1298,7 +1290,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </h3>
               <p className="text-xs text-[#64748B] mt-0.5 font-montserrat max-w-2xl leading-relaxed">
                 Los turnos de <b>GT</b> y <b>GAP</b> son completamente independientes y NO se mezclan.
-                GAP cuenta con exactamente <b>30 bases físicas únicas</b> compartidas en sus 3 turnos.
+                GAP cuenta con exactamente <b>22 bases físicas únicas</b> (1 a 19 normales + 3 especiales: Toro, Speedway y Arcade) compartidas en sus 3 turnos.
               </p>
             </div>
 
@@ -1313,7 +1305,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
-                <span>GAP {isCarnival ? "(3 Turnos + 30 Bases)" : "(Bases Físicas)"}</span>
+                <span>GAP {isCarnival ? "(3 Turnos + 22 Bases)" : "(Bases Físicas)"}</span>
               </button>
 
               <button
@@ -1679,7 +1671,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         )}
       </div>
 
-      {/* CONDITIONAL: 30 PHYSICAL BASES FOR CARNIVAL GAP */}
+      {/* CONDITIONAL: 19 PHYSICAL BASES FOR CARNIVAL GAP */}
       {activeShift.hasBases && physicalBases.length > 0 && (
         <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EADDC7]">
@@ -1697,7 +1689,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] font-montserrat">
-                Base 1 a 27 + Toro, Speedway y Arcade. Cada base admite 2 encargados con continuidad garantizada.
+                Base 1 a 19 + Toro (20), Speedway (21) y Arcade (22) — 22 bases oficiales en total. Cada base admite 2 encargados con continuidad garantizada.
               </p>
             </div>
 
@@ -1708,16 +1700,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             </div>
           </div>
 
-          {/* Grid of 30 physical bases */}
+          {/* Grid of 22 physical bases */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
             {physicalBases.map((base) => {
               const baseAssignments = currentShiftAssignments.filter(
                 (a) =>
                   String(a.baseId) === String(base.id) ||
+                  String(a.baseId) === `carnival_${base.id}` ||
                   String(a.baseNumber) === String(base.id) ||
                   (base.baseNumber !== undefined && String(a.baseNumber) === String(base.baseNumber)) ||
                   (a.baseName && base.name && a.baseName.toLowerCase() === base.name.toLowerCase()) ||
-                  (base.code && a.baseNumber === base.code)
+                  (base.code && (a.baseNumber === base.code || a.baseId === base.code)) ||
+                  (base.id === 20 && (a.baseNumber === '20' || a.baseNumber === '28' || a.baseId === 'carnival_20' || a.baseId === 'carnival_28' || a.baseId === 'toro' || a.baseNumber === 'toro' || String(a.baseName).toLowerCase() === 'base toro')) ||
+                  (base.id === 21 && (a.baseNumber === '21' || a.baseNumber === '29' || a.baseId === 'carnival_21' || a.baseId === 'carnival_29' || a.baseId === 'speedway' || a.baseNumber === 'speedway' || String(a.baseName).toLowerCase() === 'base speedway')) ||
+                  (base.id === 22 && (a.baseNumber === '22' || a.baseNumber === '30' || a.baseId === 'carnival_22' || a.baseId === 'carnival_30' || a.baseId === 'arcade' || a.baseNumber === 'arcade' || String(a.baseName).toLowerCase() === 'base arcade'))
               );
               const isFull = baseAssignments.length >= base.defaultCapacity;
               const isSpecial = base.isSpecial;
@@ -1738,20 +1734,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   <div>
                     {/* Header of Base Card */}
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <span
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                             isSpecial
                               ? 'bg-[#FEF8EC] border border-[#E5A12E]/50 text-[#C87F17]'
                               : 'bg-[#FAF6EC] border border-[#EADDC7] text-[#182535]'
                           }`}
                         >
-                          {isSpecial ? '★' : base.id}
+                          {isSpecial ? '★' : (base.baseNumber || String(base.id).replace(/^\D+/g, ''))}
                         </span>
-                        <div>
-                          <h4 className="font-bold text-[#182535] text-xs">{base.name}</h4>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-[#182535] text-xs font-montserrat truncate">{base.name}</h4>
                           {isSpecial && (
-                            <span className="text-[9px] uppercase font-bold text-[#C87F17] font-mono">
+                            <span className="text-[9px] uppercase font-bold text-[#C87F17] font-mono block">
                               Base Especial
                             </span>
                           )}

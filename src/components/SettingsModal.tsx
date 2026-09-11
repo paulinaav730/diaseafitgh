@@ -206,7 +206,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
               <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
               <span>
-                Carnival: Exactamente 30 bases físicas únicas (1..27 + Toro, Speedway, Arcade) en turnos GAP.
+                Carnival: Exactamente 22 bases físicas únicas (1..19 + Toro, Speedway, Arcade) en turnos GAP.
               </span>
             </div>
 

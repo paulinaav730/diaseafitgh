@@ -28,9 +28,9 @@ export function generateBases(count: number, capacityPerBase = 2, eventId?: stri
   }));
 }
 
-// 30 Physical Bases for Carnival: 27 numbered bases + Base Toro + Base Speedway + Base Arcade
+// 22 Physical Bases for Carnival: 19 numbered bases + Base Toro (20) + Base Speedway (21) + Base Arcade (22)
 export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
-  ...Array.from({ length: 27 }, (_, i) => ({
+  ...Array.from({ length: 19 }, (_, i) => ({
     id: i + 1,
     name: `Base ${i + 1}`,
     code: `base-${i + 1}`,
@@ -39,9 +39,9 @@ export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
     isActive: true,
     eventId: 'carnival',
   })),
-  { id: 28, code: 'toro', name: 'Base Toro', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 29, code: 'speedway', name: 'Base Speedway', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 30, code: 'arcade', name: 'Base Arcade', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 20, code: 'toro', name: 'Base Toro', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 21, code: 'speedway', name: 'Base Speedway', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 22, code: 'arcade', name: 'Base Arcade', defaultCapacity: 2, isSpecial: true, isActive: true, eventId: 'carnival' },
 ];
 
 // Helper to format base display name reliably
@@ -49,9 +49,9 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
   if (base === undefined || base === null || base === '' || base === 'null' || base === 'undefined') return '';
   let s = String(base).trim();
   if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
-  if (s === '28' || s.toLowerCase() === 'toro' || s.toLowerCase() === 'base toro' || s === 'carnival_28') return 'Base Toro';
-  if (s === '29' || s.toLowerCase() === 'speedway' || s.toLowerCase() === 'base speedway' || s === 'carnival_29') return 'Base Speedway';
-  if (s === '30' || s.toLowerCase() === 'arcade' || s.toLowerCase() === 'base arcade' || s === 'carnival_30') return 'Base Arcade';
+  if (s === '20' || s === '28' || s.toLowerCase() === 'toro' || s.toLowerCase() === 'base toro' || s === 'carnival_20' || s === 'carnival_28') return 'Base Toro';
+  if (s === '21' || s === '29' || s.toLowerCase() === 'speedway' || s.toLowerCase() === 'base speedway' || s === 'carnival_21' || s === 'carnival_29') return 'Base Speedway';
+  if (s === '22' || s === '30' || s.toLowerCase() === 'arcade' || s.toLowerCase() === 'base arcade' || s === 'carnival_22' || s === 'carnival_30') return 'Base Arcade';
 
   // Prevent repeated "Base Base_" or "Base Base "
   if (s.toLowerCase().startsWith('base base_') || s.toLowerCase().startsWith('base base ')) {
@@ -63,19 +63,19 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
   const match = s.match(/(?:carnival|games_jueves|games_viernes)_(\d+)/i);
   if (match) {
     const num = Number(match[1]);
-    if (num === 28) return 'Base Toro';
-    if (num === 29) return 'Base Speedway';
-    if (num === 30) return 'Base Arcade';
+    if (num === 20 || num === 28) return 'Base Toro';
+    if (num === 21 || num === 29) return 'Base Speedway';
+    if (num === 22 || num === 30) return 'Base Arcade';
     return `Base ${num}`;
   }
 
-  // Handle base_X (e.g. base_1, base_16)
+  // Handle base_X (e.g. base_1, base_19)
   const numMatch = s.match(/^base_(\d{1,3})$/i);
   if (numMatch) {
     const num = Number(numMatch[1]);
-    if (num === 28) return 'Base Toro';
-    if (num === 29) return 'Base Speedway';
-    if (num === 30) return 'Base Arcade';
+    if (num === 20 || num === 28) return 'Base Toro';
+    if (num === 21 || num === 29) return 'Base Speedway';
+    if (num === 22 || num === 30) return 'Base Arcade';
     return `Base ${num}`;
   }
 
@@ -130,6 +130,7 @@ export const DEFAULT_INITIAL_BASES: ConfigurableBase[] = [
     baseNumber: String(b.id),
     defaultCapacity: b.defaultCapacity,
     capacity: b.defaultCapacity,
+    isSpecial: b.isSpecial || false,
     isActive: true,
     eventId: 'carnival',
     dayId: 'miercoles',

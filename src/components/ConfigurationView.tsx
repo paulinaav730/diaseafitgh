@@ -372,7 +372,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   type: 'restore',
                   title: 'Restablecer Programación Oficial Inicial',
                   warning:
-                    '¿Deseas restaurar los turnos, eventos y bases predeterminados de DÍAS EAFIT 2026? Esto reiniciará la configuración a los 5 turnos de Carnival GT, 3 turnos Carnival GAP (30 bases), The Show (5 turnos), The Zone (4 turnos), The Challenge y The Games.',
+                    '¿Deseas restaurar los turnos, eventos y bases predeterminados de DÍAS EAFIT 2026? Esto reiniciará la configuración a los 5 turnos de Carnival GT, 3 turnos Carnival GAP (22 bases), The Show (5 turnos), The Zone (4 turnos), The Challenge y The Games.',
                 })
               }
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:text-[#182535] bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] shadow-2xs transition-all cursor-pointer"
@@ -919,7 +919,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none"
               >
                 <option value="all">Todas las Bases ({bases.length})</option>
-                <option value="carnival">Carnival (30 bases oficiales)</option>
+                <option value="carnival">Carnival (22 bases oficiales)</option>
                 <option value="the-games">The Games (15 bases)</option>
               </select>
             </div>
@@ -1718,7 +1718,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     onChange={(e) => setEditingEvent({ ...editingEvent, isCarnival: e.target.checked })}
                     className="w-4 h-4 text-[#B83A24] rounded"
                   />
-                  Es Día Carnival (30 bases físicas)
+                  Es Día Carnival (22 bases físicas)
                 </label>
 
                 <label className="flex items-center gap-2 text-xs font-bold text-[#475569]">
