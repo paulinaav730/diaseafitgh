@@ -119,14 +119,34 @@ export function initializeStorage(): void {
     const rawBases = localStorage.getItem(STORAGE_KEYS.BASES);
 
     const parsedPeople: Person[] = rawPeople ? JSON.parse(rawPeople) : [];
-    // Normalize usernames for any people missing them or set to documentId
+    // Normalize usernames for any people missing them or set to documentId, and heal primaryType for GT members
+    let hasHealedPeople = false;
     peopleCache = parsedPeople.map((p) => {
-      const derived = derivePersonUsername(p);
-      if (derived && (!p.username || p.username === p.documentId)) {
-        return { ...p, username: derived };
+      let resolvedType = p.primaryType;
+      if (
+        resolvedType !== 'MESA' &&
+        (p.gtSubTeam || (Array.isArray(p.gtTeams) && p.gtTeams.length > 0))
+      ) {
+        if (resolvedType !== 'GT') {
+          resolvedType = 'GT';
+          hasHealedPeople = true;
+        }
       }
-      return p;
+      const derived = derivePersonUsername(p);
+      const newUsername =
+        derived && (!p.username || p.username === p.documentId) ? derived : p.username;
+      if (newUsername !== p.username) {
+        hasHealedPeople = true;
+      }
+      return {
+        ...p,
+        primaryType: resolvedType,
+        username: newUsername,
+      };
     });
+    if (hasHealedPeople) {
+      localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
+    }
     assignmentCache = rawAssignments ? JSON.parse(rawAssignments) : [];
     availabilityCache = rawAvailabilities ? JSON.parse(rawAvailabilities) : [];
     attendanceCache = rawAttendances ? JSON.parse(rawAttendances) : [];

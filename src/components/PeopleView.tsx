@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Person, PersonType, GroupFunction, GtSubTeam, ConfigurableShift, AvailabilityRecord } from '../types';
+import { Person, PersonType, GroupFunction, GtSubTeam, ConfigurableShift, AvailabilityRecord, getEffectivePersonType } from '../types';
+export { getEffectivePersonType };
 import {
   addPerson,
   updatePerson,
@@ -197,7 +198,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setFormUser(person.username || '');
     setFormEmail(person.email);
     setFormPhone(person.phone || '');
-    setFormType(person.primaryType);
+    setFormType(getEffectivePersonType(person));
     setFormAlsoActsAsGap(person.alsoActsAsGap || false);
     setFormGapRoleDesc(person.gapRoleDescription || '');
     const mainSub = (person.gtSubTeam ||
@@ -338,7 +339,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     GT_SUBTEAMS.forEach((sub) => {
       counts[sub] = people.filter(
         (p) =>
-          p.primaryType === 'GT' &&
+          getEffectivePersonType(p) === 'GT' &&
           (p.gtSubTeam === sub || (p.gtTeams && p.gtTeams.includes(sub)))
       ).length;
     });
@@ -405,7 +406,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       }
 
       // 4. Category / Type Filter (ALL, GT, GAP, MESA)
-      if (effectiveType !== 'ALL' && p.primaryType !== effectiveType) {
+      const personEffType = getEffectivePersonType(p);
+      if (effectiveType !== 'ALL' && personEffType !== effectiveType) {
         return false;
       }
 
@@ -467,9 +469,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     sortOption,
   ]);
 
-  const gtCount = people.filter((p) => p.primaryType === 'GT').length;
-  const gapCount = people.filter((p) => p.primaryType === 'GAP').length;
-  const mesaCount = people.filter((p) => p.primaryType === 'MESA').length;
+  const gtCount = people.filter((p) => getEffectivePersonType(p) === 'GT').length;
+  const gapCount = people.filter((p) => getEffectivePersonType(p) === 'GAP').length;
+  const mesaCount = people.filter((p) => getEffectivePersonType(p) === 'MESA').length;
 
   const hasActiveFilters =
     activeColFiltersCount > 0 ||
@@ -1368,23 +1370,28 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                     {/* Tipo Principal */}
                     <td className="p-4">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold ${
-                          person.primaryType === 'GT'
-                            ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
-                            : person.primaryType === 'GAP'
-                            ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
-                            : 'bg-purple-50 text-purple-700 border border-purple-200'
-                        }`}
-                      >
-                        {person.primaryType}
-                      </span>
+                      {(() => {
+                        const effType = getEffectivePersonType(person);
+                        return (
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold ${
+                              effType === 'GT'
+                                ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
+                                : effType === 'GAP'
+                                ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                : 'bg-purple-50 text-purple-700 border border-purple-200'
+                            }`}
+                          >
+                            {effType}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* GT / Funciones */}
                     <td className="p-4 text-[#475569]">
                       <div className="space-y-1">
-                        {person.primaryType === 'GT' && (
+                        {getEffectivePersonType(person) === 'GT' && (
                           <div className="flex items-center gap-1 flex-wrap">
                             <span className="text-[10px] text-[#64748B] font-bold">GT:</span>
                             {person.gtTeams && person.gtTeams.length > 1 ? (
@@ -1624,22 +1631,27 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     </div>
                   </div>
 
-                  <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                      person.primaryType === 'GT'
-                        ? 'bg-[#FDF2EE] text-[#B83A24]'
-                        : person.primaryType === 'GAP'
-                        ? 'bg-[#FEF8EC] text-[#C87F17]'
-                        : 'bg-purple-50 text-purple-700'
-                    }`}
-                  >
-                    {person.primaryType}
-                  </span>
+                  {(() => {
+                    const effType = getEffectivePersonType(person);
+                    return (
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          effType === 'GT'
+                            ? 'bg-[#FDF2EE] text-[#B83A24]'
+                            : effType === 'GAP'
+                            ? 'bg-[#FEF8EC] text-[#C87F17]'
+                            : 'bg-purple-50 text-purple-700'
+                        }`}
+                      >
+                        {effType}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 {/* Details */}
                 <div className="text-xs text-[#64748B] space-y-2 bg-[#FAF6EC] p-3 rounded-2xl border border-[#EADDC7]/60">
-                  {person.primaryType === 'GT' && (
+                  {getEffectivePersonType(person) === 'GT' && (
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-[#182535]">Sub-Equipo:</span>
                       {person.gtTeams && person.gtTeams.length > 1 ? (

@@ -11,6 +11,7 @@ import {
   ConfigurableShift,
   AppEvent,
   ConfigurableBase,
+  getEffectivePersonType,
 } from '../types';
 import {
   EVENT_SCHEDULE,
@@ -68,6 +69,45 @@ interface AssignmentViewProps {
   bases?: ConfigurableBase[];
   onNavigateToConfig?: () => void;
 }
+
+export const normalizeSubTeam = (sub?: string): string => {
+  if (!sub) return '';
+  const clean = sub
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^gt\s*[:\-]?\s*/i, '')
+    .trim();
+  if (clean.includes('segur')) return 'seguridad';
+  if (clean.includes('logist')) return 'logistica';
+  if (clean.includes('merc') || clean.includes('mkt')) return 'mercadeo';
+  if (clean.includes('rrpp') || clean.includes('relac')) return 'rrpp';
+  if (clean === 'gh' || clean.includes('gestion') || clean.includes('humana')) return 'gh';
+  if (clean.includes('carniv')) return 'carnival';
+  if (clean.includes('game')) return 'the games';
+  if (clean.includes('gener')) return 'generales';
+  return clean;
+};
+
+export const matchesGtSubTeam = (person: Person, requiredSubTeam?: string): boolean => {
+  if (!requiredSubTeam) return true;
+  const reqNorm = normalizeSubTeam(requiredSubTeam);
+  if (!reqNorm) return true;
+
+  if (person.gtSubTeam && normalizeSubTeam(person.gtSubTeam) === reqNorm) {
+    return true;
+  }
+
+  if (Array.isArray(person.gtTeams) && person.gtTeams.some((t) => normalizeSubTeam(t) === reqNorm)) {
+    return true;
+  }
+
+  if (person.notes && normalizeSubTeam(person.notes).includes(reqNorm)) {
+    return true;
+  }
+
+  return false;
+};
 
 export const AssignmentView: React.FC<AssignmentViewProps> = ({
   people,
@@ -585,6 +625,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
     return people.map((person) => {
       const isMesa = person.primaryType === 'MESA';
+      const effectiveType: PersonType = isMesa
+        ? 'MESA'
+        : (person.gtSubTeam || (Array.isArray(person.gtTeams) && person.gtTeams.length > 0))
+        ? 'GT'
+        : person.primaryType || 'GT';
+      const isGt = effectiveType === 'GT';
       const isPersonActive = person.isActive !== false;
 
       // RULE: MESA members ONLY appear for MESA shifts/requirements ("solo para los turnos que sea mesa")
@@ -637,15 +683,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         if (activeRequirement.groupType === 'MESA') {
           matchesRequirementGroup = isMesa;
         } else if (activeRequirement.groupType === 'GT') {
-          const isGt = person.primaryType === 'GT';
-          const matchesSub =
-            !activeRequirement.gtSubTeam ||
-            person.gtSubTeam === activeRequirement.gtSubTeam ||
-            (person.gtTeams && person.gtTeams.includes(activeRequirement.gtSubTeam));
+          const matchesSub = matchesGtSubTeam(person, activeRequirement.gtSubTeam);
           matchesRequirementGroup = isGt && matchesSub;
         } else if (activeRequirement.groupType === 'GAP') {
           matchesRequirementGroup =
-            person.primaryType === 'GAP' || (person.primaryType === 'GT' && Boolean(person.alsoActsAsGap));
+            effectiveType === 'GAP' || (isGt && Boolean(person.alsoActsAsGap));
         }
       } else {
         if (isShiftMesa) {
@@ -691,6 +733,117 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         if (availRecord.shiftIds.includes(activeShift.id)) {
           isAvailableInShift = true;
         } else {
+          // Check Miércoles (Carnival) aliases & time window matching
+          if (selectedDayId === 'miercoles') {
+            const getCarnivalWindow = (
+              sid?: string,
+              sname?: string,
+              slabel?: string,
+              sstart?: string,
+              send?: string
+            ) => {
+              const str = `${sid || ''} ${sname || ''} ${slabel || ''}`.toLowerCase();
+
+              // Early morning (GT T1: 6:50 - 9:00 AM)
+              if (
+                str.includes('gt-t1') ||
+                /(?:gt.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gt)/i.test(str) ||
+                str.includes('6:50') ||
+                str.includes('06:50') ||
+                (sstart && sstart.startsWith('06:50'))
+              ) {
+                return 'T1_GT_EARLY';
+              }
+
+              // Morning (GT T2: 8:50 - 12:10 <===> GAP T1: 8:50 - 12:10)
+              if (
+                str.includes('gap-t1') ||
+                str.includes('gt-t2') ||
+                str.includes('miercoles-gap-t1') ||
+                str.includes('miercoles-gt-t2') ||
+                /(?:gap.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gap)/i.test(str) ||
+                /(?:gt.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gt)/i.test(str) ||
+                str.includes('8:50') ||
+                str.includes('08:50') ||
+                (sstart && (sstart.startsWith('08:50') || sstart.startsWith('8:50')))
+              ) {
+                return 'MORNING';
+              }
+
+              // Midday (GT T3: 12:00 - 3:10 <===> GAP T2: 12:00 - 3:10)
+              if (
+                str.includes('gap-t2') ||
+                str.includes('gt-t3') ||
+                str.includes('miercoles-gap-t2') ||
+                str.includes('miercoles-gt-t3') ||
+                /(?:gap.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gap)/i.test(str) ||
+                /(?:gt.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gt)/i.test(str) ||
+                str.includes('12:00') ||
+                str.includes('12:10') ||
+                str.includes('12:30') ||
+                (sstart && (sstart.startsWith('12:00') || sstart.startsWith('12:10') || sstart.startsWith('12:30')))
+              ) {
+                return 'MIDDAY';
+              }
+
+              // Afternoon (GT T4: 3:00 - 6:10 <===> GAP T3: 3:00 - 6:10)
+              if (
+                str.includes('gap-t3') ||
+                str.includes('gt-t4') ||
+                str.includes('miercoles-gap-t3') ||
+                str.includes('miercoles-gt-t4') ||
+                /(?:gap.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gap)/i.test(str) ||
+                /(?:gt.*t(?:urno)?\s*4\b|t(?:urno)?\s*4.*gt)/i.test(str) ||
+                str.includes('3:00') ||
+                str.includes('15:00') ||
+                str.includes('15:10') ||
+                (sstart && (sstart.startsWith('15:00') || sstart.startsWith('3:00')))
+              ) {
+                return 'AFTERNOON';
+              }
+
+              // Evening (GT T5: 6:00 - 9:00 PM)
+              if (
+                str.includes('gt-t5') ||
+                str.includes('miercoles-gt-t5') ||
+                /(?:gt.*t(?:urno)?\s*5\b|t(?:urno)?\s*5.*gt)/i.test(str) ||
+                str.includes('6:00 p') ||
+                str.includes('18:00') ||
+                (sstart && (sstart.startsWith('18:00') || sstart.startsWith('6:00')))
+              ) {
+                return 'T5_GT_LATE';
+              }
+
+              return null;
+            };
+
+            const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+            const activeWin = getCarnivalWindow(
+              activeShift.id,
+              activeShift.name,
+              activeShift.label,
+              activeShift.startTime,
+              activeShift.endTime
+            );
+
+            if (activeWin) {
+              for (const regId of availRecord.shiftIds) {
+                const regShift = allKnownShifts.find((s) => s.id === regId);
+                const regWin = getCarnivalWindow(
+                  regId,
+                  regShift?.name,
+                  regShift?.label,
+                  regShift?.startTime,
+                  regShift?.endTime
+                );
+                if (regWin && regWin === activeWin) {
+                  isAvailableInShift = true;
+                  break;
+                }
+              }
+            }
+          }
+
           // Check Jueves aliases
           if (selectedDayId === 'jueves') {
             const isT1 = (sid: string) =>
@@ -721,29 +874,48 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           // Time & Turno matching
           if (!isAvailableInShift) {
             const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
-            const normTime = (t?: string) => {
-              if (!t) return '';
-              const clean = t.replace(/(?:a\.\s*m\.|p\.\s*m\.|am|pm)/gi, '').trim();
-              const parts = clean.split(':');
-              if (parts.length < 2) return clean;
-              const h = parseInt(parts[0], 10);
+
+            const timeToMinutes = (t?: string) => {
+              if (!t) return null;
+              const clean = t.trim();
+              const isPM = /p\.?\s*m/i.test(clean);
+              const isAM = /a\.?\s*m/i.test(clean);
+              const numeric = clean.replace(/(?:a\.\s*m\.|p\.\s*m\.|am|pm)/gi, '').trim();
+              const parts = numeric.split(':');
+              if (parts.length < 2) return null;
+              let h = parseInt(parts[0], 10);
               const m = parseInt(parts[1], 10);
-              if (isNaN(h) || isNaN(m)) return clean;
-              return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+              if (isNaN(h) || isNaN(m)) return null;
+              if (isPM && h < 12) h += 12;
+              if (isAM && h === 12) h = 0;
+              return h * 60 + m;
             };
+
+            const sAct = timeToMinutes(activeShift.startTime);
+            const eAct = timeToMinutes(activeShift.endTime);
 
             for (const regId of availRecord.shiftIds) {
               const regShift = allKnownShifts.find((s) => s.id === regId);
               if (regShift && regShift.dayId === selectedDayId) {
-                if (
-                  regShift.startTime &&
-                  activeShift.startTime &&
-                  normTime(regShift.startTime) === normTime(activeShift.startTime) &&
-                  normTime(regShift.endTime) === normTime(activeShift.endTime)
-                ) {
-                  isAvailableInShift = true;
-                  break;
+                const sReg = timeToMinutes(regShift.startTime);
+                const eReg = timeToMinutes(regShift.endTime);
+
+                if (sReg !== null && eReg !== null && sAct !== null && eAct !== null) {
+                  // Direct or close match (within 35 min on start and end)
+                  if (Math.abs(sReg - sAct) <= 35 && Math.abs(eReg - eAct) <= 35) {
+                    isAvailableInShift = true;
+                    break;
+                  }
+                  // Overlap match: if they overlap by at least 60 minutes or 50% of the active shift
+                  const overlapMins = Math.max(0, Math.min(eReg, eAct) - Math.max(sReg, sAct));
+                  const actDuration = eAct - sAct;
+                  if (overlapMins >= 60 || (actDuration > 0 && overlapMins / actDuration >= 0.5)) {
+                    isAvailableInShift = true;
+                    break;
+                  }
                 }
+
+                // Fallback to turno number matching
                 const extractTurno = (name: string, id: string) => {
                   const m = (name + ' ' + id).match(/\b(t[1-5]|turno\s*[1-5])\b/i);
                   return m ? m[0].toUpperCase().replace(/\s+/, '') : null;
@@ -793,15 +965,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         (person.gtTeams || []).some((t) => t.toUpperCase().includes('CARNIVAL'));
 
       // GAP Eligibility:
-      // - primaryType === 'GAP'
-      // - primaryType === 'GT' with dual role:
+      // - effectiveType === 'GAP'
+      // - isGt with dual role:
       //   * GT Generales or alsoActsAsGap: Wed, Thu, Fri
       //   * GT Carnival: Thu, Fri
       //   * MESA is NEVER allowed for GAP
       let isCategoryAllowedForGap = false;
-      if (person.primaryType === 'GAP') {
+      if (effectiveType === 'GAP') {
         isCategoryAllowedForGap = true;
-      } else if (person.primaryType === 'GT') {
+      } else if (isGt) {
         if (isGeneralSubteam || person.alsoActsAsGap) {
           if (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') {
             isCategoryAllowedForGap = true;
@@ -816,14 +988,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
 
       // GT Eligibility:
-      // - strictly primaryType === 'GT' (MESA is NEVER allowed for GT)
+      // - strictly non-MESA, and is GT or has a GT subteam
       let isCategoryAllowedForGt = false;
-      if (person.primaryType === 'GT') {
+      if (!isMesa && isGt) {
         if (activeRequirement && activeRequirement.groupType === 'GT' && activeRequirement.gtSubTeam) {
-          if (
-            person.gtSubTeam === activeRequirement.gtSubTeam ||
-            (person.gtTeams || []).includes(activeRequirement.gtSubTeam)
-          ) {
+          if (matchesGtSubTeam(person, activeRequirement.gtSubTeam)) {
             isCategoryAllowedForGt = true;
           }
         } else {
@@ -949,10 +1118,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           if (!c.isEligibleForGt) return false;
           // Filter candidate by GT Sub-team in modal
           if (modalGtSubTeamFilter !== 'ALL') {
-            const target = modalGtSubTeamFilter.toLowerCase();
-            const pSub = (c.person.gtSubTeam || '').toLowerCase();
-            const pTeams = (c.person.gtTeams || []).map((t: string) => t.toLowerCase());
-            if (pSub !== target && !pTeams.includes(target)) {
+            if (!matchesGtSubTeam(c.person, modalGtSubTeamFilter)) {
               return false;
             }
           }
@@ -1404,7 +1570,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 (a) =>
                   a.assignedType === req.groupType &&
                   (a.requirementId === req.id ||
-                    (!req.gtSubTeam || a.gtSubTeam === req.gtSubTeam))
+                    (!req.gtSubTeam || normalizeSubTeam(a.gtSubTeam) === normalizeSubTeam(req.gtSubTeam)))
               );
               const progressPct = Math.min(
                 100,
@@ -2499,25 +2665,34 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               <span className="font-bold text-sm text-[#182535]">
                                 {person.name}
                               </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                  person.primaryType === 'GT'
-                                    ? 'bg-[#FDF2EE] text-[#B83A24]'
-                                    : 'bg-[#FEF8EC] text-[#C87F17]'
-                                }`}
-                              >
-                                {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : person.primaryType}
-                              </span>
-                              {person.primaryType === 'MESA' && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
-                                  MESA
-                                </span>
-                              )}
-                              {person.primaryType === 'GT' && person.alsoActsAsGap && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
-                                  + GAP Habilitado
-                                </span>
-                              )}
+                              {(() => {
+                                const effType = getEffectivePersonType(person);
+                                return (
+                                  <>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                        effType === 'GT'
+                                          ? 'bg-[#FDF2EE] text-[#B83A24]'
+                                          : effType === 'GAP'
+                                          ? 'bg-[#FEF8EC] text-[#C87F17]'
+                                          : 'bg-purple-50 text-purple-700'
+                                      }`}
+                                    >
+                                      {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : effType}
+                                    </span>
+                                    {effType === 'MESA' && (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
+                                        MESA
+                                      </span>
+                                    )}
+                                    {effType === 'GT' && person.alsoActsAsGap && (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+                                        + GAP Habilitado
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
 
                             <div className="text-[11px] text-[#64748B] font-mono mt-0.5">

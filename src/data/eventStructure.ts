@@ -579,16 +579,18 @@ export function findShiftById(
   if (direct) return direct;
 
   // Legacy aliases
-  if (shiftId === 'miercoles-t1' || shiftId === 'miercoles-gap-t1') {
-    return shifts.find((s) => s.id === 'miercoles-gt-t1') || shifts.find((s) => s.id === 'miercoles-gt-t2');
+  if (shiftId === 'miercoles-t1') {
+    return shifts.find((s) => s.id === 'miercoles-gt-t1');
   }
-  if (shiftId === 'miercoles-t2' || shiftId === 'miercoles-gap-t2') {
+  if (shiftId === 'miercoles-gap-t1' || shiftId === 'miercoles-t2') {
+    return shifts.find((s) => s.id === 'miercoles-gt-t2');
+  }
+  if (shiftId === 'miercoles-gap-t2' || shiftId === 'miercoles-t3') {
     return shifts.find((s) => s.id === 'miercoles-gt-t3');
   }
-  if (shiftId === 'miercoles-t3' || shiftId === 'miercoles-gap-t3') {
+  if (shiftId === 'miercoles-gap-t3' || shiftId === 'miercoles-t4') {
     return shifts.find((s) => s.id === 'miercoles-gt-t4');
   }
-  if (shiftId === 'miercoles-t4') return shifts.find((s) => s.id === 'miercoles-gt-t4');
   if (shiftId === 'miercoles-t5') return shifts.find((s) => s.id === 'miercoles-gt-t5');
   if (
     shiftId === 'jueves-t2-gt' ||

@@ -99,6 +99,12 @@ export interface Person {
   updatedAt?: string;
 }
 
+export function getEffectivePersonType(p: Person): PersonType {
+  if (p.primaryType === 'MESA') return 'MESA';
+  if (p.gtSubTeam || (Array.isArray(p.gtTeams) && p.gtTeams.length > 0)) return 'GT';
+  return p.primaryType || 'GT';
+}
+
 // Configurable event
 export interface AppEvent {
   id: string; // e.g. 'the-show', 'the-zone', 'carnival', 'the-challenge', 'the-games'

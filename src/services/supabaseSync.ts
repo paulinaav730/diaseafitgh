@@ -84,6 +84,17 @@ export function postgresToPerson(r: any): Person {
   const cleanNotes =
     typeof r.notes === 'string' ? r.notes.replace(/\[DUAL_GAP[^\]]*\]/g, '').trim() : '';
 
+  const rawPrimaryType = r.primary_type;
+  const gtSubTeam = r.gt_sub_team || undefined;
+  const gtTeams = Array.isArray(r.gt_teams) ? r.gt_teams : [];
+  // If a person has a GT subteam and is not MESA, they belong to GT
+  const resolvedPrimaryType =
+    rawPrimaryType === 'MESA'
+      ? 'MESA'
+      : (gtSubTeam || gtTeams.length > 0)
+      ? 'GT'
+      : rawPrimaryType || 'GT';
+
   return {
     id: r.id,
     name: r.name,
@@ -97,11 +108,11 @@ export function postgresToPerson(r: any): Person {
     externalExcelId: r.external_excel_id || undefined,
     startTimeExcel: r.start_time_excel || undefined,
     endTimeExcel: r.end_time_excel || undefined,
-    primaryType: r.primary_type,
+    primaryType: resolvedPrimaryType,
     alsoActsAsGap: r.also_acts_as_gap ?? (hasDualGapInNotes || false),
     gapRoleDescription: r.gap_role_description || extractedGapDesc || undefined,
-    gtTeams: r.gt_teams || [],
-    gtSubTeam: r.gt_sub_team || undefined,
+    gtTeams: gtTeams,
+    gtSubTeam: gtSubTeam,
     functions: r.functions || [],
     roleTitle: r.role_title || 'Staff',
     shirtSize: r.shirt_size || 'M',

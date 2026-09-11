@@ -645,27 +645,53 @@ export async function parseExcelMaestroFile(
     let gtSubTeam: GtSubTeam | undefined;
 
     const gtClean = gt.trim();
+    const gtUpper = gtClean.toUpperCase();
+    const hasGtSubTeam =
+      gtUpper.includes('SEGURIDAD') ||
+      gtUpper.includes('LOGISTICA') ||
+      gtUpper.includes('LOGÍSTICA') ||
+      gtUpper.includes('MERCADEO') ||
+      gtUpper.includes('MKT') ||
+      gtUpper.includes('RRPP') ||
+      gtUpper.includes('RELAC') ||
+      gtUpper.includes('GENERAL') ||
+      gtUpper.includes('THE GAMES') ||
+      gtUpper.includes('CARNIVAL') ||
+      gtUpper.includes('GH') ||
+      gtUpper.includes('GESTION') ||
+      gtUpper.includes('GESTIÓN');
+
     const isExplicitGap =
-      gtClean.toUpperCase().includes('GAP') || gtClean.toUpperCase().includes('APOYO');
+      gtUpper.includes('GAP') || gtUpper.includes('APOYO');
     const isExplicitGt =
-      gtClean.toUpperCase().includes('GT') ||
-      gtClean.toUpperCase().includes('TRABAJO') ||
-      gtClean.toUpperCase().includes('LOGÍSTICA') ||
-      gtClean.toUpperCase().includes('LOGISTICA');
-    const isMesa = gtClean.toUpperCase().includes('MESA');
+      gtUpper.includes('GT') ||
+      gtUpper.includes('TRABAJO') ||
+      hasGtSubTeam;
+    const isMesa = gtUpper.includes('MESA');
 
     if (isMesa) {
       primaryType = 'MESA';
-    } else if (isExplicitGap && isExplicitGt) {
+    } else if (hasGtSubTeam || (isExplicitGap && isExplicitGt)) {
       primaryType = 'GT';
-      alsoActsAsGap = true;
-      gapRoleDescription = 'GAP Generales (Miércoles, Jueves y Viernes)';
-      const cleanedGt = gtClean.replace(/GAP/gi, '').replace(/APOYO/gi, '');
-      gtTeams = cleanedGt
-        ? cleanedGt.split(/[,/;|\-]+/).map((s) => s.trim()).filter(Boolean)
-        : ['Logística'];
-      if (gtTeams.length === 0) gtTeams = ['Logística'];
-      gtSubTeam = (gtTeams[0] || 'Logística') as GtSubTeam;
+      if (isExplicitGap) {
+        alsoActsAsGap = true;
+        gapRoleDescription = 'GAP Generales (Miércoles, Jueves y Viernes)';
+      }
+      const cleanedGt = gtClean.replace(/GAP/gi, '').replace(/APOYO/gi, '').trim();
+      const rawSplits = (cleanedGt || gtClean).split(/[,/;|\-]+/).map((s) => s.trim()).filter(Boolean);
+      gtTeams = rawSplits.length > 0 ? rawSplits : ['Logística'];
+      // Normalize to known GtSubTeam
+      const normalizedSub = gtTeams[0] || 'Logística';
+      const normUpper = normalizedSub.toUpperCase();
+      if (normUpper.includes('SEGUR')) gtSubTeam = 'Seguridad';
+      else if (normUpper.includes('LOGIST')) gtSubTeam = 'Logística';
+      else if (normUpper.includes('MERC') || normUpper.includes('MKT')) gtSubTeam = 'Mercadeo';
+      else if (normUpper.includes('RRPP') || normUpper.includes('RELAC')) gtSubTeam = 'RRPP';
+      else if (normUpper.includes('GH') || normUpper.includes('GESTION') || normUpper.includes('GESTIÓN')) gtSubTeam = 'GH';
+      else if (normUpper.includes('CARNIV')) gtSubTeam = 'Carnival';
+      else if (normUpper.includes('GAME')) gtSubTeam = 'The Games';
+      else if (normUpper.includes('GENER')) gtSubTeam = 'Generales';
+      else gtSubTeam = 'Logística';
     } else if (isExplicitGap) {
       primaryType = 'GAP';
     } else {
