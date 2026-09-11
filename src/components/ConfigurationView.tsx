@@ -931,7 +931,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {filteredBases.map((b) => {
-              const displayName = getBaseDisplayName(b.id) || b.name;
+              const hasCleanName = b.name && !b.name.toLowerCase().startsWith('base base_') && !b.name.toLowerCase().startsWith('base_');
+              const displayName = hasCleanName ? b.name : (getBaseDisplayName(b.name) || getBaseDisplayName(b.id) || b.name || `Base ${b.id}`);
               const assignmentsOnBase = assignments.filter((a) => String(a.baseNumber) === String(b.id));
 
               return (
@@ -970,7 +971,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   <div className="mt-3 pt-2 border-t border-[#F1F5F9] flex items-center justify-end gap-1">
                     <button
                       onClick={() => {
-                        setEditingBase({ ...b });
+                        setEditingBase({ ...b, name: displayName });
                         setIsBaseModalOpen(true);
                       }}
                       className="p-1 text-[#0284C7] hover:bg-[#E0F2FE] rounded transition-colors"

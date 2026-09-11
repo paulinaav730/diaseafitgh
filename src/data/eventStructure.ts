@@ -47,12 +47,19 @@ export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
 // Helper to format base display name reliably
 export function getBaseDisplayName(base: number | string | undefined | null): string {
   if (base === undefined || base === null || base === '' || base === 'null' || base === 'undefined') return '';
-  const s = String(base).trim();
+  let s = String(base).trim();
   if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
   if (s === '28' || s.toLowerCase() === 'toro' || s.toLowerCase() === 'base toro' || s === 'carnival_28') return 'Base Toro';
   if (s === '29' || s.toLowerCase() === 'speedway' || s.toLowerCase() === 'base speedway' || s === 'carnival_29') return 'Base Speedway';
   if (s === '30' || s.toLowerCase() === 'arcade' || s.toLowerCase() === 'base arcade' || s === 'carnival_30') return 'Base Arcade';
-  if (s.toLowerCase().startsWith('base ')) return s;
+
+  // Prevent repeated "Base Base_" or "Base Base "
+  if (s.toLowerCase().startsWith('base base_') || s.toLowerCase().startsWith('base base ')) {
+    s = s.substring(10).trim();
+  } else if (s.toLowerCase().startsWith('base ')) {
+    return s;
+  }
+
   const match = s.match(/(?:carnival|games_jueves|games_viernes)_(\d+)/i);
   if (match) {
     const num = Number(match[1]);
@@ -61,6 +68,26 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
     if (num === 30) return 'Base Arcade';
     return `Base ${num}`;
   }
+
+  // Handle base_X (e.g. base_1, base_16)
+  const numMatch = s.match(/^base_(\d{1,3})$/i);
+  if (numMatch) {
+    const num = Number(numMatch[1]);
+    if (num === 28) return 'Base Toro';
+    if (num === 29) return 'Base Speedway';
+    if (num === 30) return 'Base Arcade';
+    return `Base ${num}`;
+  }
+
+  // If it is a timestamp ID like base_1784086...
+  if (s.toLowerCase().startsWith('base_')) {
+    const rest = s.substring(5).trim();
+    if (/^\d{6,}$/.test(rest)) {
+      return `Base ${rest.slice(-4)}`;
+    }
+    return `Base ${rest}`;
+  }
+
   return `Base ${s}`;
 }
 
