@@ -938,18 +938,34 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                         )}
                       </td>
 
-                      {/* Restricción Alimentaria */}
+                      {/* Restricción Alimentaria & Alergias */}
                       <td className="py-3.5 px-4">
-                        {hasRestriction ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-300 font-bold text-[11px]">
-                            <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>{entry.person?.dietaryRestrictions}</span>
-                          </span>
-                        ) : (
-                          <span className="text-[#94A3B8] text-xs">
-                            {entry.person?.dietaryRestrictions || 'Ninguna'}
-                          </span>
-                        )}
+                        <div className="space-y-1">
+                          {entry.person?.foodAllergies &&
+                            !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                              entry.person.foodAllergies.trim().toLowerCase()
+                            ) && (
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-900 border border-rose-300 font-bold text-[11px]">
+                                <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                                <span>Alergia: {entry.person.foodAllergies}</span>
+                              </div>
+                            )}
+                          {hasRestriction ? (
+                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-300 font-bold text-[11px]">
+                              <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span>Dieta: {entry.person?.dietaryRestrictions}</span>
+                            </div>
+                          ) : (
+                            (!entry.person?.foodAllergies ||
+                              ['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                entry.person.foodAllergies.trim().toLowerCase()
+                              )) && (
+                              <span className="text-[#94A3B8] text-xs">
+                                {entry.person?.dietaryRestrictions || 'Ninguna'}
+                              </span>
+                            )
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

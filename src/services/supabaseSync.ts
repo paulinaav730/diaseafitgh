@@ -67,9 +67,12 @@ export function personToPostgres(p: Person) {
     role_title: p.roleTitle || 'Staff',
     shirt_size: p.shirtSize || 'M',
     dietary_restrictions: p.dietaryRestrictions || 'Ninguna',
-    notes: p.alsoActsAsGap
-      ? `${p.notes || ''} [DUAL_GAP${p.gapRoleDescription ? ':' + p.gapRoleDescription : ''}]`.trim()
-      : p.notes || '',
+    notes: [
+      p.notes || '',
+      p.alsoActsAsGap ? `[DUAL_GAP${p.gapRoleDescription ? ':' + p.gapRoleDescription : ''}]` : '',
+      p.foodAllergies && p.foodAllergies !== 'Ninguna' ? `[ALLERGIES:${p.foodAllergies}]` : '',
+      p.medicalConditions && p.medicalConditions !== 'Ninguna' ? `[CONDITIONS:${p.medicalConditions}]` : '',
+    ].filter(Boolean).join(' ').trim(),
     updated_at: new Date().toISOString(),
   };
 }
@@ -81,8 +84,14 @@ export function postgresToPerson(r: any): Person {
   const hasDualGapInNotes = typeof r.notes === 'string' && r.notes.includes('[DUAL_GAP');
   const extractedGapDesc =
     typeof r.notes === 'string' ? r.notes.match(/\[DUAL_GAP:([^\]]+)\]/)?.[1] : undefined;
+  const extractedAllergies =
+    typeof r.notes === 'string' ? r.notes.match(/\[ALLERGIES:([^\]]+)\]/)?.[1] : undefined;
+  const extractedConditions =
+    typeof r.notes === 'string' ? r.notes.match(/\[CONDITIONS:([^\]]+)\]/)?.[1] : undefined;
   const cleanNotes =
-    typeof r.notes === 'string' ? r.notes.replace(/\[DUAL_GAP[^\]]*\]/g, '').trim() : '';
+    typeof r.notes === 'string'
+      ? r.notes.replace(/\[(DUAL_GAP|ALLERGIES|CONDITIONS)[^\]]*\]/g, '').trim()
+      : '';
 
   const rawPrimaryType = r.primary_type;
   const gtSubTeam = r.gt_sub_team || undefined;
@@ -116,7 +125,9 @@ export function postgresToPerson(r: any): Person {
     functions: r.functions || [],
     roleTitle: r.role_title || 'Staff',
     shirtSize: r.shirt_size || 'M',
+    foodAllergies: r.food_allergies || extractedAllergies || 'Ninguna',
     dietaryRestrictions: r.dietary_restrictions || 'Ninguna',
+    medicalConditions: r.medical_conditions || extractedConditions || 'Ninguna',
     notes: cleanNotes,
     createdAt: r.created_at || new Date().toISOString(),
     updatedAt: r.updated_at || undefined,

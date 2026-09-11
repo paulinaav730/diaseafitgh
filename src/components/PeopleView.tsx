@@ -47,6 +47,8 @@ import {
   RefreshCw,
   CheckSquare,
   Square,
+  Utensils,
+  HeartPulse,
 } from 'lucide-react';
 
 interface PeopleViewProps {
@@ -162,7 +164,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   const [formAlsoActsAsGap, setFormAlsoActsAsGap] = useState(false);
   const [formGapRoleDesc, setFormGapRoleDesc] = useState('');
   const [formShirt, setFormShirt] = useState<'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
+  const [formFoodAllergies, setFormFoodAllergies] = useState('Ninguna');
   const [formDiet, setFormDiet] = useState('Ninguna');
+  const [formMedicalConditions, setFormMedicalConditions] = useState('Ninguna');
   const [formNotes, setFormNotes] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,7 +188,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setCustomFunctionInput('');
     setFormRole('Staff');
     setFormShirt('M');
+    setFormFoodAllergies('Ninguna');
     setFormDiet('Ninguna');
+    setFormMedicalConditions('Ninguna');
     setFormNotes('');
     setFormError('');
     setIsAddModalOpen(true);
@@ -215,7 +221,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
     setCustomFunctionInput('');
     setFormRole(person.roleTitle || 'Staff');
     setFormShirt(person.shirtSize || 'M');
+    setFormFoodAllergies(person.foodAllergies || 'Ninguna');
     setFormDiet(person.dietaryRestrictions || 'Ninguna');
+    setFormMedicalConditions(person.medicalConditions || 'Ninguna');
     setFormNotes(person.notes || '');
     setFormError('');
     setIsAddModalOpen(true);
@@ -269,7 +277,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           functions: formSelectedFunctions,
           roleTitle: formRole.trim(),
           shirtSize: formShirt,
-          dietaryRestrictions: formDiet.trim(),
+          foodAllergies: formFoodAllergies.trim() || 'Ninguna',
+          dietaryRestrictions: formDiet.trim() || 'Ninguna',
+          medicalConditions: formMedicalConditions.trim() || 'Ninguna',
           notes: formNotes.trim(),
         });
       } else {
@@ -287,7 +297,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           functions: formSelectedFunctions,
           roleTitle: formRole.trim(),
           shirtSize: formShirt,
-          dietaryRestrictions: formDiet.trim(),
+          foodAllergies: formFoodAllergies.trim() || 'Ninguna',
+          dietaryRestrictions: formDiet.trim() || 'Ninguna',
+          medicalConditions: formMedicalConditions.trim() || 'Ninguna',
           notes: formNotes.trim(),
         });
       }
@@ -1344,15 +1356,54 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                     {/* Persona */}
                     <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-[#B83A24] font-bold font-dalek flex items-center justify-center shrink-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-[#B83A24] font-bold font-dalek flex items-center justify-center shrink-0 mt-0.5">
                           {person.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <div className="font-bold text-sm text-[#182535]">{person.name}</div>
                           <div className="text-[11px] text-[#64748B]">
-                            {person.roleTitle || 'Staff'}
+                            {person.roleTitle || 'Staff'} {person.shirtSize ? `• Talla ${person.shirtSize}` : ''}
                           </div>
+
+                          {/* Alergias, Restricciones y Condiciones Médicas */}
+                          {((person.foodAllergies && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.foodAllergies.trim().toLowerCase())) ||
+                            (person.dietaryRestrictions && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.dietaryRestrictions.trim().toLowerCase())) ||
+                            (person.medicalConditions && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.medicalConditions.trim().toLowerCase()))) ? (
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                              {person.foodAllergies && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.foodAllergies.trim().toLowerCase()) && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-[10px] font-bold"
+                                  title={`Alergia alimentaria: ${person.foodAllergies}`}
+                                >
+                                  <AlertCircle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
+                                  <span>Alergia: {person.foodAllergies}</span>
+                                </span>
+                              )}
+                              {person.dietaryRestrictions && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.dietaryRestrictions.trim().toLowerCase()) && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-bold"
+                                  title={`Restricción de comida: ${person.dietaryRestrictions}`}
+                                >
+                                  <Utensils className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                                  <span>Dieta: {person.dietaryRestrictions}</span>
+                                </span>
+                              )}
+                              {person.medicalConditions && !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(person.medicalConditions.trim().toLowerCase()) && (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-900 text-[10px] font-bold"
+                                  title={`Enfermedad o condición médica: ${person.medicalConditions}`}
+                                >
+                                  <HeartPulse className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                                  <span>Condición: {person.medicalConditions}</span>
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-[#94A3B8] mt-1">
+                              Salud: Sin novedades
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -2063,37 +2114,74 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 })()}
               </div>
 
-              {/* Talla y Dieta */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                    Talla Camiseta
-                  </label>
-                  <select
-                    value={formShirt}
-                    onChange={(e) => setFormShirt(e.target.value as any)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
-                  >
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
+              {/* Talla Camiseta */}
+              <div>
+                <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  Talla Camiseta
+                </label>
+                <select
+                  value={formShirt}
+                  onChange={(e) => setFormShirt(e.target.value as any)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                >
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+
+              {/* Salud, Alergias y Restricciones de Comida (3 casillas solicitadas) */}
+              <div className="bg-[#FAF6EC]/80 border border-[#EADDC7] rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#182535]">
+                  <HeartPulse className="w-4 h-4 text-[#B83A24]" />
+                  <span>Salud, Alergias y Alimentación</span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
-                    Restricción Alimentaria
-                  </label>
-                  <input
-                    type="text"
-                    value={formDiet}
-                    onChange={(e) => setFormDiet(e.target.value)}
-                    placeholder="Ej. Vegetariana, Celíaca"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 text-rose-600" />
+                      <span>Alergias Alimentarias</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formFoodAllergies}
+                      onChange={(e) => setFormFoodAllergies(e.target.value)}
+                      placeholder="Ej. Maní, Mariscos, Ninguna"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                      <Utensils className="w-3 h-3 text-amber-600" />
+                      <span>Restricción de Comidas</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formDiet}
+                      onChange={(e) => setFormDiet(e.target.value)}
+                      placeholder="Ej. Vegetariana, Celíaca, Ninguna"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                      <HeartPulse className="w-3 h-3 text-blue-600" />
+                      <span>Enfermedad o Condición</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formMedicalConditions}
+                      onChange={(e) => setFormMedicalConditions(e.target.value)}
+                      placeholder="Ej. Asma, Diabetes, Ninguna"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    />
+                  </div>
                 </div>
               </div>
 

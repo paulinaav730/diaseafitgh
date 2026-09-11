@@ -34,6 +34,9 @@ export interface ExcelMaestroParsedRow {
   epikId: string;
   gt: string;
   shirtSize: string;
+  foodAllergies?: string;
+  dietaryRestrictions?: string;
+  medicalConditions?: string;
   primaryType: PersonType;
   alsoActsAsGap?: boolean;
   gapRoleDescription?: string;
@@ -349,6 +352,9 @@ export function identifyColumns(headers: string[]): {
   epikIdKey?: string;
   gtKey?: string;
   shirtSizeKey?: string;
+  foodAllergiesKey?: string;
+  dietaryRestrictionsKey?: string;
+  medicalConditionsKey?: string;
   eventDayKeys: Record<string, string>; // dayId -> original header key
 } {
   const result: ReturnType<typeof identifyColumns> = {
@@ -420,6 +426,31 @@ export function identifyColumns(headers: string[]): {
       result.gtKey = hdr;
     } else if (norm.includes('talla') || norm.includes('camiseta') || norm.includes('shirt')) {
       result.shirtSizeKey = hdr;
+    } else if (
+      norm.includes('alergia') ||
+      norm.includes('allergy') ||
+      norm.includes('alergeno') ||
+      norm.includes('alérgeno')
+    ) {
+      result.foodAllergiesKey = hdr;
+    } else if (
+      norm.includes('restriccion') ||
+      norm.includes('restricción') ||
+      norm.includes('dieta') ||
+      norm.includes('dietary') ||
+      norm.includes('comida') ||
+      norm.includes('alimentar')
+    ) {
+      result.dietaryRestrictionsKey = hdr;
+    } else if (
+      norm.includes('enfermedad') ||
+      norm.includes('condicion') ||
+      norm.includes('condición') ||
+      norm.includes('medica') ||
+      norm.includes('médica') ||
+      norm.includes('medical')
+    ) {
+      result.medicalConditionsKey = hdr;
     }
   });
 
@@ -567,6 +598,13 @@ export async function parseExcelMaestroFile(
     const epikId = colMap.epikIdKey ? cleanVal(raw[colMap.epikIdKey]) : '';
     const gt = colMap.gtKey ? cleanVal(raw[colMap.gtKey]) : '';
     const shirtSize = colMap.shirtSizeKey ? cleanVal(raw[colMap.shirtSizeKey]).toUpperCase() : 'M';
+    const foodAllergies = colMap.foodAllergiesKey ? cleanVal(raw[colMap.foodAllergiesKey]) : '';
+    const dietaryRestrictions = colMap.dietaryRestrictionsKey
+      ? cleanVal(raw[colMap.dietaryRestrictionsKey])
+      : '';
+    const medicalConditions = colMap.medicalConditionsKey
+      ? cleanVal(raw[colMap.medicalConditionsKey])
+      : '';
 
     // Fallbacks
     if (!name && fullName) {
@@ -832,6 +870,9 @@ export async function parseExcelMaestroFile(
       epikId,
       gt,
       shirtSize,
+      foodAllergies: foodAllergies || (existingPerson?.foodAllergies ?? 'Ninguna'),
+      dietaryRestrictions: dietaryRestrictions || (existingPerson?.dietaryRestrictions ?? 'Ninguna'),
+      medicalConditions: medicalConditions || (existingPerson?.medicalConditions ?? 'Ninguna'),
       primaryType,
       alsoActsAsGap,
       gapRoleDescription,
@@ -908,6 +949,9 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'ID de EPIK': 'EPIK-00129',
       '¿A qué GT pertenece?': 'Logística, Montaje',
       'Talla de camiseta': 'M',
+      'Alergias alimentarias': 'Ninguna',
+      'Restricción de comidas': 'Vegetariana',
+      'Enfermedad o condición médica': 'Ninguna',
       'THE SHOW LUNES 28 de septiembre': lunesSample,
       'THE ZONE MARTES 29 de septiembre': martesSample,
       'CARNIVAL MIÉRCOLES 30 de septiembre': miercolesSample,
@@ -928,6 +972,9 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'ID de EPIK': 'EPIK-00245',
       '¿A qué GT pertenece?': 'GAP',
       'Talla de camiseta': 'S',
+      'Alergias alimentarias': 'Maní, mariscos',
+      'Restricción de comidas': 'Sin gluten / Celíaca',
+      'Enfermedad o condición médica': 'Asma leve',
       'THE SHOW LUNES 28 de septiembre': '',
       'THE ZONE MARTES 29 de septiembre': '',
       'CARNIVAL MIÉRCOLES 30 de septiembre': '8:50 AM – 12:10 PM; 12:00 PM – 3:10 PM',
@@ -948,6 +995,9 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'ID de EPIK': 'EPIK-00388',
       '¿A qué GT pertenece?': 'RRPP',
       'Talla de camiseta': 'L',
+      'Alergias alimentarias': 'Lactosa',
+      'Restricción de comidas': 'Ninguna',
+      'Enfermedad o condición médica': 'Diabetes tipo 1',
       'THE SHOW LUNES 28 de septiembre': '6:00 AM – 8:00 AM',
       'THE ZONE MARTES 29 de septiembre': '7:00 AM – 12:30 PM',
       'CARNIVAL MIÉRCOLES 30 de septiembre': '',
@@ -976,6 +1026,9 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
     { wch: 14 }, // EPIK
     { wch: 24 }, // GT
     { wch: 16 }, // Talla
+    { wch: 24 }, // Alergias alimentarias
+    { wch: 24 }, // Restricción de comidas
+    { wch: 30 }, // Enfermedad o condición médica
     { wch: 34 }, // Lunes
     { wch: 32 }, // Martes
     { wch: 36 }, // Miércoles
@@ -1055,6 +1108,9 @@ export function exportPeopleToOfficialExcel(
           ? `${p.gtTeams && p.gtTeams.length > 0 ? p.gtTeams.join(', ') : p.gtSubTeam || 'Logística'}${p.alsoActsAsGap ? ' / GAP Generales' : ''}`
           : p.primaryType,
       'Talla de camiseta': p.shirtSize || 'M',
+      'Alergias alimentarias': p.foodAllergies || 'Ninguna',
+      'Restricción de comidas': p.dietaryRestrictions || 'Ninguna',
+      'Enfermedad o condición médica': p.medicalConditions || 'Ninguna',
       'THE SHOW LUNES 28 de septiembre': formatDayShifts('lunes'),
       'THE ZONE MARTES 29 de septiembre': formatDayShifts('martes'),
       'CARNIVAL MIÉRCOLES 30 de septiembre': formatDayShifts('miercoles'),

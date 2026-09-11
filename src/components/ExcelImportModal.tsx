@@ -721,6 +721,45 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                               <div className="text-[10px] text-[#64748B] truncate max-w-[180px]">
                                 {row.institutionalEmail || row.email}
                               </div>
+                              {((row.foodAllergies &&
+                                !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                  row.foodAllergies.trim().toLowerCase()
+                                )) ||
+                                (row.dietaryRestrictions &&
+                                  !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                    row.dietaryRestrictions.trim().toLowerCase()
+                                  )) ||
+                                (row.medicalConditions &&
+                                  !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                    row.medicalConditions.trim().toLowerCase()
+                                  ))) && (
+                                <div className="flex items-center gap-1 flex-wrap mt-1">
+                                  {row.foodAllergies &&
+                                    !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                      row.foodAllergies.trim().toLowerCase()
+                                    ) && (
+                                      <span className="text-[9px] px-1 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 font-semibold">
+                                        Alergia: {row.foodAllergies}
+                                      </span>
+                                    )}
+                                  {row.dietaryRestrictions &&
+                                    !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                      row.dietaryRestrictions.trim().toLowerCase()
+                                    ) && (
+                                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-semibold">
+                                        Dieta: {row.dietaryRestrictions}
+                                      </span>
+                                    )}
+                                  {row.medicalConditions &&
+                                    !['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
+                                      row.medicalConditions.trim().toLowerCase()
+                                    ) && (
+                                      <span className="text-[9px] px-1 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200 font-semibold">
+                                        Condición: {row.medicalConditions}
+                                      </span>
+                                    )}
+                                </div>
+                              )}
                             </td>
 
                             {/* Document & Username */}

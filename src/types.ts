@@ -92,7 +92,9 @@ export interface Person {
   functions?: string[]; // Multiple functions: e.g. ["Montaje", "Apoyo logístico"]
   roleTitle?: string; // e.g. "Coordinador", "Líder de Base", "Staff"
   shirtSize?: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | string; // Talla de camiseta
-  dietaryRestrictions?: string;
+  foodAllergies?: string; // Alergias alimentarias (ej. Maní, Mariscos, Ninguna)
+  dietaryRestrictions?: string; // Restricción de comidas (ej. Vegetariana, Vegana, Celíaca, Ninguna)
+  medicalConditions?: string; // Algún tipo de enfermedad o condición médica (ej. Asma, Diabetes, Ninguna)
   notes?: string;
   isActive?: boolean;
   createdAt: string;

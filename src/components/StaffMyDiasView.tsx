@@ -216,7 +216,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
         </div>
 
         {/* Profile Details Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-[#EADDC7] text-xs font-montserrat">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6 pt-6 border-t border-[#EADDC7] text-xs font-montserrat">
           <div>
             <span className="text-[#64748B] text-[11px] block">Cédula</span>
             <span className="font-mono font-bold text-[#182535] text-sm">{person.documentId}</span>
@@ -236,13 +236,25 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
             </span>
           </div>
           <div>
-            <span className="text-[#64748B] text-[11px] block">Talla de Camiseta</span>
+            <span className="text-[#64748B] text-[11px] block">Talla Camiseta</span>
             <span className="font-bold text-[#182535] text-sm">{person.shirtSize || 'No registrada'}</span>
           </div>
           <div>
-            <span className="text-[#64748B] text-[11px] block">Restricción Alimentaria</span>
+            <span className="text-[#64748B] text-[11px] block">Alergias Alimentarias</span>
+            <span className="font-semibold text-[#182535] text-xs truncate block" title={person.foodAllergies}>
+              {person.foodAllergies || 'Ninguna'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[#64748B] text-[11px] block">Restricción de Comidas</span>
             <span className="font-semibold text-[#182535] text-xs truncate block" title={person.dietaryRestrictions}>
               {person.dietaryRestrictions || 'Ninguna'}
+            </span>
+          </div>
+          <div>
+            <span className="text-[#64748B] text-[11px] block">Enfermedad o Condición</span>
+            <span className="font-semibold text-[#182535] text-xs truncate block" title={person.medicalConditions}>
+              {person.medicalConditions || 'Ninguna'}
             </span>
           </div>
         </div>

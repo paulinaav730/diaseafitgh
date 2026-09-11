@@ -811,6 +811,18 @@ export async function importExcelMaestroBatch(
           startTimeExcel: row.startTimeExcel || existing.startTimeExcel,
           endTimeExcel: row.endTimeExcel || existing.endTimeExcel,
           shirtSize: row.shirtSize || existing.shirtSize,
+          foodAllergies:
+            row.foodAllergies && row.foodAllergies !== 'Ninguna'
+              ? row.foodAllergies
+              : existing.foodAllergies || row.foodAllergies || 'Ninguna',
+          dietaryRestrictions:
+            row.dietaryRestrictions && row.dietaryRestrictions !== 'Ninguna'
+              ? row.dietaryRestrictions
+              : existing.dietaryRestrictions || row.dietaryRestrictions || 'Ninguna',
+          medicalConditions:
+            row.medicalConditions && row.medicalConditions !== 'Ninguna'
+              ? row.medicalConditions
+              : existing.medicalConditions || row.medicalConditions || 'Ninguna',
           primaryType: row.primaryType || existing.primaryType,
           alsoActsAsGap: row.alsoActsAsGap !== undefined ? row.alsoActsAsGap : existing.alsoActsAsGap,
           gapRoleDescription: row.gapRoleDescription || existing.gapRoleDescription,
@@ -859,7 +871,9 @@ export async function importExcelMaestroBatch(
         functions: [],
         roleTitle: 'Staff',
         shirtSize: row.shirtSize || 'M',
-        dietaryRestrictions: 'Ninguna',
+        foodAllergies: row.foodAllergies || 'Ninguna',
+        dietaryRestrictions: row.dietaryRestrictions || 'Ninguna',
+        medicalConditions: row.medicalConditions || 'Ninguna',
         notes: row.gt ? `GT: ${row.gt}` : '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
