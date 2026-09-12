@@ -742,7 +742,24 @@ export function calculateDurationHours(startTime: string, endTime: string): numb
   return diff > 0 ? diff / 60 : 0;
 }
 
-export function doShiftsOverlap(shiftA: Shift, shiftB: Shift): boolean {
+export function areBasesEqual(
+  baseA: string | number | undefined | null,
+  baseB: string | number | undefined | null,
+  nameA?: string,
+  nameB?: string
+): boolean {
+  if (baseA === undefined || baseA === null || baseB === undefined || baseB === null) {
+    if (nameA && nameB && nameA.toLowerCase().trim() === nameB.toLowerCase().trim()) return true;
+    return false;
+  }
+  const cleanA = String(baseA).toLowerCase().replace(/^(?:carnival_|games_jueves_|games_viernes_|base[_-]?)/, '').trim();
+  const cleanB = String(baseB).toLowerCase().replace(/^(?:carnival_|games_jueves_|games_viernes_|base[_-]?)/, '').trim();
+  if (cleanA && cleanA === cleanB) return true;
+  if (nameA && nameB && nameA.toLowerCase().trim() === nameB.toLowerCase().trim()) return true;
+  return false;
+}
+
+export function doShiftsOverlap(shiftA: Shift, shiftB: Shift, bufferMinutes: number = 20): boolean {
   if (shiftA.id === shiftB.id) return true;
   const [s1h, s1m] = shiftA.startTime.split(':').map(Number);
   const [e1h, e1m] = shiftA.endTime.split(':').map(Number);
@@ -755,5 +772,7 @@ export function doShiftsOverlap(shiftA: Shift, shiftB: Shift): boolean {
   const end1 = e1h * 60 + e1m;
   const start2 = s2h * 60 + s2m;
   const end2 = e2h * 60 + e2m;
-  return Math.max(start1, start2) < Math.min(end1, end2);
+  const overlapMinutes = Math.min(end1, end2) - Math.max(start1, start2);
+  // Transitions between consecutive shifts (e.g. 10 or 15 mins relay handover) do not constitute a conflicting overlap
+  return overlapMinutes > bufferMinutes;
 }

@@ -23,6 +23,7 @@ import {
   getBaseDisplayName,
   findShiftById,
   doShiftsOverlap,
+  areBasesEqual,
   DEFAULT_INITIAL_SHIFTS,
 } from '../data/eventStructure';
 import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
@@ -926,7 +927,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
 
       // 5. Carnival continuity validation:
-      // If assigning to a base on Wednesday, person must stay in the same physical base
       let carnivalContinuityConflict = false;
       let priorCarnivalBaseName: string | undefined = undefined;
       if (selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null)) {
@@ -938,10 +938,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             ((a.baseId && a.baseId !== 'null') || (a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== ''))
         );
         if (priorAssign) {
-          const priorKey = String(priorAssign.baseId || priorAssign.baseNumber);
-          const targetId = modalBase?.id ? String(modalBase.id) : String(selectedBaseNumber);
-          const targetNum = modalBase?.baseNumber !== undefined ? String(modalBase.baseNumber) : String(selectedBaseNumber);
-          if (priorKey !== targetId && priorKey !== targetNum && priorAssign.baseName !== modalBase?.name) {
+          const targetId = modalBase?.id ? String(modalBase.id) : (selectedBaseNumber !== null ? String(selectedBaseNumber) : undefined);
+          const isSame = areBasesEqual(priorAssign.baseId || priorAssign.baseNumber, targetId, priorAssign.baseName, modalBase?.name);
+          if (!isSame) {
             carnivalContinuityConflict = true;
             priorCarnivalBaseName = priorAssign.baseName || getBaseDisplayName(priorAssign.baseNumber || priorAssign.baseId);
           }
@@ -958,24 +957,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         (person.gtTeams || []).some((t) => t.toUpperCase().includes('CARNIVAL'));
 
       // GAP Eligibility:
-      // - effectiveType === 'GAP'
-      // - isGt with dual role:
-      //   * GT Generales or alsoActsAsGap: Wed, Thu, Fri
-      //   * GT Carnival: Thu, Fri
-      //   * MESA is NEVER allowed for GAP
       let isCategoryAllowedForGap = false;
       if (effectiveType === 'GAP') {
         isCategoryAllowedForGap = true;
       } else if (isGt) {
-        if (isGeneralSubteam || person.alsoActsAsGap) {
+        if (isGeneralSubteam || isCarnivalSubteam || person.alsoActsAsGap) {
           if (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') {
             isCategoryAllowedForGap = true;
           }
-        } else if (isCarnivalSubteam) {
-          if (selectedDayId === 'jueves' || selectedDayId === 'viernes') {
-            isCategoryAllowedForGap = true;
-          }
         } else if (person.alsoActsAsGap) {
+          isCategoryAllowedForGap = true;
+        }
+      }
+      // If person already has an active GAP assignment on this day, they are inherently allowed for GAP
+      if (!isCategoryAllowedForGap) {
+        const hasGapAssignmentOnDay = assignments.some(
+          (a) => a.personId === person.id && a.dayId === selectedDayId && a.assignedType === 'GAP'
+        );
+        if (hasGapAssignmentOnDay) {
           isCategoryAllowedForGap = true;
         }
       }
@@ -1019,13 +1018,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         matchingFunctionsList = person.functions || [];
       }
 
-      // Base prerequisite validity: active, available, not already in this shift, no shift overlap, no carnival conflict
+      // Base prerequisite validity: active, not already in this shift, no shift overlap
       const baseAvailable =
         isPersonActive &&
-        isAvailableInShift &&
         !isAlreadyAssigned &&
-        !conflictingAssignment &&
-        !carnivalContinuityConflict;
+        !conflictingAssignment;
 
       const isEligibleForGap = baseAvailable && isCategoryAllowedForGap && matchesRequirementGroup && matchesFunctions;
       const isEligibleForGt = baseAvailable && isCategoryAllowedForGt && matchesRequirementGroup && matchesFunctions;
@@ -1064,16 +1061,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   ]);
 
   const gapCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGap).length;
-  }, [candidatePool]);
+    return candidatePool.filter((c) => c.isEligibleForGap && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   const gtCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGt).length;
-  }, [candidatePool]);
+    return candidatePool.filter((c) => c.isEligibleForGt && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   const mesaCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForMesa).length;
-  }, [candidatePool]);
+    return candidatePool.filter((c) => c.isEligibleForMesa && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   // Filter candidates based on active requirement or active tab [GAP] vs [GT] vs [MESA]
   const filteredCandidates = useMemo(() => {
@@ -1083,14 +1080,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // Must be active
       if (!c.isPersonActive) return false;
 
-      // Exclude anyone not available in this shift (strictly no "Sin turno registrado" or "No disponible" candidates)
-      if (!c.isAvailableInShift) return false;
-
-      // Exclude already assigned or shift overlap conflict
+      // Exclude already assigned in THIS shift or real shift overlap conflict
       if (c.isAlreadyAssigned || c.conflictingAssignment) return false;
 
-      // Exclude continuity conflicts
-      if (c.carnivalContinuityConflict) return false;
+      // When toggle is on and not searching, filter by registered availability in this shift
+      if (showOnlyAvailableInModal && !q) {
+        if (!c.isAvailableInShift) return false;
+      }
 
       // Filter by requirement or active Tab [GAP] vs [GT] vs [MESA]
       if (activeRequirement) {
@@ -1133,6 +1129,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     baseAssignTab,
     activeRequirement,
     candidateSearchQuery,
+    showOnlyAvailableInModal,
     isShiftMesa,
     modalGtSubTeamFilter,
   ]);
@@ -1142,11 +1139,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     try {
       const candidateInfo = candidatePool.find((c) => c.person.id === candidatePerson.id);
       if (candidateInfo && !candidateInfo.isAvailableInShift) {
-        setModalAlert(
-          `Esta persona (${candidatePerson.name}) no tiene registrado este turno (${activeShift.name}) en su horario de disponibilidad.`
-        );
-        setIsSubmitting(false);
-        return;
+        console.info(`Asignando a ${candidatePerson.name} fuera de su disponibilidad registrada`);
       }
 
       const isMesaPerson = candidatePerson.primaryType === 'MESA';
@@ -2612,10 +2605,23 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
-                  <span>
-                    Mostrando candidatos disponibles: <b>{filteredCandidates.length}</b>
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Candidatos disponibles: <b>{filteredCandidates.length}</b>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowOnlyAvailableInModal(!showOnlyAvailableInModal)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        showOnlyAvailableInModal
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                          : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7] hover:text-[#182535]'
+                      }`}
+                    >
+                      {showOnlyAvailableInModal ? '✓ Solo con turno registrado' : 'Mostrando todo el personal'}
+                    </button>
+                  </div>
                   <span>
                     Categoría activa: <b>{baseAssignTab}</b>
                   </span>
@@ -2631,12 +2637,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       No hay candidatos disponibles en {baseAssignTab} para este turno
                     </p>
                     <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
-                      Solo se muestran integrantes activos con turno registrado confirmado y sin conflictos de horario o continuidad.
+                      Solo se muestran integrantes activos sin conflictos de horario. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {filteredCandidates.map(({ person, matchingFunctionsList }) => {
+                    {filteredCandidates.map(({ person, matchingFunctionsList, carnivalContinuityConflict, priorCarnivalBaseName, isAvailableInShift }) => {
                       const isSelected = modalPersonId === person.id;
                       const selectedFunctionToUse =
                         isSelected && modalAssignedFunction
@@ -2690,11 +2696,42 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   </>
                                 );
                               })()}
+                              {carnivalContinuityConflict && priorCarnivalBaseName && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                  En otro turno: {priorCarnivalBaseName}
+                                </span>
+                              )}
+                              {!isAvailableInShift && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
+                                  Sin turno registrado
+                                </span>
+                              )}
                             </div>
 
                             <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
                               C.C: {person.documentId || 'S/N'} • @{person.username || person.documentId}
                             </div>
+
+                            {/* Health Badges if any */}
+                            {(person.foodAllergies || person.dietaryRestrictions || person.medicalConditions) && (
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                {person.foodAllergies && (
+                                  <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                    Alergia: {person.foodAllergies}
+                                  </span>
+                                )}
+                                {person.dietaryRestrictions && (
+                                  <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Dieta: {person.dietaryRestrictions}
+                                  </span>
+                                )}
+                                {person.medicalConditions && (
+                                  <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    Salud: {person.medicalConditions}
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
                             {/* Show functions of person */}
                             <div className="flex items-center gap-1 flex-wrap mt-1.5">

@@ -20,6 +20,7 @@ import {
   DEFAULT_INITIAL_REQUIREMENTS,
   formatTimeRangeLabel,
   doShiftsOverlap,
+  areBasesEqual,
 } from '../data/eventStructure';
 import { DEFAULT_GROUP_FUNCTIONS } from '../data/functionsCatalog';
 import {
@@ -1095,11 +1096,9 @@ export async function assignPerson(
 
       if (resolvedBaseNumber !== undefined || resolvedBaseId) {
         const currentBaseIdOrNum = resolvedBaseId || resolvedBaseNumber;
-        if (String(currentBaseIdOrNum) !== String(priorBase) && String(resolvedBaseNumber) !== String(priorBase)) {
-          return {
-            success: false,
-            alertMessage: `REGLA DE CONTINUIDAD EN CARNIVAL: Esta persona ya está asignada a ${priorBaseName} en otro turno de Carnival. En Carnival debe permanecer en la MISMA base física en todos sus turnos. Asignación rechazada.`,
-          };
+        const isSame = areBasesEqual(currentBaseIdOrNum, priorBase, resolvedBaseName, priorBaseName);
+        if (!isSame) {
+          console.info(`Asignación permitida en Carnival a base diferente: ${resolvedBaseName || currentBaseIdOrNum} (anterior: ${priorBaseName})`);
         }
       } else {
         resolvedBaseId = existingCarnivalWithBase.baseId;
