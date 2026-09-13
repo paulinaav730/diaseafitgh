@@ -278,6 +278,14 @@ export function initializeStorage(): void {
                 s.startTime = '08:00';
                 s.endTime = '12:30';
                 s.label = '8:00 a. m. – 12:30 p. m.';
+              } else if (s.id === 'shift_miercoles_mesa_mtqn2c1v_thu') {
+                s.name = 'Turno MESA';
+                s.startTime = '06:30';
+                s.endTime = '09:00';
+                s.label = '6:30 a. m. – 9:00 a. m.';
+                s.category = 'MESA';
+                s.forTypes = ['GT', 'MESA'];
+                s.isActive = true;
               }
 
               // Ensure Thursday Turno 2 is updated to 13:00 - 21:00 (1 a 9) if still 12:30-18:00
@@ -305,6 +313,12 @@ export function initializeStorage(): void {
         shiftMap.set(gs.id, { ...gs });
       }
     });
+
+    // Always ensure Wednesday Turno MESA (6:30 AM - 9:00 AM) is present
+    const defaultMesaWed = DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'shift_miercoles_mesa_mtqn2c1v_thu');
+    if (defaultMesaWed && !shiftMap.has(defaultMesaWed.id)) {
+      shiftMap.set(defaultMesaWed.id, { ...defaultMesaWed });
+    }
 
     shiftsCache = Array.from(shiftMap.values());
 
@@ -348,10 +362,10 @@ export function initializeStorage(): void {
           endTime = isMesa ? '12:30' : '12:00';
           label = isMesa ? '8:00 a. m. – 12:30 p. m.' : '8:30 a. m. – 12:00 p. m.';
         } else if (dayId === 'miercoles') {
-          name = isMesa ? 'Turno 1 — Carnival (MESA)' : 'Turno 1 — Carnival';
-          startTime = '06:00';
-          endTime = '10:00';
-          label = '6:00 a. m. a 10:00 a. m.';
+          name = isMesa ? 'Turno MESA' : 'Turno 1';
+          startTime = isMesa ? '06:30' : '06:50';
+          endTime = '09:00';
+          label = isMesa ? '6:30 a. m. a 9:00 a. m.' : '6:50 a. m. a 9:00 a. m.';
         }
 
         const healedShift: ConfigurableShift = {

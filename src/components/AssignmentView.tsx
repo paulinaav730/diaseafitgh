@@ -21,6 +21,7 @@ import {
   THE_GAMES_VIERNES_BASES,
   CARNIVAL_GT_SHIFTS,
   CARNIVAL_GAP_SHIFTS,
+  CARNIVAL_MESA_SHIFTS,
   getBaseDisplayName,
   findShiftById,
   doShiftsOverlap,
@@ -247,7 +248,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 }) => {
   const [selectedDayId, setSelectedDayId] = useState<string>('lunes');
   // Sub-category selector for CARNIVAL: GT (default)
-  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT'>('GT');
+  const [carnivalCategory, setCarnivalCategory] = useState<'GAP' | 'GT' | 'MESA'>('GT');
   const [selectedShiftId, setSelectedShiftId] = useState<string>('lunes-t1');
   const [selectedBaseNumber, setSelectedBaseNumber] = useState<number | string | null>(null);
   const [modalBase, setModalBase] = useState<PhysicalBase | null>(null);
@@ -275,7 +276,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [isContinuityLocked, setIsContinuityLocked] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
-  const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP'>('ALL');
+  const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
   const [activeRosterFilter, setActiveRosterFilter] = useState<string>('ALL');
   const [assignedRosterSearch, setAssignedRosterSearch] = useState<string>('');
   const [modalGtSubTeamFilter, setModalGtSubTeamFilter] = useState<string>('ALL');
@@ -301,7 +302,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (activeInDay.length > 0) return activeInDay;
     }
     if (isDivided) {
-      return isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS] : currentDay.shifts;
+      return isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS, ...(CARNIVAL_MESA_SHIFTS || [])] : currentDay.shifts;
     }
     return currentDay.shifts;
   }, [shifts, selectedDayId, isCarnival, isDivided, currentDay]);
@@ -314,14 +315,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     return allShiftsInDay.filter((s) => s.category === 'GAP' || s.hasBases);
   }, [allShiftsInDay]);
 
+  const mesaShiftsInDay = useMemo(() => {
+    return allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+  }, [allShiftsInDay]);
+
   // Active shifts available in this view (dynamically uses configurable shifts if present)
   const availableShifts = useMemo(() => {
     if (isDivided && isCarnival) {
       if (carnivalCategory === 'GAP') {
         const filtered = allShiftsInDay.filter((s) => s.category === 'GAP' || s.hasBases);
         if (filtered.length > 0) return filtered;
+      } else if (carnivalCategory === 'MESA') {
+        const filtered = allShiftsInDay.filter((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+        if (filtered.length > 0) return filtered;
       } else if (carnivalCategory === 'GT') {
-        const filtered = allShiftsInDay.filter((s) => s.category === 'GT' && !s.hasBases);
+        const filtered = allShiftsInDay.filter((s) => (s.category === 'GT' || s.category === 'MESA') && !s.hasBases);
         if (filtered.length > 0) return filtered;
       }
     }
@@ -330,10 +338,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       return gtShiftsInDay.length > 0 ? gtShiftsInDay : allShiftsInDay;
     } else if (shiftCategoryFilter === 'GAP') {
       return gapShiftsInDay.length > 0 ? gapShiftsInDay : allShiftsInDay;
+    } else if (shiftCategoryFilter === 'MESA') {
+      return mesaShiftsInDay.length > 0 ? mesaShiftsInDay : allShiftsInDay;
     }
 
     return allShiftsInDay;
-  }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, gapShiftsInDay]);
+  }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, gapShiftsInDay, mesaShiftsInDay]);
 
   // Current active shift object
   const activeShift =
@@ -360,23 +370,30 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     }
   };
 
-  const handleCarnivalCategorySelect = (cat: 'GAP' | 'GT') => {
+  const handleCarnivalCategorySelect = (cat: 'GAP' | 'GT' | 'MESA') => {
     setCarnivalCategory(cat);
-    setShiftCategoryFilter(cat);
     setSelectedBaseNumber(null);
     setModalBase(null);
     if (cat === 'GAP') {
+      setShiftCategoryFilter('GAP');
       const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
       if (gapShift) {
         setSelectedShiftId(gapShift.id);
       }
+    } else if (cat === 'MESA') {
+      setShiftCategoryFilter('MESA');
+      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+      if (mesaShift) {
+        setSelectedShiftId(mesaShift.id);
+      }
     } else {
+      setShiftCategoryFilter('GT');
       const gtShift = allShiftsInDay.find((s) => s.category === 'GT' && !s.hasBases);
       setSelectedShiftId(gtShift ? gtShift.id : (allShiftsInDay[0]?.id || 'miercoles-gt-t1'));
     }
   };
 
-  const handleShiftCategoryFilterChange = (cat: 'ALL' | 'GT' | 'GAP') => {
+  const handleShiftCategoryFilterChange = (cat: 'ALL' | 'GT' | 'GAP' | 'MESA') => {
     setShiftCategoryFilter(cat);
     setSelectedBaseNumber(null);
     setModalBase(null);
@@ -386,6 +403,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     } else if (cat === 'GAP') {
       const gapShift = allShiftsInDay.find((s) => s.category === 'GAP' || s.hasBases);
       if (gapShift) setSelectedShiftId(gapShift.id);
+    } else if (cat === 'MESA') {
+      const mesaShift = allShiftsInDay.find((s) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA'));
+      if (mesaShift) setSelectedShiftId(mesaShift.id);
     }
   };
 
@@ -1658,7 +1678,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </p>
             </div>
 
-            {/* Sub-Category Switcher for Carnival: GAP and GT */}
+            {/* Sub-Category Switcher for Carnival: GAP, GT, and MESA */}
             <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] self-start lg:self-center">
               <button
                 onClick={() => handleCarnivalCategorySelect('GAP')}
@@ -1682,6 +1702,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               >
                 <Shield className="w-3.5 h-3.5" />
                 <span>GT {isCarnival ? "(5 Turnos)" : "(Soporte General)"}</span>
+              </button>
+
+              <button
+                onClick={() => handleCarnivalCategorySelect('MESA')}
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  carnivalCategory === 'MESA'
+                    ? 'bg-purple-700 text-white shadow-xs font-montserrat'
+                    : 'text-[#64748B] hover:text-purple-700 font-montserrat'
+                }`}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>MESA DIRECTIVA</span>
               </button>
             </div>
           </div>
@@ -1797,6 +1829,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               { id: 'ALL', label: `Todos (${allShiftsInDay.length})` },
               { id: 'GT', label: `GT (${gtShiftsInDay.length})` },
               { id: 'GAP', label: `GAP (${gapShiftsInDay.length})` },
+              ...(mesaShiftsInDay.length > 0
+                ? [{ id: 'MESA', label: `MESA (${mesaShiftsInDay.length})` }]
+                : []),
             ].map((pill) => (
               <button
                 key={pill.id}
@@ -1808,6 +1843,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       ? 'bg-[#16A34A] text-white shadow-2xs'
                       : pill.id === 'GT'
                       ? 'bg-[#182535] text-white shadow-2xs'
+                      : pill.id === 'MESA'
+                      ? 'bg-purple-700 text-white shadow-2xs'
                       : 'bg-[#B83A24] text-white shadow-2xs'
                     : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
                 }`}

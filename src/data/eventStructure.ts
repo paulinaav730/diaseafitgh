@@ -452,6 +452,20 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     hasBases: false,
     forTypes: ['GT'],
   },
+  {
+    id: 'shift_miercoles_mesa_mtqn2c1v_thu',
+    name: 'Turno MESA',
+    dayId: 'miercoles',
+    eventId: 'carnival',
+    category: 'MESA',
+    startTime: '06:30',
+    endTime: '09:00',
+    label: '6:30 a. m. – 9:00 a. m.',
+    capacity: 18,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['GT', 'MESA'],
+  },
 
   // MIÉRCOLES - CARNIVAL GAP (3 turnos con 22 bases físicas oficiales)
   {
@@ -637,6 +651,8 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   // Turno 5 (18:00 - 21:00, cap 19)
   { id: 'req_carnival_t5_log', dayId: 'miercoles', shiftId: 'miercoles-gt-t5', groupType: 'GT', gtSubTeam: 'Logística', capacity: 17, createdAt: new Date().toISOString() },
   { id: 'req_carnival_t5_rrpp', dayId: 'miercoles', shiftId: 'miercoles-gt-t5', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 2, createdAt: new Date().toISOString() },
+  // Turno MESA Carnival (6:30 - 9:00, cap 18)
+  { id: 'req_carnival_mesa_t1', dayId: 'miercoles', shiftId: 'shift_miercoles_mesa_mtqn2c1v_thu', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva (6:30 a. m. – 9:00 a. m.)' },
 
   // JUEVES - THE CHALLENGE + THE GAMES
   // Turno 1 — The Challenge (6:00 - 13:00, cap 50)
@@ -673,6 +689,10 @@ export const CARNIVAL_GT_SHIFTS: Shift[] = DEFAULT_INITIAL_SHIFTS.filter(
 
 export const CARNIVAL_GAP_SHIFTS: Shift[] = DEFAULT_INITIAL_SHIFTS.filter(
   (s) => s.dayId === 'miercoles' && s.category === 'GAP'
+);
+
+export const CARNIVAL_MESA_SHIFTS: Shift[] = DEFAULT_INITIAL_SHIFTS.filter(
+  (s) => s.dayId === 'miercoles' && s.category === 'MESA'
 );
 
 // Backward-compatible EVENT_SCHEDULE
