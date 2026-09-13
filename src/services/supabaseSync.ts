@@ -1,6 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord, ConfigurableShift } from '../types';
-import { getBaseDisplayName } from '../data/eventStructure';
+import { getBaseDisplayName, CARNIVAL_PHYSICAL_BASES } from '../data/eventStructure';
 
 export interface SupabaseSyncStatus {
   isConfigured: boolean;
@@ -223,24 +223,51 @@ export async function pushAssignmentsToSupabase(assignments: Assignment[]): Prom
 }
 
 /**
- * Synchronizes availabilities to Supabase PostgreSQL
+ * Synchronizes bases to Supabase PostgreSQL
  */
 export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
   const client = getSupabase();
   if (!client || bases.length === 0) return false;
   try {
-    const payload = bases.map((b) => ({
-      id: b.id,
-      event_id: b.eventId || null,
-      day_id: b.dayId || 'miercoles',
-      name: b.name,
-      base_number: isNaN(Number(b.baseNumber)) ? null : Number(b.baseNumber),
-      category: b.category || null,
-      color: b.color || '#B83A24',
-      order_index: b.orderIndex || 0,
-      is_active: b.isActive !== false,
-      updated_at: new Date().toISOString(),
-    }));
+    const payload = bases.map((b) => {
+      const isCarnival = b.eventId === 'carnival' || b.dayId === 'miercoles' || String(b.id).startsWith('carnival_');
+      const carnivalBase = isCarnival
+        ? CARNIVAL_PHYSICAL_BASES.find(
+            (cb) =>
+              String(b.id) === `carnival_${cb.id}` ||
+              String(b.baseNumber) === String(cb.id) ||
+              (cb.id === 20 && String(b.name).toLowerCase().includes('toro')) ||
+              (cb.id === 21 && (String(b.name).toLowerCase().includes('speed') || String(b.name).toLowerCase().includes('speedway'))) ||
+              (cb.id === 22 && String(b.name).toLowerCase().includes('arcade'))
+          )
+        : null;
+
+      const baseLabel = b.baseLabel || carnivalBase?.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name);
+      const gameName = b.gameName || carnivalBase?.gameName || '';
+      const gapCap = b.gapCapacity || b.capacity || b.defaultCapacity || carnivalBase?.gapCapacity || 2;
+      const isSpec = b.isSpecial ?? (carnivalBase?.isSpecial || false);
+      const fullName = isCarnival ? (isSpec ? baseLabel : `${baseLabel} — ${gameName}`) : b.name;
+
+      return {
+        id: b.id,
+        event_id: b.eventId || (isCarnival ? 'carnival' : null),
+        day_id: b.dayId || (isCarnival ? 'miercoles' : null),
+        name: fullName,
+        base_number: isNaN(Number(b.baseNumber)) ? null : Number(b.baseNumber),
+        physical_location: baseLabel,
+        description: JSON.stringify({
+          baseLabel,
+          gameName,
+          gapCapacity: gapCap,
+          isSpecial: isSpec,
+        }),
+        category: `${gapCap} GAP`,
+        color: b.color || '#B83A24',
+        order_index: b.orderIndex || carnivalBase?.orderIndex || 0,
+        is_active: b.isActive !== false,
+        updated_at: new Date().toISOString(),
+      };
+    });
     const { error } = await client.from('bases').upsert(payload, { onConflict: 'id' });
     if (error) { console.warn('Error pushing bases:', error); return false; }
     return true;
@@ -256,20 +283,50 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
   try {
     const { data, error } = await client.from('bases').select('*');
     if (error || !data) return null;
-    return data.map((r: any) => ({
-      id: r.id,
-      eventId: r.event_id || undefined,
-      dayId: r.day_id || '',
-      name: r.name,
-      baseNumber: r.base_number !== null && r.base_number !== undefined ? String(r.base_number) : (r.id ? String(r.id).replace(/^[a-z_]+_/, '') : undefined),
-      category: r.category || undefined,
-      color: r.color || '#B83A24',
-      orderIndex: r.order_index || 0,
-      isActive: r.is_active !== false,
-      capacity: 2,
-      defaultCapacity: 2,
-      isSpecial: r.name?.toLowerCase().includes('toro') || r.name?.toLowerCase().includes('speedway') || r.name?.toLowerCase().includes('arcade'),
-    }));
+    return data.map((r: any) => {
+      let meta: any = {};
+      try {
+        if (r.description && r.description.startsWith('{')) {
+          meta = JSON.parse(r.description);
+        }
+      } catch (e) {}
+
+      const isCarnival = r.event_id === 'carnival' || r.day_id === 'miercoles' || String(r.id).startsWith('carnival_');
+      const carnivalBase = isCarnival
+        ? CARNIVAL_PHYSICAL_BASES.find(
+            (cb) =>
+              String(r.id) === `carnival_${cb.id}` ||
+              String(r.base_number) === String(cb.id) ||
+              (cb.id === 20 && String(r.name).toLowerCase().includes('toro')) ||
+              (cb.id === 21 && (String(r.name).toLowerCase().includes('speed') || String(r.name).toLowerCase().includes('speedway'))) ||
+              (cb.id === 22 && String(r.name).toLowerCase().includes('arcade'))
+          )
+        : null;
+
+      const baseLabel = meta.baseLabel || carnivalBase?.baseLabel || (r.base_number ? `BASE ${r.base_number}` : r.name);
+      const gameName = meta.gameName || carnivalBase?.gameName || '';
+      const gapCap = meta.gapCapacity || carnivalBase?.gapCapacity || carnivalBase?.defaultCapacity || (r.category && r.category.includes('GAP') ? parseInt(r.category) : 2);
+      const isSpec = meta.isSpecial ?? (carnivalBase?.isSpecial || r.name?.toLowerCase().includes('toro') || r.name?.toLowerCase().includes('speed') || r.name?.toLowerCase().includes('arcade'));
+
+      return {
+        id: r.id,
+        eventId: r.event_id || (isCarnival ? 'carnival' : undefined),
+        dayId: r.day_id || (isCarnival ? 'miercoles' : ''),
+        name: carnivalBase?.name || r.name,
+        baseLabel,
+        gameName,
+        gapCapacity: gapCap,
+        baseNumber: r.base_number !== null && r.base_number !== undefined ? String(r.base_number) : (r.id ? String(r.id).replace(/^[a-z_]+_/, '') : undefined),
+        category: r.category || `${gapCap} GAP`,
+        color: r.color || '#B83A24',
+        orderIndex: r.order_index || carnivalBase?.orderIndex || 0,
+        isActive: r.is_active !== false,
+        capacity: gapCap,
+        defaultCapacity: gapCap,
+        suggestedCapacity: gapCap,
+        isSpecial: isSpec,
+      };
+    });
   } catch (err) {
     console.warn('Exception pulling bases:', err);
     return null;

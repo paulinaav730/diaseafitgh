@@ -407,7 +407,7 @@ export function initializeStorage(): void {
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
     }
 
-    // Sync Carnival bases to 22 bases: 1 to 19 regular, and 20 (Toro), 21 (Speedway), 22 (Arcade)
+    // Sync Carnival bases to 22 bases: 1 to 19 regular, and 20 (Toro), 21 (Speed), 22 (Arcade)
     const carnivalBasesInCache = basesCache.filter(
       (b) => b.eventId === 'carnival' || String(b.id).startsWith('carnival_') || (b.dayId === 'miercoles' && !b.eventId)
     );
@@ -415,62 +415,61 @@ export function initializeStorage(): void {
       (b) => b.eventId !== 'carnival' && !String(b.id).startsWith('carnival_') && !(b.dayId === 'miercoles' && !b.eventId)
     );
 
-    const hasInvalidCarnivalCount = carnivalBasesInCache.length !== 22;
-    const hasSpecialWithWrongCap = carnivalBasesInCache.some(
-      (b) => b.isSpecial && (b.capacity !== 1 || b.defaultCapacity !== 1)
-    );
-    const hasOldSpecialBases = carnivalBasesInCache.some(
-      (b) =>
-        ['28', '29', '30', 'carnival_28', 'carnival_29', 'carnival_30'].includes(String(b.id)) ||
-        ['28', '29', '30'].includes(String(b.baseNumber)) ||
-        (typeof b.baseNumber === 'number' && b.baseNumber > 22) ||
-        (typeof b.baseNumber === 'string' && Number(b.baseNumber) > 22) ||
-        (String(b.id) === 'carnival_17' && b.name.toLowerCase().includes('toro')) ||
-        (String(b.id) === 'carnival_18' && b.name.toLowerCase().includes('speedway')) ||
-        (String(b.id) === 'carnival_19' && b.name.toLowerCase().includes('arcade'))
-    );
+    const needsCarnivalUpdate =
+      carnivalBasesInCache.length !== 22 ||
+      carnivalBasesInCache.some((b) => {
+        const num = Number(String(b.id).replace('carnival_', '')) || Number(b.baseNumber);
+        const conf = CARNIVAL_PHYSICAL_BASES.find((cb) => cb.id === num);
+        if (!conf) return true;
+        if (b.name !== conf.name) return true;
+        if (b.defaultCapacity !== conf.defaultCapacity) return true;
+        return false;
+      }) ||
+      carnivalBasesInCache.some(
+        (b) =>
+          ['28', '29', '30', 'carnival_28', 'carnival_29', 'carnival_30'].includes(String(b.id)) ||
+          ['28', '29', '30'].includes(String(b.baseNumber)) ||
+          (typeof b.baseNumber === 'number' && b.baseNumber > 22) ||
+          (typeof b.baseNumber === 'string' && Number(b.baseNumber) > 22) ||
+          b.name.toLowerCase().includes('speedway')
+      );
 
-    if (hasInvalidCarnivalCount || hasOldSpecialBases || hasSpecialWithWrongCap) {
+    if (needsCarnivalUpdate) {
       const specialBaseMap: Record<string, { newId: string; newBaseNumber: string; newName: string }> = {
-        '20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
-        'carnival_20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
-        '28': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
-        'carnival_28': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
-        'toro': { newId: 'carnival_20', newBaseNumber: '20', newName: 'Base Toro' },
-        '21': { newId: 'carnival_21', newBaseNumber: '21', newName: 'Base Speedway' },
-        'carnival_21': { newId: 'carnival_21', newBaseNumber: '21', newName: 'Base Speedway' },
-        '29': { newId: 'carnival_21', newBaseNumber: '21', newName: 'Base Speedway' },
-        'carnival_29': { newId: 'carnival_21', newBaseNumber: '21', newName: 'Base Speedway' },
-        'speedway': { newId: 'carnival_21', newBaseNumber: '21', newName: 'Base Speedway' },
-        '22': { newId: 'carnival_22', newBaseNumber: '22', newName: 'Base Arcade' },
-        'carnival_22': { newId: 'carnival_22', newBaseNumber: '22', newName: 'Base Arcade' },
-        '30': { newId: 'carnival_22', newBaseNumber: '22', newName: 'Base Arcade' },
-        'carnival_30': { newId: 'carnival_22', newBaseNumber: '22', newName: 'Base Arcade' },
-        'arcade': { newId: 'carnival_22', newBaseNumber: '22', newName: 'Base Arcade' },
+        '20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'BASE TORO' },
+        'carnival_20': { newId: 'carnival_20', newBaseNumber: '20', newName: 'BASE TORO' },
+        '28': { newId: 'carnival_20', newBaseNumber: '20', newName: 'BASE TORO' },
+        'carnival_28': { newId: 'carnival_20', newBaseNumber: '20', newName: 'BASE TORO' },
+        'toro': { newId: 'carnival_20', newBaseNumber: '20', newName: 'BASE TORO' },
+        '21': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        'carnival_21': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        '29': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        'carnival_29': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        'speedway': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        'speed': { newId: 'carnival_21', newBaseNumber: '21', newName: 'BASE SPEED' },
+        '22': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
+        'carnival_22': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
+        '30': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
+        'carnival_30': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
+        'arcade': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
       };
 
-      const newCarnivalBases: ConfigurableBase[] = CARNIVAL_PHYSICAL_BASES.map((b) => {
-        const existing = carnivalBasesInCache.find(
-          (eb) =>
-            String(eb.id) === `carnival_${b.id}` ||
-            String(eb.baseNumber) === String(b.id) ||
-            eb.name.toLowerCase() === b.name.toLowerCase()
-        );
-        const cap = b.isSpecial ? 1 : (existing?.capacity || existing?.defaultCapacity || b.defaultCapacity);
-        return {
-          id: 'carnival_' + b.id,
-          name: b.name,
-          baseNumber: String(b.id),
-          defaultCapacity: cap,
-          capacity: cap,
-          isSpecial: b.isSpecial || false,
-          isActive: true,
-          eventId: 'carnival',
-          dayId: 'miercoles',
-          color: '#B83A24',
-          orderIndex: Number(b.id) || 99,
-        };
-      });
+      const newCarnivalBases: ConfigurableBase[] = CARNIVAL_PHYSICAL_BASES.map((b) => ({
+        id: 'carnival_' + b.id,
+        name: b.name,
+        baseNumber: String(b.id),
+        baseLabel: b.baseLabel,
+        gameName: b.gameName,
+        defaultCapacity: b.defaultCapacity,
+        capacity: b.defaultCapacity,
+        gapCapacity: b.gapCapacity,
+        isSpecial: b.isSpecial || false,
+        isActive: true,
+        eventId: 'carnival',
+        dayId: 'miercoles',
+        color: '#B83A24',
+        orderIndex: Number(b.id) || 99,
+      }));
 
       basesCache = [...newCarnivalBases, ...nonCarnivalBases];
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
@@ -1059,23 +1058,43 @@ export async function assignPerson(
   let maxCapacity = 2;
 
   if (shiftHasBases && (rawBaseId || rawBaseNumber !== undefined)) {
-    const targetBaseObj = basesCache.find(
-      (b) =>
-        (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
-        (rawBaseNumber !== undefined &&
-          (String(b.baseNumber) === String(rawBaseNumber) ||
-            String(b.id) === String(rawBaseNumber) ||
-            b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
-    );
+    if (dayId === 'miercoles') {
+      const carn = CARNIVAL_PHYSICAL_BASES.find(
+        (cb) =>
+          String(cb.id) === String(rawBaseId || rawBaseNumber).replace('carnival_', '') ||
+          String(cb.baseNumber) === String(rawBaseNumber || rawBaseId).replace('carnival_', '') ||
+          (rawBaseId && String(rawBaseId) === `carnival_${cb.id}`) ||
+          (cb.id === 20 && String(rawBaseId || rawBaseNumber).toLowerCase().includes('toro')) ||
+          (cb.id === 21 && (String(rawBaseId || rawBaseNumber).toLowerCase().includes('speed') || String(rawBaseId || rawBaseNumber).toLowerCase().includes('speedway'))) ||
+          (cb.id === 22 && String(rawBaseId || rawBaseNumber).toLowerCase().includes('arcade'))
+      );
+      if (carn) {
+        resolvedBaseId = `carnival_${carn.id}`;
+        resolvedBaseNumber = String(carn.id);
+        resolvedBaseName = carn.name;
+        maxCapacity = carn.gapCapacity || carn.defaultCapacity;
+      }
+    }
 
-    if (targetBaseObj) {
-      resolvedBaseId = String(targetBaseObj.id);
-      resolvedBaseNumber = targetBaseObj.baseNumber || targetBaseObj.id;
-      resolvedBaseName = targetBaseObj.name;
-      maxCapacity = targetBaseObj.capacity || targetBaseObj.defaultCapacity || 2;
-    } else {
-      if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
-        resolvedBaseName = getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
+    if (!resolvedBaseName) {
+      const targetBaseObj = basesCache.find(
+        (b) =>
+          (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
+          (rawBaseNumber !== undefined &&
+            (String(b.baseNumber) === String(rawBaseNumber) ||
+              String(b.id) === String(rawBaseNumber) ||
+              b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
+      );
+
+      if (targetBaseObj) {
+        resolvedBaseId = String(targetBaseObj.id);
+        resolvedBaseNumber = targetBaseObj.baseNumber || targetBaseObj.id;
+        resolvedBaseName = targetBaseObj.name;
+        maxCapacity = targetBaseObj.gapCapacity || targetBaseObj.capacity || targetBaseObj.defaultCapacity || 2;
+      } else {
+        if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
+          resolvedBaseName = getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
+        }
       }
     }
   }

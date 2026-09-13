@@ -152,9 +152,12 @@ export type ShiftDefinition = ConfigurableShift;
 export interface PhysicalBase {
   id: number | string; // 1 to 19, 20, 21, 22 or 'toro', 'speedway', 'arcade'
   baseNumber?: number | string;
-  name: string; // e.g. "Base 1" ... "Base 19", "Base Toro", "Base Speedway", "Base Arcade"
+  name: string; // e.g. "BASE 1 — Ring Toss", "BASE TORO", "BASE SPEED", "BASE ARCADE"
+  baseLabel?: string; // e.g. "BASE 1" ... "BASE 19", "BASE TORO", "BASE SPEED", "BASE ARCADE"
+  gameName?: string; // e.g. "Ring Toss", "Balance Maestro", ...
+  gapCapacity?: number; // Total GAP required for this base
   code?: string;
-  defaultCapacity: number; // default capacity per base (e.g. 2)
+  defaultCapacity: number; // default capacity per base (e.g. 3 or 2)
   capacity?: number;
   suggestedCapacity?: number;
   isSpecial?: boolean; // true for Toro, Speedway, Arcade

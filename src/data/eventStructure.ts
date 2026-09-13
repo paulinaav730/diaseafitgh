@@ -28,20 +28,30 @@ export function generateBases(count: number, capacityPerBase = 2, eventId?: stri
   }));
 }
 
-// 22 Physical Bases for Carnival: 19 numbered bases + Base Toro (20) + Base Speedway (21) + Base Arcade (22)
+// 22 Physical Bases for Carnival: 19 numbered bases + Base Toro (20) + Base Speed (21) + Base Arcade (22)
 export const CARNIVAL_PHYSICAL_BASES: PhysicalBase[] = [
-  ...Array.from({ length: 19 }, (_, i) => ({
-    id: i + 1,
-    name: `Base ${i + 1}`,
-    code: `base-${i + 1}`,
-    defaultCapacity: 2,
-    isSpecial: false,
-    isActive: true,
-    eventId: 'carnival',
-  })),
-  { id: 20, code: 'toro', name: 'Base Toro', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 21, code: 'speedway', name: 'Base Speedway', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
-  { id: 22, code: 'arcade', name: 'Base Arcade', defaultCapacity: 1, isSpecial: true, isActive: true, eventId: 'carnival' },
+  { id: 1, baseNumber: '1', baseLabel: 'BASE 1', gameName: 'Ring Toss', name: 'BASE 1 — Ring Toss', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-1', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 1 },
+  { id: 2, baseNumber: '2', baseLabel: 'BASE 2', gameName: 'Balance Maestro', name: 'BASE 2 — Balance Maestro', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-2', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 2 },
+  { id: 3, baseNumber: '3', baseLabel: 'BASE 3', gameName: 'Encesta Puntos', name: 'BASE 3 — Encesta Puntos', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-3', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 3 },
+  { id: 4, baseNumber: '4', baseLabel: 'BASE 4', gameName: 'Salta Sapitos', name: 'BASE 4 — Salta Sapitos', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-4', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 4 },
+  { id: 5, baseNumber: '5', baseLabel: 'BASE 5', gameName: 'Duck Shoots', name: 'BASE 5 — Duck Shoots', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-5', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 5 },
+  { id: 6, baseNumber: '6', baseLabel: 'BASE 6', gameName: 'Punto a Punto', name: 'BASE 6 — Punto a Punto', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-6', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 6 },
+  { id: 7, baseNumber: '7', baseLabel: 'BASE 7', gameName: 'La Cima', name: 'BASE 7 — La Cima', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-7', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 7 },
+  { id: 8, baseNumber: '8', baseLabel: 'BASE 8', gameName: 'Derriba y Asciende', name: 'BASE 8 — Derriba y Asciende', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-8', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 8 },
+  { id: 9, baseNumber: '9', baseLabel: 'BASE 9', gameName: 'Descenso Caótico', name: 'BASE 9 — Descenso Caótico', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-9', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 9 },
+  { id: 10, baseNumber: '10', baseLabel: 'BASE 10', gameName: 'Duck Fish', name: 'BASE 10 — Duck Fish', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-10', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 10 },
+  { id: 11, baseNumber: '11', baseLabel: 'BASE 11', gameName: 'La Joroba', name: 'BASE 11 — La Joroba', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-11', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 11 },
+  { id: 12, baseNumber: '12', baseLabel: 'BASE 12', gameName: 'Herradura', name: 'BASE 12 — Herradura', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-12', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 12 },
+  { id: 13, baseNumber: '13', baseLabel: 'BASE 13', gameName: 'Croquet y Golf', name: 'BASE 13 — Croquet y Golf', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-13', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 13 },
+  { id: 14, baseNumber: '14', baseLabel: 'BASE 14', gameName: 'Nerfs', name: 'BASE 14 — Nerfs', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-14', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 14 },
+  { id: 15, baseNumber: '15', baseLabel: 'BASE 15', gameName: 'Tower', name: 'BASE 15 — Tower', defaultCapacity: 3, gapCapacity: 3, isSpecial: false, code: 'base-15', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 15 },
+  { id: 16, baseNumber: '16', baseLabel: 'BASE 16', gameName: 'Flip the bottle', name: 'BASE 16 — Flip the bottle', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-16', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 16 },
+  { id: 17, baseNumber: '17', baseLabel: 'BASE 17', gameName: 'Deslizamiento Cruzado', name: 'BASE 17 — Deslizamiento Cruzado', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-17', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 17 },
+  { id: 18, baseNumber: '18', baseLabel: 'BASE 18', gameName: 'Mini Futbol', name: 'BASE 18 — Mini Futbol', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-18', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 18 },
+  { id: 19, baseNumber: '19', baseLabel: 'BASE 19', gameName: 'Match', name: 'BASE 19 — Match', defaultCapacity: 2, gapCapacity: 2, isSpecial: false, code: 'base-19', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 19 },
+  { id: 20, baseNumber: '20', baseLabel: 'BASE TORO', gameName: 'Base Toro', name: 'BASE TORO', defaultCapacity: 2, gapCapacity: 2, isSpecial: true, code: 'toro', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 20 },
+  { id: 21, baseNumber: '21', baseLabel: 'BASE SPEED', gameName: 'Base Speed', name: 'BASE SPEED', defaultCapacity: 2, gapCapacity: 2, isSpecial: true, code: 'speedway', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 21 },
+  { id: 22, baseNumber: '22', baseLabel: 'BASE ARCADE', gameName: 'Base Arcade', name: 'BASE ARCADE', defaultCapacity: 2, gapCapacity: 2, isSpecial: true, code: 'arcade', isActive: true, eventId: 'carnival', dayId: 'miercoles', orderIndex: 22 },
 ];
 
 // Helper to format base display name reliably
@@ -49,46 +59,69 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
   if (base === undefined || base === null || base === '' || base === 'null' || base === 'undefined') return '';
   let s = String(base).trim();
   if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
-  if (s === '20' || s === '28' || s.toLowerCase() === 'toro' || s.toLowerCase() === 'base toro' || s === 'carnival_20' || s === 'carnival_28') return 'Base Toro';
-  if (s === '21' || s === '29' || s.toLowerCase() === 'speedway' || s.toLowerCase() === 'base speedway' || s === 'carnival_21' || s === 'carnival_29') return 'Base Speedway';
-  if (s === '22' || s === '30' || s.toLowerCase() === 'arcade' || s.toLowerCase() === 'base arcade' || s === 'carnival_22' || s === 'carnival_30') return 'Base Arcade';
 
-  // Prevent repeated "Base Base_" or "Base Base "
-  if (s.toLowerCase().startsWith('base base_') || s.toLowerCase().startsWith('base base ')) {
-    s = s.substring(10).trim();
-  } else if (s.toLowerCase().startsWith('base ')) {
-    return s;
+  const sLower = s.toLowerCase();
+  if (sLower === '20' || sLower === '28' || sLower === 'toro' || sLower === 'base toro' || sLower === 'carnival_20' || sLower === 'carnival_28') return 'BASE TORO';
+  if (sLower === '21' || sLower === '29' || sLower === 'speed' || sLower === 'speedway' || sLower === 'base speed' || sLower === 'base speedway' || sLower === 'carnival_21' || sLower === 'carnival_29') return 'BASE SPEED';
+  if (sLower === '22' || sLower === '30' || sLower === 'arcade' || sLower === 'base arcade' || sLower === 'carnival_22' || sLower === 'carnival_30') return 'BASE ARCADE';
+
+  // If matches "BASE X — Game Name" return as is
+  if (/^BASE\s+\d+\s+—/i.test(s)) {
+    return s.replace(/^base\s+(\d+)/i, (_, n) => `BASE ${n}`);
+  }
+
+  // Handle #01, #02, #1, etc.
+  const hashMatch = s.match(/^#0?(\d+)$/);
+  if (hashMatch) {
+    const num = Number(hashMatch[1]);
+    const found = CARNIVAL_PHYSICAL_BASES.find((b) => Number(b.id) === num);
+    if (found) return found.name;
+    return `BASE ${num}`;
   }
 
   const match = s.match(/(?:carnival|games_jueves|games_viernes)_(\d+)/i);
   if (match) {
     const num = Number(match[1]);
-    if (num === 20 || num === 28) return 'Base Toro';
-    if (num === 21 || num === 29) return 'Base Speedway';
-    if (num === 22 || num === 30) return 'Base Arcade';
-    return `Base ${num}`;
+    if (num === 20 || num === 28) return 'BASE TORO';
+    if (num === 21 || num === 29) return 'BASE SPEED';
+    if (num === 22 || num === 30) return 'BASE ARCADE';
+    const found = CARNIVAL_PHYSICAL_BASES.find((b) => Number(b.id) === num);
+    if (found) return found.name;
+    return `BASE ${num}`;
   }
 
   // Handle base_X (e.g. base_1, base_19)
   const numMatch = s.match(/^base_(\d{1,3})$/i);
   if (numMatch) {
     const num = Number(numMatch[1]);
-    if (num === 20 || num === 28) return 'Base Toro';
-    if (num === 21 || num === 29) return 'Base Speedway';
-    if (num === 22 || num === 30) return 'Base Arcade';
-    return `Base ${num}`;
+    if (num === 20 || num === 28) return 'BASE TORO';
+    if (num === 21 || num === 29) return 'BASE SPEED';
+    if (num === 22 || num === 30) return 'BASE ARCADE';
+    const found = CARNIVAL_PHYSICAL_BASES.find((b) => Number(b.id) === num);
+    if (found) return found.name;
+    return `BASE ${num}`;
   }
 
-  // If it is a timestamp ID like base_1784086...
-  if (s.toLowerCase().startsWith('base_')) {
-    const rest = s.substring(5).trim();
-    if (/^\d{6,}$/.test(rest)) {
-      return `Base ${rest.slice(-4)}`;
-    }
-    return `Base ${rest}`;
+  // Plain number
+  if (/^\d+$/.test(s)) {
+    const num = Number(s);
+    if (num === 20 || num === 28) return 'BASE TORO';
+    if (num === 21 || num === 29) return 'BASE SPEED';
+    if (num === 22 || num === 30) return 'BASE ARCADE';
+    const found = CARNIVAL_PHYSICAL_BASES.find((b) => Number(b.id) === num);
+    if (found) return found.name;
+    return `BASE ${num}`;
   }
 
-  return `Base ${s}`;
+  // If already "Base X" convert to "BASE X"
+  if (/^base\s+(\d+)$/i.test(s)) {
+    const num = s.match(/^base\s+(\d+)$/i)?.[1];
+    const found = CARNIVAL_PHYSICAL_BASES.find((b) => String(b.id) === num);
+    if (found) return found.name;
+    return `BASE ${num}`;
+  }
+
+  return s;
 }
 
 // 15 Physical Bases for The Games
@@ -128,7 +161,10 @@ export const DEFAULT_INITIAL_BASES: ConfigurableBase[] = [
     id: 'carnival_' + b.id,
     name: b.name,
     baseNumber: String(b.id),
+    baseLabel: b.baseLabel,
+    gameName: b.gameName,
     defaultCapacity: b.defaultCapacity,
+    gapCapacity: b.gapCapacity,
     capacity: b.defaultCapacity,
     isSpecial: b.isSpecial || false,
     isActive: true,
@@ -755,12 +791,36 @@ export function areBasesEqual(
   const cleanA = String(baseA).toLowerCase().replace(/^(?:carnival_|games_jueves_|games_viernes_|base[_-]?)/, '').trim();
   const cleanB = String(baseB).toLowerCase().replace(/^(?:carnival_|games_jueves_|games_viernes_|base[_-]?)/, '').trim();
   if (cleanA && cleanA === cleanB) return true;
+
+  // Handle special bases aliases (20/toro, 21/speed/speedway, 22/arcade)
+  const isToroA = cleanA === '20' || cleanA === '28' || cleanA === 'toro' || cleanA.includes('toro') || nameA?.toLowerCase().includes('toro');
+  const isToroB = cleanB === '20' || cleanB === '28' || cleanB === 'toro' || cleanB.includes('toro') || nameB?.toLowerCase().includes('toro');
+  if (isToroA && isToroB) return true;
+
+  const isSpeedA = cleanA === '21' || cleanA === '29' || cleanA === 'speed' || cleanA === 'speedway' || cleanA.includes('speed') || nameA?.toLowerCase().includes('speed');
+  const isSpeedB = cleanB === '21' || cleanB === '29' || cleanB === 'speed' || cleanB === 'speedway' || cleanB.includes('speed') || nameB?.toLowerCase().includes('speed');
+  if (isSpeedA && isSpeedB) return true;
+
+  const isArcadeA = cleanA === '22' || cleanA === '30' || cleanA === 'arcade' || cleanA.includes('arcade') || nameA?.toLowerCase().includes('arcade');
+  const isArcadeB = cleanB === '22' || cleanB === '30' || cleanB === 'arcade' || cleanB.includes('arcade') || nameB?.toLowerCase().includes('arcade');
+  if (isArcadeA && isArcadeB) return true;
+
   if (nameA && nameB && nameA.toLowerCase().trim() === nameB.toLowerCase().trim()) return true;
   return false;
 }
 
 export function doShiftsOverlap(shiftA: Shift, shiftB: Shift, bufferMinutes: number = 20): boolean {
   if (shiftA.id === shiftB.id) return true;
+  // Explicitly allow consecutive Carnival GAP shifts (T1: 8:50-12:10, T2: 12:00-15:10, T3: 15:00-18:10)
+  const isGapA = shiftA.id.includes('gap') || shiftA.name.toLowerCase().includes('gap') || shiftA.category === 'GAP';
+  const isGapB = shiftB.id.includes('gap') || shiftB.name.toLowerCase().includes('gap') || shiftB.category === 'GAP';
+  const isCarnivalA = shiftA.id.includes('carnival') || shiftA.id.includes('miercoles') || shiftA.dayId === 'miercoles';
+  const isCarnivalB = shiftB.id.includes('carnival') || shiftB.dayId === 'miercoles';
+  if (isCarnivalA && isCarnivalB && isGapA && isGapB) {
+    // If they are different turns (e.g. T1 and T2), they don't block each other due to the 10 min overlap
+    return false;
+  }
+
   const [s1h, s1m] = shiftA.startTime.split(':').map(Number);
   const [e1h, e1m] = shiftA.endTime.split(':').map(Number);
   const [s2h, s2m] = shiftB.startTime.split(':').map(Number);

@@ -258,7 +258,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Determine physical bases for current day & category (dynamically uses configurable bases if present)
   const physicalBases: PhysicalBase[] = useMemo(() => {
     if (selectedDayId === 'miercoles') {
-      // Carnival ALWAYS has exactly 22 physical bases: 1 to 19 regular, and 20 (Toro), 21 (Speedway), 22 (Arcade)
+      // Carnival ALWAYS has exactly 22 physical bases: BASE 1 to BASE 19, and BASE TORO (20), BASE SPEED (21), BASE ARCADE (22)
       return CARNIVAL_PHYSICAL_BASES.map((cb) => {
         const custom = (bases || []).find(
           (b) =>
@@ -268,12 +268,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               String(b.baseNumber) === String(cb.id) ||
               b.name.toLowerCase() === cb.name.toLowerCase())
         );
-        const cap = cb.isSpecial ? 1 : (custom?.capacity || custom?.defaultCapacity || cb.defaultCapacity);
+        const cap = custom?.gapCapacity || custom?.capacity || custom?.defaultCapacity || cb.gapCapacity || cb.defaultCapacity;
         return {
           id: cb.id,
           baseNumber: cb.id,
-          name: custom?.name || cb.name,
+          baseLabel: cb.baseLabel,
+          gameName: cb.gameName,
+          name: cb.name,
           code: cb.code,
+          gapCapacity: cap,
           defaultCapacity: cap,
           suggestedCapacity: cap,
           isSpecial: cb.isSpecial,
@@ -961,12 +964,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (effectiveType === 'GAP') {
         isCategoryAllowedForGap = true;
       } else if (isGt) {
-        if (isGeneralSubteam || isCarnivalSubteam || person.alsoActsAsGap) {
+        if (isCarnivalSubteam) {
+          // GT CARNIVAL: NO pueden aparecer como GAP durante el miércoles de Carnival. Sí pueden aparecer como GAP: JUEVES, VIERNES.
+          if (selectedDayId === 'jueves' || selectedDayId === 'viernes') {
+            isCategoryAllowedForGap = true;
+          }
+        } else if (isGeneralSubteam) {
+          // GT GENERALES: Sí pueden aparecer como GAP: MIÉRCOLES, JUEVES, VIERNES. No pueden aparecer como GAP: LUNES, MARTES.
           if (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') {
             isCategoryAllowedForGap = true;
           }
         } else if (person.alsoActsAsGap) {
-          isCategoryAllowedForGap = true;
+          if (selectedDayId === 'miercoles' && isCarnivalSubteam) {
+            isCategoryAllowedForGap = false;
+          } else {
+            isCategoryAllowedForGap = true;
+          }
         }
       }
       // If person already has an active GAP assignment on this day, they are inherently allowed for GAP
@@ -974,7 +987,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         const hasGapAssignmentOnDay = assignments.some(
           (a) => a.personId === person.id && a.dayId === selectedDayId && a.assignedType === 'GAP'
         );
-        if (hasGapAssignmentOnDay) {
+        if (hasGapAssignmentOnDay && !(selectedDayId === 'miercoles' && isCarnivalSubteam)) {
           isCategoryAllowedForGap = true;
         }
       }
@@ -1061,16 +1074,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   ]);
 
   const gapCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGap && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
-  }, [candidatePool, showOnlyAvailableInModal]);
+    return candidatePool.filter((c) => c.isEligibleForGap && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool]);
 
   const gtCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGt && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
-  }, [candidatePool, showOnlyAvailableInModal]);
+    return candidatePool.filter((c) => c.isEligibleForGt && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool]);
 
   const mesaCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForMesa && (showOnlyAvailableInModal ? c.isAvailableInShift : true)).length;
-  }, [candidatePool, showOnlyAvailableInModal]);
+    return candidatePool.filter((c) => c.isEligibleForMesa && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool]);
 
   // Filter candidates based on active requirement or active tab [GAP] vs [GT] vs [MESA]
   const filteredCandidates = useMemo(() => {
@@ -1083,10 +1096,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // Exclude already assigned in THIS shift or real shift overlap conflict
       if (c.isAlreadyAssigned || c.conflictingAssignment) return false;
 
-      // When toggle is on and not searching, filter by registered availability in this shift
-      if (showOnlyAvailableInModal && !q) {
-        if (!c.isAvailableInShift) return false;
-      }
+      // Must have registered exact availability in this shift (strictly exclude unavailable persons)
+      if (!c.isAvailableInShift) return false;
 
       // Filter by requirement or active Tab [GAP] vs [GT] vs [MESA]
       if (activeRequirement) {
@@ -1683,13 +1694,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] font-montserrat">
-                Bases 1 a 19 (2 encargados) + Toro, Speedway y Arcade (1 encargado c/u) — 22 bases oficiales en total.
+                Bases 1 a 19 + Toro, Speed y Arcade — 22 bases oficiales con cupos específicos de GAP.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[#B83A24] font-mono bg-[#FDF2EE] border border-[#F6C7BA] px-2.5 py-1 rounded-lg font-bold">
-                Capacidad: Normales (2) • Especiales (1)
+                Cupos GAP: 2 a 3 por base • 22 bases oficiales
               </span>
             </div>
           </div>
@@ -1706,7 +1717,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   (a.baseName && base.name && a.baseName.toLowerCase() === base.name.toLowerCase()) ||
                   (base.code && (a.baseNumber === base.code || a.baseId === base.code)) ||
                   (base.id === 20 && (a.baseNumber === '20' || a.baseNumber === '28' || a.baseId === 'carnival_20' || a.baseId === 'carnival_28' || a.baseId === 'toro' || a.baseNumber === 'toro' || String(a.baseName).toLowerCase() === 'base toro')) ||
-                  (base.id === 21 && (a.baseNumber === '21' || a.baseNumber === '29' || a.baseId === 'carnival_21' || a.baseId === 'carnival_29' || a.baseId === 'speedway' || a.baseNumber === 'speedway' || String(a.baseName).toLowerCase() === 'base speedway')) ||
+                  (base.id === 21 && (a.baseNumber === '21' || a.baseNumber === '29' || a.baseId === 'carnival_21' || a.baseId === 'carnival_29' || a.baseId === 'speedway' || a.baseNumber === 'speedway' || a.baseId === 'speed' || a.baseNumber === 'speed' || String(a.baseName).toLowerCase() === 'base speed')) ||
                   (base.id === 22 && (a.baseNumber === '22' || a.baseNumber === '30' || a.baseId === 'carnival_22' || a.baseId === 'carnival_30' || a.baseId === 'arcade' || a.baseNumber === 'arcade' || String(a.baseName).toLowerCase() === 'base arcade'))
               );
               const isFull = baseAssignments.length >= base.defaultCapacity;
@@ -1739,7 +1750,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           {isSpecial ? '★' : (base.baseNumber || String(base.id).replace(/^\D+/g, ''))}
                         </span>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-[#182535] text-xs font-montserrat truncate">{base.name}</h4>
+                          <h4 className="font-bold text-[#182535] text-xs font-montserrat truncate">
+                            {base.baseLabel || (isSpecial ? base.name : `BASE ${base.baseNumber || base.id}`)}
+                          </h4>
+                          {base.gameName ? (
+                            <p className="text-[11px] text-[#64748B] font-montserrat truncate">
+                              {base.gameName}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-[#64748B] font-montserrat truncate">
+                              {base.name}
+                            </p>
+                          )}
                           {isSpecial && (
                             <span className="text-[9px] uppercase font-bold text-[#C87F17] font-mono block">
                               Base Especial
@@ -1757,7 +1779,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]'
                         }`}
                       >
-                        {baseAssignments.length} / {base.defaultCapacity}
+                        {baseAssignments.length} / {base.defaultCapacity} GAP
                       </span>
                     </div>
 
@@ -2349,44 +2371,59 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               {/* Modal Header */}
               <div className="flex items-start justify-between pb-3 border-b border-[#EADDC7] shrink-0">
                 <div>
-                  <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
-                    {currentDay.eventName} • {activeShift.name} ({activeShift.label})
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek">
-                    {activeRequirement
-                      ? `ASIGNAR A: ${
-                          activeRequirement.groupType === 'GT'
-                            ? `GT ${activeRequirement.gtSubTeam}`
-                            : activeRequirement.groupType
-                        }`
-                      : modalBase
-                      ? `ASIGNAR A ${modalBase.name.toUpperCase()}`
-                      : selectedBaseNumber !== null
-                      ? `ASIGNAR A ${getBaseDisplayName(selectedBaseNumber).toUpperCase()}`
-                      : `ASIGNAR A ${activeShift.name}`}
-                  </h3>
-                  {activeRequirement ? (
-                    <p className="text-xs text-[#64748B] mt-0.5">
-                      Cupo objetivo: <b>{activeRequirement.capacity} personas ({activeRequirement.groupType})</b> •{' '}
-                      {activeRequirement.specificFunctions &&
-                      activeRequirement.specificFunctions.length > 0 ? (
-                        <span>
-                          Filtro de funciones activas:{' '}
-                          <b>{activeRequirement.specificFunctions.join(' · ')}</b>
+                  {modalBase ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                          {modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
                         </span>
-                      ) : (
-                        <span>Sin filtro: cualquier integrante del grupo</span>
-                      )}
-                    </p>
+                        {modalBase.isSpecial && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-[#FEF8EC] border border-[#E5A12E]/50 text-[#C87F17] font-bold">
+                            BASE ESPECIAL
+                          </span>
+                        )}
+                        <span className="text-[11px] text-[#64748B] font-montserrat">
+                          • {activeShift.name} ({activeShift.label})
+                        </span>
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek mt-0.5">
+                        {modalBase.gameName || modalBase.name}
+                      </h3>
+                      <p className="text-xs text-[#64748B] mt-1 font-montserrat">
+                        Cupo GAP: <b className="text-[#182535] font-mono">{currentBaseOccupants.length} / {modalBase.defaultCapacity}</b>
+                      </p>
+                    </div>
                   ) : (
-                    <p className="text-xs text-[#64748B] mt-0.5">
-                      Cupo del turno: <b>{shiftCupoFilledCount} / {activeShift.capacity || 0} {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}</b>
-                      {assignedMesaCount > 0 && !isShiftMesa && (
-                        <span className="ml-1 text-purple-700 font-medium">
-                          ({assignedMesaCount} MESA asignados no ocupan cupo GT)
-                        </span>
+                    <div>
+                      <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                        {currentDay.eventName} • {activeShift.name} ({activeShift.label})
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek">
+                        {activeRequirement
+                          ? `ASIGNAR A: ${
+                              activeRequirement.groupType === 'GT'
+                                ? `GT ${activeRequirement.gtSubTeam}`
+                                : activeRequirement.groupType
+                            }`
+                          : selectedBaseNumber !== null
+                          ? `ASIGNAR A ${getBaseDisplayName(selectedBaseNumber).toUpperCase()}`
+                          : `ASIGNAR A ${activeShift.name}`}
+                      </h3>
+                      {activeRequirement ? (
+                        <p className="text-xs text-[#64748B] mt-0.5">
+                          Cupo objetivo: <b>{activeRequirement.capacity} personas ({activeRequirement.groupType})</b>
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[#64748B] mt-0.5">
+                          Cupo del turno: <b>{shiftCupoFilledCount} / {activeShift.capacity || 0} {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}</b>
+                          {assignedMesaCount > 0 && !isShiftMesa && (
+                            <span className="ml-1 text-purple-700 font-medium">
+                              ({assignedMesaCount} MESA asignados no ocupan cupo GT)
+                            </span>
+                          )}
+                        </p>
                       )}
-                    </p>
+                    </div>
                   )}
                 </div>
                 <button
