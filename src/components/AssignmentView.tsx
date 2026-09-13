@@ -2888,14 +2888,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-            <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+            <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col overflow-hidden">
               {/* Modal Header */}
-              <div className="flex items-start justify-between pb-3 border-b border-[#EADDC7] shrink-0">
+              <div className="flex items-start justify-between pb-2.5 border-b border-[#EADDC7] shrink-0">
                 <div>
                   {modalBase ? (
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                        <span className="text-xs font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
                           {modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
                         </span>
                         {modalBase.isSpecial && (
@@ -2907,19 +2907,19 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           • {activeShift.name} ({activeShift.label})
                         </span>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek mt-0.5">
+                      <h3 className="text-lg sm:text-xl font-extrabold text-[#182535] font-montserrat mt-0.5">
                         {modalBase.gameName || modalBase.name}
                       </h3>
-                      <p className="text-xs text-[#64748B] mt-1 font-montserrat">
-                        Cupo GAP: <b className="text-[#182535] font-mono">{currentBaseOccupants.length} / {modalBase.defaultCapacity}</b>
+                      <p className="text-xs text-[#64748B] mt-0.5 font-montserrat">
+                        Cupo GAP de la base: <b className="text-[#182535] font-mono">{currentBaseOccupants.length} / {modalBase.defaultCapacity}</b>
                       </p>
                     </div>
                   ) : (
                     <div>
-                      <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                      <span className="text-[10px] font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
                         {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                       </span>
-                      <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek">
+                      <h3 className="text-lg sm:text-xl font-extrabold text-[#182535] font-montserrat">
                         {activeRequirement
                           ? `ASIGNAR A: ${
                               activeRequirement.groupType === 'GT'
@@ -2955,425 +2955,413 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 </button>
               </div>
 
-              {/* Modal Alert if continuity or error */}
-              {modalAlert && (
-                <div className="my-2.5 p-3 rounded-2xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs flex items-start gap-2 leading-relaxed shrink-0">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#C87F17]" />
-                  <span>{modalAlert}</span>
-                </div>
-              )}
-
-              {/* MANDATORY BASE SELECTION (for shifts requiring a base) */}
-              {shiftRequiresBase && (
-                <div className="mt-3 p-3.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] space-y-2 shrink-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <label className="text-xs font-bold text-[#182535] flex items-center gap-1.5 font-montserrat">
-                      <MapPin className="w-3.5 h-3.5 text-[#B83A24]" />
-                      <span>Base Física Obligatoria *</span>
-                    </label>
-                    {modalBase && (
-                      <span
-                        className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full font-bold border ${
-                          isBaseFull
-                            ? 'bg-rose-100 text-rose-800 border-rose-300'
-                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                        }`}
-                      >
-                        Ocupación: {currentBaseOccupants.length} / {modalBase.defaultCapacity} personas
-                      </span>
-                    )}
-                  </div>
-
-                  <select
-                    value={
-                      modalBase?.id
-                        ? String(modalBase.id)
-                        : selectedBaseNumber !== null
-                        ? String(selectedBaseNumber)
-                        : ''
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) {
-                        setModalBase(null);
-                        setSelectedBaseNumber(null);
-                        return;
-                      }
-                      const found = physicalBases.find(
-                        (b) => String(b.id) === val || String(b.baseNumber) === val
-                      );
-                      if (found) {
-                        setModalBase(found);
-                        setSelectedBaseNumber(found.baseNumber || found.id);
-                      } else {
-                        setModalBase({
-                          id: val,
-                          baseNumber: val,
-                          name: getBaseDisplayName(val),
-                          defaultCapacity: 2,
-                          suggestedCapacity: 2,
-                        });
-                        setSelectedBaseNumber(val);
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-[#FFFDF8] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
-                  >
-                    <option value="">-- Seleccionar Base Física (Obligatorio) --</option>
-                    {physicalBases.map((b) => (
-                      <option key={b.id} value={String(b.id)}>
-                        {b.name} (Capacidad: {b.defaultCapacity})
-                      </option>
-                    ))}
-                  </select>
-
-                  {!hasValidBase && (
-                    <p className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      Debe seleccionar una base física antes de poder asignar a un candidato.
-                    </p>
-                  )}
-
-                  {isBaseFull && (
-                    <p className="text-[11px] text-amber-800 font-semibold flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      Esta base ha alcanzado su capacidad máxima ({modalBase?.defaultCapacity || 2} personas).
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* 4 FUNCIONES OFICIALES GAP DE CARNIVAL */}
-              {selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null) && (activeShift.category === 'GAP' || baseAssignTab === 'GAP') && (
-                <div className="mt-3 p-3.5 bg-[#FFFDF8] rounded-2xl border-2 border-[#B83A24]/30 space-y-3 shrink-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#B83A24]" />
-                      <h4 className="text-xs font-bold text-[#182535] font-dalek tracking-wider">
-                        4 FUNCIONES OFICIALES GAP — CARNIVAL
-                      </h4>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF6EC] border border-[#EADDC7] text-[#64748B] font-bold">
-                      Cupo: {currentBaseOccupants.length} / {modalBase?.defaultCapacity || 2} personas
-                    </span>
-                  </div>
-
-                  {/* Toast Alerts for manual function changes */}
-                  {roleChangeError && (
-                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                      <span>{roleChangeError}</span>
-                    </div>
-                  )}
-                  {roleChangeSuccess && (
-                    <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-                      <Check className="w-4 h-4 shrink-0 text-emerald-600" />
-                      <span>{roleChangeSuccess}</span>
-                    </div>
-                  )}
-
-                  {/* Official 4 Functions List with direct selector & status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((fn, idx) => {
-                      // Find if any occupant has this exact function
-                      const occupant = currentBaseOccupants.find(
-                        (a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase() === fn.toUpperCase()
-                      );
-                      const person = occupant ? people.find((p) => p.id === occupant.personId) : null;
-
-                      const isLider = fn.includes('LÍDER');
-                      const isCalif = fn.includes('CALIFICADOR');
-                      const isVeedor = fn.includes('VEEDOR');
-
-                      return (
-                        <div
-                          key={fn}
-                          className={`p-2.5 rounded-xl border flex flex-col justify-between gap-1.5 transition-all ${
-                            occupant
-                              ? isLider
-                                ? 'bg-amber-50/60 border-amber-300'
-                                : isCalif
-                                ? 'bg-emerald-50/60 border-emerald-300'
-                                : isVeedor
-                                ? 'bg-sky-50/60 border-sky-300'
-                                : 'bg-purple-50/60 border-purple-300'
-                              : 'bg-[#FAF6EC] border-[#EADDC7]/80 text-[#64748B]'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-[10px] font-bold font-mono tracking-tight text-[#182535] flex items-center gap-1">
-                              <span className="w-4 h-4 rounded-full bg-[#182535] text-white text-[9px] flex items-center justify-center font-bold">
-                                {idx + 1}
-                              </span>
-                              <span>{fn}</span>
-                            </span>
-
-                            {occupant ? (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                Cubierta
-                              </span>
-                            ) : isBaseFull ? (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-medium text-[#94A3B8] bg-white border border-[#EADDC7]">
-                                Sin Asignar
-                              </span>
-                            ) : (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
-                                Disponible
-                              </span>
-                            )}
-                          </div>
-
-                          {occupant && person ? (
-                            <div className="flex items-center justify-between gap-1 pt-1 border-t border-[#EADDC7]/60">
-                              <div className="min-w-0 pr-1">
-                                <div className="text-xs font-bold text-[#182535] truncate">{person.name}</div>
-                                <div className="text-[10px] text-[#64748B] font-mono truncate">CC: {person.documentId}</div>
-                              </div>
-
-                              <div className="flex items-center gap-1 shrink-0">
-                                {/* Change function selector */}
-                                <select
-                                  value={occupant.assignedFunction || occupant.roleInBase || fn}
-                                  onChange={(e) =>
-                                    handleManualFunctionChange(
-                                      occupant.id,
-                                      e.target.value,
-                                      modalBase?.id || selectedBaseNumber || undefined
-                                    )
-                                  }
-                                  className="text-[10px] py-1 px-1.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] font-semibold cursor-pointer focus:outline-hidden hover:border-[#B83A24]"
-                                  title="Cambiar función oficial"
-                                >
-                                  {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((f) => (
-                                    <option key={f} value={f}>
-                                      {f}
-                                    </option>
-                                  ))}
-                                </select>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveAssignment(occupant.id)}
-                                  className="p-1 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
-                                  title="Quitar persona de la base"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-[10px] text-[#94A3B8] italic pt-1">
-                              {isBaseFull
-                                ? 'Función desierta (Cupo de la base cubierto).'
-                                : 'Siguiente función en orden de prioridad al asignar abajo.'}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Informative Note regarding Cupo vs Functions */}
-                  <div className="text-[11px] text-[#64748B] bg-[#FAF6EC] p-2.5 rounded-xl border border-[#EADDC7] flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-[#B83A24] shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
-                      <p className="font-semibold text-[#182535]">
-                        Regla Oficial de Cupos GAP:
-                      </p>
-                      <p>
-                        El número de funciones oficiales (4) <b>NO determina el cupo</b>. El cupo de la base ({modalBase?.defaultCapacity || 2} personas) determina cuántas personas pueden estar asignadas. La 4ta función VAR no aumenta el cupo automáticamente.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* [GAP] / [GT] / [MESA] TABS */}
-              {!activeRequirement && (
-                <div className="mt-3 flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] shrink-0">
-                  {isShiftMesa ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBaseAssignTab('GT');
-                          setModalAssignedType('GT');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                          baseAssignTab === 'GT'
-                            ? 'bg-[#182535] text-white shadow-xs'
-                            : 'text-[#64748B] hover:text-[#182535]'
-                        }`}
-                      >
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>[GT] Selección GT ({gtCandidatesCount})</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBaseAssignTab('MESA');
-                          setModalAssignedType('MESA');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                          baseAssignTab === 'MESA'
-                            ? 'bg-purple-700 text-white shadow-xs'
-                            : 'text-[#64748B] hover:text-[#182535]'
-                        }`}
-                      >
-                        <Crown className="w-3.5 h-3.5" />
-                        <span>[MESA] Integrantes MESA ({mesaCandidatesCount})</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBaseAssignTab('GAP');
-                          setModalAssignedType('GAP');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                          baseAssignTab === 'GAP'
-                            ? 'bg-[#B83A24] text-white shadow-xs'
-                            : 'text-[#64748B] hover:text-[#182535]'
-                        }`}
-                      >
-                        <Grid className="w-3.5 h-3.5" />
-                        <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBaseAssignTab('GT');
-                          setModalAssignedType('GT');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                          baseAssignTab === 'GT'
-                            ? 'bg-[#182535] text-white shadow-xs'
-                            : 'text-[#64748B] hover:text-[#182535]'
-                        }`}
-                      >
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>[GT] Apoyo / Logística ({gtCandidatesCount})</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Search Control */}
-              <div className="pt-3 pb-2 shrink-0 border-b border-[#EADDC7]/60">
-                <div className="relative">
-                  <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Buscar candidato por nombre, cédula o usuario..."
-                    value={candidateSearchQuery}
-                    onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
-                  />
-                  {candidateSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setCandidateSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {/* GT Sub-team Selection in Modal ("Seleccionar y no copiar") */}
-                {!activeRequirement && baseAssignTab === 'GT' && (
-                  <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
-                      <label htmlFor="modal-gt-select" className="text-[10px] font-bold text-[#64748B] font-montserrat">
-                        Filtrar GT:
-                      </label>
-                      <select
-                        id="modal-gt-select"
-                        value={modalGtSubTeamFilter}
-                        onChange={(e) => setModalGtSubTeamFilter(e.target.value)}
-                        className="text-xs px-2 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] font-montserrat font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
-                      >
-                        <option value="ALL">Todos los GT</option>
-                        {GT_SUBTEAMS.map((st) => (
-                          <option key={st} value={st}>
-                            GT {st.toUpperCase()}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setModalGtSubTeamFilter('ALL')}
-                        className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
-                          modalGtSubTeamFilter === 'ALL'
-                            ? 'bg-[#182535] text-white shadow-2xs'
-                            : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
-                        }`}
-                      >
-                        Todos
-                      </button>
-                      {GT_SUBTEAMS.map((subteam) => (
-                        <button
-                          key={subteam}
-                          type="button"
-                          onClick={() => setModalGtSubTeamFilter(subteam)}
-                          className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
-                            modalGtSubTeamFilter === subteam
-                              ? 'bg-[#B83A24] text-white shadow-2xs'
-                              : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
-                          }`}
-                        >
-                          GT {subteam.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
+              {/* Scrollable Modal Body (Unified smooth scrolling for all screen sizes) */}
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 py-2 space-y-3 overscroll-contain">
+                {/* Modal Alert if continuity or error */}
+                {modalAlert && (
+                  <div className="p-3 rounded-2xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs flex items-start gap-2 leading-relaxed">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#C87F17]" />
+                    <span>{modalAlert}</span>
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
-                  <div className="flex items-center gap-2">
-                    <span>
-                      Candidatos disponibles: <b>{filteredCandidates.length}</b>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowOnlyAvailableInModal(!showOnlyAvailableInModal)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                        showOnlyAvailableInModal
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                          : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7] hover:text-[#182535]'
-                      }`}
-                    >
-                      {showOnlyAvailableInModal ? '✓ Solo con turno registrado' : 'Mostrando todo el personal'}
-                    </button>
-                  </div>
-                  <span>
-                    Categoría activa: <b>{baseAssignTab}</b>
-                  </span>
-                </div>
-              </div>
+                {/* MANDATORY BASE SELECTION (for shifts requiring a base) */}
+                {shiftRequiresBase && (
+                  <div className="p-3.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <label className="text-xs font-bold text-[#182535] flex items-center gap-1.5 font-montserrat">
+                        <MapPin className="w-3.5 h-3.5 text-[#B83A24]" />
+                        <span>Base Física Obligatoria *</span>
+                      </label>
+                      {modalBase && (
+                        <span
+                          className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full font-bold border ${
+                            isBaseFull
+                              ? 'bg-rose-100 text-rose-800 border-rose-300'
+                              : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          }`}
+                        >
+                          Ocupación: {currentBaseOccupants.length} / {modalBase.defaultCapacity} personas
+                        </span>
+                      )}
+                    </div>
 
-              {/* Candidate Pool List */}
-              <div className="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
-                {filteredCandidates.length === 0 ? (
-                  <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
-                    <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
-                    <p className="font-bold text-[#182535] text-xs font-montserrat">
-                      No hay candidatos disponibles en {baseAssignTab} para este turno
-                    </p>
-                    <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
-                      Solo se muestran integrantes activos sin conflictos de horario. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
+                    <select
+                      value={
+                        modalBase?.id
+                          ? String(modalBase.id)
+                          : selectedBaseNumber !== null
+                          ? String(selectedBaseNumber)
+                          : ''
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setModalBase(null);
+                          setSelectedBaseNumber(null);
+                          return;
+                        }
+                        const found = physicalBases.find(
+                          (b) => String(b.id) === val || String(b.baseNumber) === val
+                        );
+                        if (found) {
+                          setModalBase(found);
+                          setSelectedBaseNumber(found.baseNumber || found.id);
+                        } else {
+                          setModalBase({
+                            id: val,
+                            baseNumber: val,
+                            name: getBaseDisplayName(val),
+                            defaultCapacity: 2,
+                            suggestedCapacity: 2,
+                          });
+                          setSelectedBaseNumber(val);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-[#FFFDF8] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    >
+                      <option value="">-- Seleccionar Base Física (Obligatorio) --</option>
+                      {physicalBases.map((b) => (
+                        <option key={b.id} value={String(b.id)}>
+                          {b.name} (Capacidad: {b.defaultCapacity})
+                        </option>
+                      ))}
+                    </select>
+
+                    {!hasValidBase && (
+                      <p className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        Debe seleccionar una base física antes de poder asignar a un candidato.
+                      </p>
+                    )}
+
+                    {isBaseFull && (
+                      <p className="text-[11px] text-amber-800 font-semibold flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        Esta base ha alcanzado su capacidad máxima ({modalBase?.defaultCapacity || 2} personas).
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* 4 FUNCIONES OFICIALES GAP DE CARNIVAL (Solo visible en pestaña GAP) */}
+                {selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null) && baseAssignTab === 'GAP' && (
+                  <div className="p-3 bg-[#FFFDF8] rounded-2xl border border-[#B83A24]/30 space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#EADDC7]/60">
+                      <div className="flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-[#B83A24]" />
+                        <h4 className="text-xs font-bold text-[#182535] font-montserrat">
+                          Funciones Oficiales GAP de la Base
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF6EC] border border-[#EADDC7] text-[#64748B] font-bold">
+                        Cupo: {currentBaseOccupants.length} / {modalBase?.defaultCapacity || 2} personas
+                      </span>
+                    </div>
+
+                    {/* Toast Alerts for manual function changes */}
+                    {roleChangeError && (
+                      <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                        <span>{roleChangeError}</span>
+                      </div>
+                    )}
+                    {roleChangeSuccess && (
+                      <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                        <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+                        <span>{roleChangeSuccess}</span>
+                      </div>
+                    )}
+
+                    {/* 4 Functions in a clean compact 2x2 grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((fn, idx) => {
+                        const occupant = currentBaseOccupants.find(
+                          (a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase() === fn.toUpperCase()
+                        );
+                        const person = occupant ? people.find((p) => p.id === occupant.personId) : null;
+
+                        const isLider = fn.includes('LÍDER');
+                        const isCalif = fn.includes('CALIFICADOR');
+                        const isVeedor = fn.includes('VEEDOR');
+
+                        return (
+                          <div
+                            key={fn}
+                            className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+                              occupant
+                                ? isLider
+                                ? 'bg-amber-50/70 border-amber-300'
+                                : isCalif
+                                ? 'bg-emerald-50/70 border-emerald-300'
+                                : isVeedor
+                                ? 'bg-sky-50/70 border-sky-300'
+                                : 'bg-purple-50/70 border-purple-300'
+                                : 'bg-[#FAF6EC]/80 border-[#EADDC7] text-[#64748B]'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-4 h-4 rounded-full bg-[#182535] text-white text-[9px] flex items-center justify-center font-bold shrink-0 font-mono">
+                                  {idx + 1}
+                                </span>
+                                <span className="text-[11px] font-bold text-[#182535] font-montserrat truncate">
+                                  {fn}
+                                </span>
+                              </div>
+
+                              {occupant && person ? (
+                                <div className="text-[11px] font-semibold text-[#182535] truncate mt-0.5 ml-5.5">
+                                  {person.name}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-[#94A3B8] italic mt-0.5 ml-5.5">
+                                  {isBaseFull ? 'Sin asignar (Cupo lleno)' : 'Disponible al asignar'}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {occupant ? (
+                                <>
+                                  <select
+                                    value={occupant.assignedFunction || occupant.roleInBase || fn}
+                                    onChange={(e) =>
+                                      handleManualFunctionChange(
+                                        occupant.id,
+                                        e.target.value,
+                                        modalBase?.id || selectedBaseNumber || undefined
+                                      )
+                                    }
+                                    className="text-[10px] py-1 px-1.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                                    title="Cambiar función"
+                                  >
+                                    {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((f) => (
+                                      <option key={f} value={f}>
+                                        {f}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveAssignment(occupant.id)}
+                                    className="p-1 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
+                                    title="Quitar de base"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span
+                                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                                    isBaseFull
+                                      ? 'bg-neutral-100 text-[#94A3B8] border border-neutral-200'
+                                      : 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                  }`}
+                                >
+                                  {isBaseFull ? 'Vacante' : 'Libre'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Subtle 1-line note */}
+                    <p className="text-[10px] text-[#64748B] font-montserrat pt-0.5">
+                      <span className="font-semibold text-[#182535]">Regla de cupos:</span> El cupo de la base ({modalBase?.defaultCapacity || 2}) rige las asignaciones. La función VAR no aumenta el cupo automáticamente.
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-2">
+                )}
+
+                {/* [GAP] / [GT] / [MESA] TABS */}
+                {!activeRequirement && (
+                  <div className="flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7]">
+                    {isShiftMesa ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBaseAssignTab('GT');
+                            setModalAssignedType('GT');
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                            baseAssignTab === 'GT'
+                              ? 'bg-[#182535] text-white shadow-xs'
+                              : 'text-[#64748B] hover:text-[#182535]'
+                          }`}
+                        >
+                          <Shield className="w-3.5 h-3.5" />
+                          <span>[GT] Selección GT ({gtCandidatesCount})</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBaseAssignTab('MESA');
+                            setModalAssignedType('MESA');
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                            baseAssignTab === 'MESA'
+                              ? 'bg-purple-700 text-white shadow-xs'
+                              : 'text-[#64748B] hover:text-[#182535]'
+                          }`}
+                        >
+                          <Crown className="w-3.5 h-3.5" />
+                          <span>[MESA] Integrantes MESA ({mesaCandidatesCount})</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBaseAssignTab('GAP');
+                            setModalAssignedType('GAP');
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                            baseAssignTab === 'GAP'
+                              ? 'bg-[#B83A24] text-white shadow-xs'
+                              : 'text-[#64748B] hover:text-[#182535]'
+                          }`}
+                        >
+                          <Grid className="w-3.5 h-3.5" />
+                          <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBaseAssignTab('GT');
+                            setModalAssignedType('GT');
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                            baseAssignTab === 'GT'
+                              ? 'bg-[#182535] text-white shadow-xs'
+                              : 'text-[#64748B] hover:text-[#182535]'
+                          }`}
+                        >
+                          <Shield className="w-3.5 h-3.5" />
+                          <span>[GT] Apoyo / Logística ({gtCandidatesCount})</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Search Control */}
+                <div className="pt-2 pb-1 border-b border-[#EADDC7]/60">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Buscar candidato por nombre, cédula o usuario..."
+                      value={candidateSearchQuery}
+                      onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                    />
+                    {candidateSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setCandidateSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+
+                  {/* GT Sub-team Selection in Modal ("Seleccionar y no copiar") */}
+                  {!activeRequirement && baseAssignTab === 'GT' && (
+                    <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
+                        <label htmlFor="modal-gt-select" className="text-[10px] font-bold text-[#64748B] font-montserrat">
+                          Filtrar GT:
+                        </label>
+                        <select
+                          id="modal-gt-select"
+                          value={modalGtSubTeamFilter}
+                          onChange={(e) => setModalGtSubTeamFilter(e.target.value)}
+                          className="text-xs px-2 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] font-montserrat font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                        >
+                          <option value="ALL">Todos los GT</option>
+                          {GT_SUBTEAMS.map((st) => (
+                            <option key={st} value={st}>
+                              GT {st.toUpperCase()}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setModalGtSubTeamFilter('ALL')}
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                            modalGtSubTeamFilter === 'ALL'
+                              ? 'bg-[#182535] text-white shadow-2xs'
+                              : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                          }`}
+                        >
+                          Todos
+                        </button>
+                        {GT_SUBTEAMS.map((subteam) => (
+                          <button
+                            key={subteam}
+                            type="button"
+                            onClick={() => setModalGtSubTeamFilter(subteam)}
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                              modalGtSubTeamFilter === subteam
+                                ? 'bg-[#B83A24] text-white shadow-2xs'
+                                : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                            }`}
+                          >
+                            GT {subteam.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
+                    <div className="flex items-center gap-2">
+                      <span>
+                        Candidatos disponibles: <b>{filteredCandidates.length}</b>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowOnlyAvailableInModal(!showOnlyAvailableInModal)}
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                          showOnlyAvailableInModal
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7] hover:text-[#182535]'
+                        }`}
+                      >
+                        {showOnlyAvailableInModal ? '✓ Solo con turno registrado' : 'Mostrando todo el personal'}
+                      </button>
+                    </div>
+                    <span>
+                      Categoría activa: <b>{baseAssignTab}</b>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Candidate Pool List */}
+                <div className="space-y-2 pt-1">
+                  {filteredCandidates.length === 0 ? (
+                    <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
+                      <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
+                      <p className="font-bold text-[#182535] text-xs font-montserrat">
+                        No hay candidatos disponibles en {baseAssignTab} para este turno
+                      </p>
+                      <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
+                        Solo se muestran integrantes activos sin conflictos de horario. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
                     {filteredCandidates.map(({ person, matchingFunctionsList, carnivalContinuityConflict, priorCarnivalBaseName, isAvailableInShift }) => {
                       const isSelected = modalPersonId === person.id;
                       const selectedFunctionToUse =
@@ -3555,9 +3543,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Modal Footer */}
-              <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
                 <span className="text-xs text-[#64748B]">
                   {shiftCupoFilledCount} / {activeShift.capacity || 0} cupos {isShiftMesa ? 'MESA' : 'GT'} ocupados
                   {assignedMesaCount > 0 && !isShiftMesa && (
