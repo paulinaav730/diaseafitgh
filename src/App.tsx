@@ -214,6 +214,7 @@ export default function App() {
                 assignments={assignments}
                 availabilities={availabilities}
                 attendances={attendances}
+                shifts={shifts}
                 onNavigate={setCurrentTab}
                 onOpenAddPerson={() => {
                   setCurrentTab('people');

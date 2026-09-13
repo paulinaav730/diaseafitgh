@@ -256,6 +256,30 @@ export function initializeStorage(): void {
         if (Array.isArray(parsed)) {
           parsed.forEach((s) => {
             if (s && s.id) {
+              // Ensure Tuesday shifts are strictly updated to official schedules:
+              if (s.id === 'martes-t1') {
+                s.startTime = '08:30';
+                s.endTime = '12:00';
+                s.label = '8:30 a. m. – 12:00 p. m.';
+              } else if (s.id === 'martes-t2') {
+                s.startTime = '12:30';
+                s.endTime = '16:00';
+                s.label = '12:30 p. m. – 4:00 p. m.';
+              } else if (s.id === 'martes-t3') {
+                s.startTime = '16:00';
+                s.endTime = '18:00';
+                s.label = '4:00 p. m. – 6:00 p. m.';
+              } else if (s.id === 'martes-t4') {
+                s.startTime = '18:00';
+                s.endTime = '19:30';
+                s.label = '6:00 p. m. – 7:30 p. m.';
+              } else if (s.id === 'shift_martes_mesa_mtqn17fi_ya2') {
+                s.name = 'Turno MESA';
+                s.startTime = '08:00';
+                s.endTime = '12:30';
+                s.label = '8:00 a. m. – 12:30 p. m.';
+              }
+
               // Ensure Thursday Turno 2 is updated to 13:00 - 21:00 (1 a 9) if still 12:30-18:00
               if (
                 (s.id === 'jueves-t2-gt' || s.id === 'jueves-t2') &&
@@ -319,10 +343,10 @@ export function initializeStorage(): void {
           endTime = '21:30';
           label = '6:00 a. m. a 9:30 p. m.';
         } else if (dayId === 'martes') {
-          name = isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1 — The Zone';
-          startTime = '08:30';
-          endTime = '12:30';
-          label = '8:30 a. m. a 12:30 p. m.';
+          name = isMesa ? 'Turno MESA' : 'Turno 1';
+          startTime = isMesa ? '08:00' : '08:30';
+          endTime = isMesa ? '12:30' : '12:00';
+          label = isMesa ? '8:00 a. m. – 12:30 p. m.' : '8:30 a. m. – 12:00 p. m.';
         } else if (dayId === 'miercoles') {
           name = isMesa ? 'Turno 1 — Carnival (MESA)' : 'Turno 1 — Carnival';
           startTime = '06:00';

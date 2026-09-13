@@ -89,13 +89,13 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
       if (dId === 'martes') {
         return {
           id: shiftId,
-          name: isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1',
+          name: isMesa ? 'Turno MESA' : 'Turno 1',
           dayId: 'martes',
           eventId: 'the-zone',
           category: (isMesa ? 'MESA' : 'GT') as any,
-          startTime: '08:30',
-          endTime: '12:30',
-          label: '8:30 a. m. a 12:30 p. m.',
+          startTime: isMesa ? '08:00' : '08:30',
+          endTime: isMesa ? '12:30' : '12:00',
+          label: isMesa ? '8:00 a. m. – 12:30 p. m.' : '8:30 a. m. – 12:00 p. m.',
         };
       }
       if (dId === 'miercoles') {

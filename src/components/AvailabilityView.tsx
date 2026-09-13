@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Person, AvailabilityRecord, ConfigurableShift, Shift } from '../types';
 import {
   EVENT_SCHEDULE,
@@ -19,6 +19,9 @@ import {
   Layers,
   AlertCircle,
   Crown,
+  Search,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 
 interface AvailabilityViewProps {
@@ -37,6 +40,39 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Searchable combobox state
+  const [personSearchQuery, setPersonSearchQuery] = useState<string>('');
+  const [isPersonDropdownOpen, setIsPersonDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsPersonDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const sortedPeople = useMemo(() => {
+    return [...people].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  }, [people]);
+
+  const filteredPeople = useMemo(() => {
+    const q = personSearchQuery.trim().toLowerCase();
+    if (!q) return sortedPeople;
+    return sortedPeople.filter((p) => {
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchDoc = p.documentId ? p.documentId.toLowerCase().includes(q) : false;
+      const matchSub = p.gtSubTeam ? p.gtSubTeam.toLowerCase().includes(q) : false;
+      const matchType = p.primaryType ? p.primaryType.toLowerCase().includes(q) : false;
+      return matchName || matchDoc || matchSub || matchType;
+    });
+  }, [sortedPeople, personSearchQuery]);
 
   const selectedPerson = people.find((p) => p.id === selectedPersonId);
 
@@ -133,35 +169,244 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
           {/* Person & Day selector */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
-                <User className="w-4 h-4 text-[#B83A24]" />
-                <span>Integrante / Staff *</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-[#334155] flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-[#B83A24]" />
+                  <span>Integrante / Staff *</span>
+                </label>
+                {selectedPerson && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPersonId('');
+                      setSelectedShifts([]);
+                      setNotes('');
+                      setPersonSearchQuery('');
+                      setIsPersonDropdownOpen(true);
+                      setTimeout(() => searchInputRef.current?.focus(), 50);
+                    }}
+                    className="text-[11px] text-[#B83A24] hover:underline cursor-pointer flex items-center gap-1 font-medium"
+                  >
+                    <X className="w-3 h-3" />
+                    Cambiar integrante
+                  </button>
+                )}
+              </div>
+
               {people.length === 0 ? (
                 <div className="p-3 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] text-xs text-[#64748B]">
                   No hay personas registradas aún. Agregue personas en la pestaña de Personas o mediante Importación Excel.
                 </div>
               ) : (
-                <select
-                  value={selectedPersonId}
-                  onChange={(e) => handlePersonOrDayChange(e.target.value, selectedDayId)}
-                  required
-                  className="w-full min-h-[44px] px-3.5 py-2.5 bg-[#FAF6EC] text-[#182535] rounded-xl border border-[#E5DAC0] focus:outline-hidden focus:border-[#B83A24] text-xs font-medium"
-                >
-                  <option value="">-- Seleccionar Integrante --</option>
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.primaryType}) - Cédula: {p.documentId}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {selectedPerson && (
-                <div className="mt-1.5 text-[11px] text-[#B83A24] flex items-center gap-1.5">
-                  <span className="font-semibold text-[#64748B]">Tipo registrado:</span>
-                  <span className="px-2 py-0.5 rounded-md bg-[#FDF2EE] text-[#B83A24] font-bold border border-[#F6C7BA]">
-                    {selectedPerson.primaryType}
-                  </span>
+                <div className="space-y-2">
+                  {/* Searchable input with Dropdown */}
+                  <div className="relative" ref={dropdownRef}>
+                    <div className="relative flex items-center">
+                      <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 pointer-events-none" />
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder={
+                          selectedPerson
+                            ? `Buscar o cambiar integrante... (Actual: ${selectedPerson.name})`
+                            : "Escribe nombre, cédula o subequipo..."
+                        }
+                        value={personSearchQuery}
+                        onChange={(e) => {
+                          setPersonSearchQuery(e.target.value);
+                          setIsPersonDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsPersonDropdownOpen(true)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && filteredPeople.length > 0 && isPersonDropdownOpen) {
+                            e.preventDefault();
+                            handlePersonOrDayChange(filteredPeople[0].id, selectedDayId);
+                            setIsPersonDropdownOpen(false);
+                            setPersonSearchQuery('');
+                          } else if (e.key === 'Escape') {
+                            setIsPersonDropdownOpen(false);
+                          }
+                        }}
+                        className="w-full min-h-[44px] pl-10 pr-16 py-2.5 bg-[#FAF6EC] text-[#182535] rounded-xl border border-[#E5DAC0] focus:outline-hidden focus:border-[#B83A24] text-xs font-medium placeholder:text-[#94A3B8]"
+                      />
+
+                      <div className="absolute right-2.5 flex items-center gap-1">
+                        {personSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPersonSearchQuery('');
+                              searchInputRef.current?.focus();
+                            }}
+                            className="text-[#94A3B8] hover:text-[#182535] p-1 cursor-pointer"
+                            title="Limpiar búsqueda"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsPersonDropdownOpen(!isPersonDropdownOpen);
+                            if (!isPersonDropdownOpen) {
+                              setTimeout(() => searchInputRef.current?.focus(), 50);
+                            }
+                          }}
+                          className="text-[#94A3B8] hover:text-[#182535] p-1 cursor-pointer"
+                          title="Ver lista"
+                        >
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              isPersonDropdownOpen ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Autocomplete Dropdown List */}
+                    {isPersonDropdownOpen && (
+                      <div className="absolute z-40 left-0 right-0 mt-1.5 bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl shadow-xl max-h-64 overflow-y-auto p-1.5 divide-y divide-[#FAF6EC]">
+                        {filteredPeople.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-[#94A3B8]">
+                            No se encontraron integrantes con &quot;{personSearchQuery}&quot;
+                          </div>
+                        ) : (
+                          filteredPeople.slice(0, 60).map((p) => {
+                            const isSelected = p.id === selectedPersonId;
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  handlePersonOrDayChange(p.id, selectedDayId);
+                                  setIsPersonDropdownOpen(false);
+                                  setPersonSearchQuery('');
+                                }}
+                                className={`w-full text-left p-2.5 rounded-xl transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#FDF2EE] border border-[#F6C7BA]'
+                                    : 'hover:bg-[#FAF6EC]'
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="text-xs text-[#182535] font-bold truncate flex items-center gap-1.5">
+                                    <span>{p.name}</span>
+                                    {p.primaryType === 'MESA' && (
+                                      <Crown className="w-3 h-3 text-purple-700 shrink-0" />
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-[#64748B] flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded font-bold text-[9px] border ${
+                                        p.primaryType === 'MESA'
+                                          ? 'bg-purple-100 text-purple-800 border-purple-200'
+                                          : p.primaryType === 'GAP'
+                                          ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                                      }`}
+                                    >
+                                      {p.primaryType}
+                                    </span>
+                                    {p.gtSubTeam && (
+                                      <span className="text-[10px] text-[#475569] font-medium">
+                                        • {p.gtSubTeam}
+                                      </span>
+                                    )}
+                                    {p.documentId && (
+                                      <span className="text-[10px] text-[#64748B] font-mono">
+                                        • CC: {p.documentId}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {isSelected ? (
+                                  <div className="w-5 h-5 rounded-full bg-[#B83A24] text-white flex items-center justify-center shrink-0">
+                                    <Check className="w-3.5 h-3.5" />
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-[#94A3B8] font-medium shrink-0">
+                                    Seleccionar
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                        {filteredPeople.length > 60 && (
+                          <div className="p-2 text-center text-[11px] text-[#64748B] bg-[#FAF6EC] rounded-xl mt-1">
+                            Mostrando los primeros 60 de {filteredPeople.length} integrantes. Escribe para afinar la búsqueda.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selected Person Info Card */}
+                  {selectedPerson ? (
+                    <div className="p-3 bg-[#FAF6EC] border border-[#E5DAC0] rounded-2xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
+                            selectedPerson.primaryType === 'MESA'
+                              ? 'bg-purple-100 text-purple-800 border-purple-200'
+                              : selectedPerson.primaryType === 'GAP'
+                              ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                              : 'bg-blue-100 text-blue-800 border-blue-200'
+                          }`}
+                        >
+                          {selectedPerson.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-[#182535] truncate flex items-center gap-1.5">
+                            <span>{selectedPerson.name}</span>
+                            {selectedPerson.primaryType === 'MESA' && (
+                              <Crown className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                            )}
+                          </div>
+                          <div className="text-[11px] text-[#64748B] flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span
+                              className={`px-1.5 py-0.5 rounded font-bold text-[9px] border ${
+                                selectedPerson.primaryType === 'MESA'
+                                  ? 'bg-purple-100 text-purple-800 border-purple-200'
+                                  : selectedPerson.primaryType === 'GAP'
+                                  ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                                  : 'bg-blue-100 text-blue-800 border-blue-200'
+                              }`}
+                            >
+                              {selectedPerson.primaryType}
+                            </span>
+                            {selectedPerson.gtSubTeam && (
+                              <span className="text-[10px] text-[#475569] font-medium">
+                                Subequipo: {selectedPerson.gtSubTeam}
+                              </span>
+                            )}
+                            {selectedPerson.documentId && (
+                              <span className="text-[10px] text-[#64748B] font-mono">
+                                • CC: {selectedPerson.documentId}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsPersonDropdownOpen(true);
+                          setTimeout(() => searchInputRef.current?.focus(), 50);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-white border border-[#E5DAC0] text-xs font-bold text-[#182535] hover:border-[#B83A24] hover:text-[#B83A24] transition-all cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
+                      >
+                        <Search className="w-3 h-3" />
+                        Buscar otro
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="px-3 py-2 bg-[#FAF6EC]/60 border border-dashed border-[#E5DAC0] rounded-xl text-[11px] text-[#64748B] flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-[#C87F17] shrink-0" />
+                      <span>Escribe el nombre o cédula arriba para seleccionar al integrante.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

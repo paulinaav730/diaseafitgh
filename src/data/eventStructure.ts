@@ -195,7 +195,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     dayId: 'martes',
     dayName: 'Martes',
     description: 'Zona de interacción, actividades interactivas en campus con equipo GRUPO DE TRABAJO (GT).',
-    notes: '4 turnos programados para GRUPO DE TRABAJO (GT).',
+    notes: '4 turnos GT y 1 Turno MESA (8:00 a. m. – 12:30 p. m.).',
     isActive: true,
     order: 2,
   },
@@ -309,7 +309,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     forTypes: ['GT'],
   },
 
-  // MARTES - THE ZONE (4 turnos GT)
+  // MARTES - THE ZONE (4 turnos GT + Turno MESA)
   {
     id: 'martes-t1',
     name: 'Turno 1',
@@ -317,8 +317,8 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     eventId: 'the-zone',
     category: 'GT',
     startTime: '08:30',
-    endTime: '12:30',
-    label: '8:30 a. m. a 12:30 p. m.',
+    endTime: '12:00',
+    label: '8:30 a. m. – 12:00 p. m.',
     capacity: 50,
     isActive: true,
     hasBases: false,
@@ -332,7 +332,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     category: 'GT',
     startTime: '12:30',
     endTime: '16:00',
-    label: '12:30 p. m. a 4:00 p. m.',
+    label: '12:30 p. m. – 4:00 p. m.',
     capacity: 50,
     isActive: true,
     hasBases: false,
@@ -345,8 +345,8 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     eventId: 'the-zone',
     category: 'GT',
     startTime: '16:00',
-    endTime: '19:30',
-    label: '4:00 p. m. a 7:30 p. m.',
+    endTime: '18:00',
+    label: '4:00 p. m. – 6:00 p. m.',
     capacity: 50,
     isActive: true,
     hasBases: false,
@@ -358,13 +358,27 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     dayId: 'martes',
     eventId: 'the-zone',
     category: 'GT',
-    startTime: '19:30',
-    endTime: '21:00',
-    label: '7:30 p. m. a 9:00 p. m.',
+    startTime: '18:00',
+    endTime: '19:30',
+    label: '6:00 p. m. – 7:30 p. m.',
     capacity: 19,
     isActive: true,
     hasBases: false,
     forTypes: ['GT'],
+  },
+  {
+    id: 'shift_martes_mesa_mtqn17fi_ya2',
+    name: 'Turno MESA',
+    dayId: 'martes',
+    eventId: 'the-zone',
+    category: 'MESA',
+    startTime: '08:00',
+    endTime: '12:30',
+    label: '8:00 a. m. – 12:30 p. m.',
+    capacity: 18,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['GT', 'MESA'],
   },
 
   // MIÉRCOLES - CARNIVAL (GT: 5 turnos)
@@ -743,18 +757,18 @@ export function findShiftById(
       };
     }
     if (sid.includes('martes')) {
-      const match = shifts.find((s) => s.dayId === 'martes' && (isMesa ? s.category === 'MESA' : true));
+      const match = shifts.find((s) => s.dayId === 'martes' && (isMesa ? s.category === 'MESA' || s.id.includes('mesa') : true));
       if (match) return match;
       return {
         id: shiftId,
-        name: isMesa ? 'Turno 1 — The Zone (MESA)' : 'Turno 1',
+        name: isMesa ? 'Turno MESA' : 'Turno 1',
         dayId: 'martes',
         eventId: 'the-zone',
         category: (isMesa ? 'MESA' : 'GT') as any,
-        startTime: '08:30',
-        endTime: '12:30',
-        label: '8:30 a. m. a 12:30 p. m.',
-        capacity: 10,
+        startTime: isMesa ? '08:00' : '08:30',
+        endTime: isMesa ? '12:30' : '12:00',
+        label: isMesa ? '8:00 a. m. – 12:30 p. m.' : '8:30 a. m. – 12:00 p. m.',
+        capacity: isMesa ? 18 : 50,
         isActive: true,
       };
     }
@@ -880,3 +894,14 @@ export function doShiftsOverlap(shiftA: Shift, shiftB: Shift, bufferMinutes: num
   // Transitions between consecutive shifts (e.g. 10 or 15 mins relay handover) do not constitute a conflicting overlap
   return overlapMinutes > bufferMinutes;
 }
+
+export function getShiftDurationMinutes(startTime: string, endTime: string): number {
+  if (!startTime || !endTime) return 0;
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
+  const start = sh * 60 + sm;
+  const end = eh * 60 + em;
+  return Math.max(0, end - start);
+}
+

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Person, Assignment, ConfigurableShift, AppEvent, GtSubTeam } from '../types';
-import { EVENT_SCHEDULE, findShiftById } from '../data/eventStructure';
+import { EVENT_SCHEDULE, findShiftById, DEFAULT_INITIAL_SHIFTS } from '../data/eventStructure';
 import {
   Utensils,
   Coffee,
@@ -95,9 +95,11 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
 
       let totalMinutes = 0;
       personShifts.forEach((asgn) => {
-        const shiftDef = shifts
-          ? shifts.find((s) => s.id === asgn.shiftId)
-          : findShiftById(currentDay, asgn.shiftId);
+        const shiftDef =
+          (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
+          findShiftById(shifts || [], asgn.shiftId) ||
+          findShiftById(currentDay, asgn.shiftId) ||
+          DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId);
         if (shiftDef) {
           totalMinutes += getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime);
         }

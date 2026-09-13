@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
-import { EVENT_SCHEDULE, CARNIVAL_PHYSICAL_BASES, THE_GAMES_PHYSICAL_BASES } from '../data/eventStructure';
+import {
+  EVENT_SCHEDULE,
+  CARNIVAL_PHYSICAL_BASES,
+  THE_GAMES_PHYSICAL_BASES,
+  findShiftById,
+  DEFAULT_INITIAL_SHIFTS,
+  getShiftDurationMinutes,
+} from '../data/eventStructure';
+import { ConfigurableShift } from '../types';
 import {
   Users,
   Calendar,
@@ -26,6 +34,7 @@ interface DashboardViewProps {
   assignments: Assignment[];
   availabilities: AvailabilityRecord[];
   attendances: AttendanceRecord[];
+  shifts?: ConfigurableShift[];
   onNavigate: (tab: TabType) => void;
   onOpenAddPerson: () => void;
   onOpenExcelImport?: () => void;
@@ -36,6 +45,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   assignments,
   availabilities,
   attendances,
+  shifts = [],
   onNavigate,
   onOpenAddPerson,
   onOpenExcelImport,
@@ -76,7 +86,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   assignments.forEach((asgn) => {
     const key = `${asgn.personId}_${asgn.dayId}`;
     const curr = personDayHours.get(key) || 0;
-    personDayHours.set(key, curr + 3.5); // avg shift 3.5h
+    const shiftDef =
+      (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
+      findShiftById(shifts || [], asgn.shiftId) ||
+      findShiftById(asgn.dayId, asgn.shiftId) ||
+      DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId);
+    const durationHours = shiftDef
+      ? getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime) / 60
+      : 3.5;
+    personDayHours.set(key, curr + durationHours);
   });
 
   personDayHours.forEach((hours) => {

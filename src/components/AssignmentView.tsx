@@ -700,7 +700,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         activeShift.category === 'MESA' ||
         activeShift.name.toUpperCase().includes('MESA') ||
         (activeShift.label && activeShift.label.toUpperCase().includes('MESA'));
-      const defaultTab: 'GAP' | 'GT' | 'MESA' = isShiftMesa ? 'MESA' : 'GT';
+      const defaultTab: 'GAP' | 'GT' | 'MESA' = 'GT';
       setBaseAssignTab(defaultTab);
       setModalAssignedType(defaultTab);
       setModalGtSubTeam(undefined);
@@ -752,7 +752,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   // Candidate pool calculation with strict availability, continuity, and GAP/GT/MESA rules
   const candidatePool = useMemo(() => {
     const isReqMesa = activeRequirement?.groupType === 'MESA';
-    const isMesaContext = isReqMesa || (!activeRequirement && isShiftMesa);
+    const isMesaRequirement = Boolean(isReqMesa);
 
     return people.map((person) => {
       const isMesa = person.primaryType === 'MESA';
@@ -764,48 +764,25 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       const isGt = effectiveType === 'GT';
       const isPersonActive = person.isActive !== false;
 
-      // RULE: MESA members ONLY appear for MESA shifts/requirements ("solo para los turnos que sea mesa")
-      // And in MESA shifts/requirements, ONLY MESA members appear
-      if (isMesaContext) {
-        if (!isMesa) {
-          return {
-            person,
-            isPersonActive,
-            isAlreadyAssigned: false,
-            conflictingAssignment: undefined,
-            isAvailableInShift: false,
-            carnivalContinuityConflict: false,
-            priorCarnivalBaseName: undefined,
-            isCategoryAllowedForGap: false,
-            isCategoryAllowedForGt: false,
-            isCategoryAllowedForMesa: false,
-            isEligibleForGap: false,
-            isEligibleForGt: false,
-            isEligibleForMesa: false,
-            matchesRequirementGroup: false,
-            matchingFunctionsList: [],
-          };
-        }
-      } else {
-        if (isMesa) {
-          return {
-            person,
-            isPersonActive,
-            isAlreadyAssigned: false,
-            conflictingAssignment: undefined,
-            isAvailableInShift: false,
-            carnivalContinuityConflict: false,
-            priorCarnivalBaseName: undefined,
-            isCategoryAllowedForGap: false,
-            isCategoryAllowedForGt: false,
-            isCategoryAllowedForMesa: false,
-            isEligibleForGap: false,
-            isEligibleForGt: false,
-            isEligibleForMesa: false,
-            matchesRequirementGroup: false,
-            matchingFunctionsList: [],
-          };
-        }
+      // When a specific requirement explicitly specifies MESA, only MESA members match
+      if (isMesaRequirement && !isMesa) {
+        return {
+          person,
+          isPersonActive,
+          isAlreadyAssigned: false,
+          conflictingAssignment: undefined,
+          isAvailableInShift: false,
+          carnivalContinuityConflict: false,
+          priorCarnivalBaseName: undefined,
+          isCategoryAllowedForGap: false,
+          isCategoryAllowedForGt: false,
+          isCategoryAllowedForMesa: false,
+          isEligibleForGap: false,
+          isEligibleForGt: false,
+          isEligibleForMesa: false,
+          matchesRequirementGroup: false,
+          matchingFunctionsList: [],
+        };
       }
 
       // 1. Group / Subteam matching for requirements:
@@ -815,17 +792,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           matchesRequirementGroup = isMesa;
         } else if (activeRequirement.groupType === 'GT') {
           const matchesSub = matchesGtSubTeam(person, activeRequirement.gtSubTeam);
-          matchesRequirementGroup = isGt && matchesSub;
+          matchesRequirementGroup = (isGt || isMesa) && matchesSub;
         } else if (activeRequirement.groupType === 'GAP') {
           matchesRequirementGroup =
             effectiveType === 'GAP' || (isGt && Boolean(person.alsoActsAsGap));
         }
       } else {
-        if (isShiftMesa) {
-          matchesRequirementGroup = isMesa;
-        } else {
-          matchesRequirementGroup = !isMesa;
-        }
+        matchesRequirementGroup = true;
       }
 
       // 2. Already assigned to this exact shift
@@ -1045,9 +1018,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       }
 
       // GT Eligibility:
-      // - strictly non-MESA, and is GT or has a GT subteam
+      // - is GT or MESA (MESA participates in GT shifts / Turno MESA with GT logic)
       let isCategoryAllowedForGt = false;
-      if (!isMesa && isGt) {
+      if (isGt || isMesa) {
         if (activeRequirement && activeRequirement.groupType === 'GT' && activeRequirement.gtSubTeam) {
           if (matchesGtSubTeam(person, activeRequirement.gtSubTeam)) {
             isCategoryAllowedForGt = true;
@@ -1162,7 +1135,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           if (!c.isEligibleForGap) return false;
         }
       } else {
-        if (isShiftMesa || baseAssignTab === 'MESA') {
+        if (baseAssignTab === 'MESA') {
           if (!c.isEligibleForMesa) return false;
         } else if (baseAssignTab === 'GAP') {
           if (!c.isEligibleForGap) return false;
@@ -2911,10 +2884,39 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               {!activeRequirement && (
                 <div className="mt-3 flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] shrink-0">
                   {isShiftMesa ? (
-                    <div className="flex-1 py-2 px-3 rounded-xl text-xs font-bold font-montserrat flex items-center justify-center gap-2 bg-purple-700 text-white shadow-xs">
-                      <Crown className="w-3.5 h-3.5" />
-                      <span>[MESA] Integrantes de MESA ({mesaCandidatesCount})</span>
-                    </div>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBaseAssignTab('GT');
+                          setModalAssignedType('GT');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                          baseAssignTab === 'GT'
+                            ? 'bg-[#182535] text-white shadow-xs'
+                            : 'text-[#64748B] hover:text-[#182535]'
+                        }`}
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>[GT] Selección GT ({gtCandidatesCount})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBaseAssignTab('MESA');
+                          setModalAssignedType('MESA');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                          baseAssignTab === 'MESA'
+                            ? 'bg-purple-700 text-white shadow-xs'
+                            : 'text-[#64748B] hover:text-[#182535]'
+                        }`}
+                      >
+                        <Crown className="w-3.5 h-3.5" />
+                        <span>[MESA] Integrantes MESA ({mesaCandidatesCount})</span>
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
