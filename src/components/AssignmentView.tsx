@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Person,
   Assignment,
@@ -9,6 +9,7 @@ import {
   PersonType,
   AvailabilityRecord,
   ConfigurableShift,
+  Shift,
   AppEvent,
   ConfigurableBase,
   getEffectivePersonType,
@@ -32,7 +33,13 @@ import {
   removeAssignment,
   saveShiftRequirement,
   deleteShiftRequirement,
+  pullAssignmentsFromSupabase,
 } from '../services/storageService';
+import {
+  CarnivalAutoAssignModal,
+  CarnivalAutoPromptData,
+  CarnivalPosteriorShiftStatus,
+} from './CarnivalAutoAssignModal';
 import {
   Clock,
   Users,
@@ -110,6 +117,123 @@ export const matchesGtSubTeam = (person: Person, requiredSubTeam?: string): bool
   return false;
 };
 
+export const getCarnivalWindow = (
+  sid?: string,
+  sname?: string,
+  slabel?: string,
+  sstart?: string,
+  send?: string
+): string | null => {
+  const str = `${sid || ''} ${sname || ''} ${slabel || ''}`.toLowerCase();
+
+  // Early morning (GT T1: 6:50 - 9:00 AM)
+  if (
+    str.includes('gt-t1') ||
+    /(?:gt.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gt)/i.test(str) ||
+    str.includes('6:50') ||
+    str.includes('06:50') ||
+    (sstart && sstart.startsWith('06:50'))
+  ) {
+    return 'T1_GT_EARLY';
+  }
+
+  // Morning (GT T2: 8:50 - 12:10 <===> GAP T1: 8:50 - 12:10)
+  if (
+    str.includes('gap-t1') ||
+    str.includes('gt-t2') ||
+    str.includes('miercoles-gap-t1') ||
+    str.includes('miercoles-gt-t2') ||
+    /(?:gap.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gap)/i.test(str) ||
+    /(?:gt.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gt)/i.test(str) ||
+    str.includes('8:50') ||
+    str.includes('08:50') ||
+    (sstart && (sstart.startsWith('08:50') || sstart.startsWith('8:50')))
+  ) {
+    return 'MORNING';
+  }
+
+  // Midday (GT T3: 12:00 - 3:10 <===> GAP T2: 12:00 - 3:10)
+  if (
+    str.includes('gap-t2') ||
+    str.includes('gt-t3') ||
+    str.includes('miercoles-gap-t2') ||
+    str.includes('miercoles-gt-t3') ||
+    /(?:gap.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gap)/i.test(str) ||
+    /(?:gt.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gt)/i.test(str) ||
+    str.includes('12:00') ||
+    str.includes('12:10') ||
+    str.includes('12:30') ||
+    (sstart && (sstart.startsWith('12:00') || sstart.startsWith('12:10') || sstart.startsWith('12:30')))
+  ) {
+    return 'MIDDAY';
+  }
+
+  // Afternoon (GT T4: 3:00 - 6:10 <===> GAP T3: 3:00 - 6:10)
+  if (
+    str.includes('gap-t3') ||
+    str.includes('gt-t4') ||
+    str.includes('miercoles-gap-t3') ||
+    str.includes('miercoles-gt-t4') ||
+    /(?:gap.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gap)/i.test(str) ||
+    /(?:gt.*t(?:urno)?\s*4\b|t(?:urno)?\s*4.*gt)/i.test(str) ||
+    str.includes('3:00') ||
+    str.includes('15:00') ||
+    str.includes('15:10') ||
+    (sstart && (sstart.startsWith('15:00') || sstart.startsWith('3:00')))
+  ) {
+    return 'AFTERNOON';
+  }
+
+  // Evening (GT T5: 6:00 - 9:00 PM)
+  if (
+    str.includes('gt-t5') ||
+    str.includes('miercoles-gt-t5') ||
+    /(?:gt.*t(?:urno)?\s*5\b|t(?:urno)?\s*5.*gt)/i.test(str) ||
+    str.includes('6:00 p') ||
+    str.includes('18:00') ||
+    (sstart && (sstart.startsWith('18:00') || sstart.startsWith('6:00')))
+  ) {
+    return 'T5_GT_LATE';
+  }
+
+  return null;
+};
+
+export const getCarnivalGapTurnNumber = (shift: ConfigurableShift | Shift): number => {
+  const win = getCarnivalWindow(shift.id, shift.name, shift.label, shift.startTime, shift.endTime);
+  if (win === 'MORNING') return 1;
+  if (win === 'MIDDAY') return 2;
+  if (win === 'AFTERNOON') return 3;
+  if (shift.id === 'miercoles-gap-t1' || shift.id === 'miercoles-gt-t2') return 1;
+  if (shift.id === 'miercoles-gap-t2' || shift.id === 'miercoles-gt-t3') return 2;
+  if (shift.id === 'miercoles-gap-t3' || shift.id === 'miercoles-gt-t4') return 3;
+  if (/t(?:urno)?\s*1\b/i.test(shift.name) || /t1/i.test(shift.id)) return 1;
+  if (/t(?:urno)?\s*2\b/i.test(shift.name) || /t2/i.test(shift.id)) return 2;
+  if (/t(?:urno)?\s*3\b/i.test(shift.name) || /t3/i.test(shift.id)) return 3;
+  return 1;
+};
+
+export const getOfficialCarnivalGapShifts = (
+  allShifts?: ConfigurableShift[]
+): (ConfigurableShift | Shift)[] => {
+  const source = allShifts && allShifts.length > 0 ? allShifts : DEFAULT_INITIAL_SHIFTS;
+  const gapShifts = source.filter(
+    (s) => s.dayId === 'miercoles' && (s.category === 'GAP' || s.hasBases)
+  );
+
+  const t1 =
+    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 1) ||
+    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t1')!;
+  const t2 =
+    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 2) ||
+    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t2')!;
+  const t3 =
+    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 3) ||
+    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t3')!;
+
+  return [t1, t2, t3];
+};
+
 export const AssignmentView: React.FC<AssignmentViewProps> = ({
   people,
   assignments,
@@ -155,6 +279,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [activeRosterFilter, setActiveRosterFilter] = useState<string>('ALL');
   const [assignedRosterSearch, setAssignedRosterSearch] = useState<string>('');
   const [modalGtSubTeamFilter, setModalGtSubTeamFilter] = useState<string>('ALL');
+  const [carnivalAutoPrompt, setCarnivalAutoPrompt] = useState<CarnivalAutoPromptData | null>(null);
+  const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!actionSuccessToast) return;
+    const t = setTimeout(() => {
+      setActionSuccessToast(null);
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [actionSuccessToast]);
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const isCarnival = currentDay.isCarnival;
@@ -732,88 +866,6 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         } else {
           // Check Miércoles (Carnival) aliases & time window matching
           if (selectedDayId === 'miercoles') {
-            const getCarnivalWindow = (
-              sid?: string,
-              sname?: string,
-              slabel?: string,
-              sstart?: string,
-              send?: string
-            ) => {
-              const str = `${sid || ''} ${sname || ''} ${slabel || ''}`.toLowerCase();
-
-              // Early morning (GT T1: 6:50 - 9:00 AM)
-              if (
-                str.includes('gt-t1') ||
-                /(?:gt.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gt)/i.test(str) ||
-                str.includes('6:50') ||
-                str.includes('06:50') ||
-                (sstart && sstart.startsWith('06:50'))
-              ) {
-                return 'T1_GT_EARLY';
-              }
-
-              // Morning (GT T2: 8:50 - 12:10 <===> GAP T1: 8:50 - 12:10)
-              if (
-                str.includes('gap-t1') ||
-                str.includes('gt-t2') ||
-                str.includes('miercoles-gap-t1') ||
-                str.includes('miercoles-gt-t2') ||
-                /(?:gap.*t(?:urno)?\s*1\b|t(?:urno)?\s*1.*gap)/i.test(str) ||
-                /(?:gt.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gt)/i.test(str) ||
-                str.includes('8:50') ||
-                str.includes('08:50') ||
-                (sstart && (sstart.startsWith('08:50') || sstart.startsWith('8:50')))
-              ) {
-                return 'MORNING';
-              }
-
-              // Midday (GT T3: 12:00 - 3:10 <===> GAP T2: 12:00 - 3:10)
-              if (
-                str.includes('gap-t2') ||
-                str.includes('gt-t3') ||
-                str.includes('miercoles-gap-t2') ||
-                str.includes('miercoles-gt-t3') ||
-                /(?:gap.*t(?:urno)?\s*2\b|t(?:urno)?\s*2.*gap)/i.test(str) ||
-                /(?:gt.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gt)/i.test(str) ||
-                str.includes('12:00') ||
-                str.includes('12:10') ||
-                str.includes('12:30') ||
-                (sstart && (sstart.startsWith('12:00') || sstart.startsWith('12:10') || sstart.startsWith('12:30')))
-              ) {
-                return 'MIDDAY';
-              }
-
-              // Afternoon (GT T4: 3:00 - 6:10 <===> GAP T3: 3:00 - 6:10)
-              if (
-                str.includes('gap-t3') ||
-                str.includes('gt-t4') ||
-                str.includes('miercoles-gap-t3') ||
-                str.includes('miercoles-gt-t4') ||
-                /(?:gap.*t(?:urno)?\s*3\b|t(?:urno)?\s*3.*gap)/i.test(str) ||
-                /(?:gt.*t(?:urno)?\s*4\b|t(?:urno)?\s*4.*gt)/i.test(str) ||
-                str.includes('3:00') ||
-                str.includes('15:00') ||
-                str.includes('15:10') ||
-                (sstart && (sstart.startsWith('15:00') || sstart.startsWith('3:00')))
-              ) {
-                return 'AFTERNOON';
-              }
-
-              // Evening (GT T5: 6:00 - 9:00 PM)
-              if (
-                str.includes('gt-t5') ||
-                str.includes('miercoles-gt-t5') ||
-                /(?:gt.*t(?:urno)?\s*5\b|t(?:urno)?\s*5.*gt)/i.test(str) ||
-                str.includes('6:00 p') ||
-                str.includes('18:00') ||
-                (sstart && (sstart.startsWith('18:00') || sstart.startsWith('6:00')))
-              ) {
-                return 'T5_GT_LATE';
-              }
-
-              return null;
-            };
-
             const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
             const activeWin = getCarnivalWindow(
               activeShift.id,
@@ -1210,6 +1262,340 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const evaluatePosteriorShiftEligibility = (
+    person: Person,
+    postShift: ConfigurableShift | Shift,
+    postTurnNumber: number,
+    targetBase: PhysicalBase
+  ): CarnivalPosteriorShiftStatus => {
+    // 1. Active status
+    if (person.isActive === false) {
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        unavailableReason: 'Persona inactiva',
+      };
+    }
+
+    // 2. GAP eligibility rule: GT Carnival cannot do GAP on Wednesday
+    const isGtCarnival = person.primaryType === 'GT' && person.gtSubTeam === 'Carnival';
+    if (isGtCarnival) {
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        unavailableReason: 'GT Carnival no habilitado para GAP',
+      };
+    }
+    if (person.primaryType === 'MESA') {
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        unavailableReason: 'Personal MESA no asignable a base física',
+      };
+    }
+
+    // 3. Availability registered for this shift
+    const availRecord = availabilities.find(
+      (av) => av.personId === person.id && av.dayId === 'miercoles'
+    );
+    let hasShiftAvailability = false;
+    if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
+      if (availRecord.shiftIds.includes(postShift.id)) {
+        hasShiftAvailability = true;
+      } else {
+        const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+        const targetWin = getCarnivalWindow(
+          postShift.id,
+          postShift.name,
+          postShift.label,
+          postShift.startTime,
+          postShift.endTime
+        );
+        if (targetWin) {
+          for (const regId of availRecord.shiftIds) {
+            const regShift = allKnownShifts.find((s) => s.id === regId);
+            const regWin = getCarnivalWindow(
+              regId,
+              regShift?.name,
+              regShift?.label,
+              regShift?.startTime,
+              regShift?.endTime
+            );
+            if (regWin && regWin === targetWin) {
+              hasShiftAvailability = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!hasShiftAvailability) {
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        unavailableReason: 'Sin disponibilidad registrada',
+      };
+    }
+
+    // 4. Prior assignment check (No duplicate assignments in this shift)
+    const existingInShift = assignments.find(
+      (a) =>
+        a.personId === person.id &&
+        a.dayId === 'miercoles' &&
+        (a.shiftId === postShift.id ||
+          getCarnivalGapTurnNumber(
+            findShiftById(shifts || DEFAULT_INITIAL_SHIFTS, a.shiftId) ||
+              ({ id: a.shiftId, name: a.shiftId, label: a.shiftId, startTime: '', endTime: '' } as Shift)
+          ) === postTurnNumber)
+    );
+
+    if (existingInShift) {
+      const isSameBase = areBasesEqual(
+        existingInShift.baseId || existingInShift.baseNumber,
+        targetBase.id || targetBase.baseNumber,
+        existingInShift.baseName,
+        targetBase.name
+      );
+
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        alreadyAssignedSameBase: isSameBase,
+        unavailableReason: isSameBase
+          ? 'Ya asignado(a) a esta base en este turno'
+          : 'Ya asignado(a) a otra base/función en este turno',
+      };
+    }
+
+    // 5. Schedule conflicts with other assignments on Wednesday
+    const otherDayAssignments = assignments.filter(
+      (a) =>
+        a.personId === person.id &&
+        a.dayId === 'miercoles' &&
+        a.shiftId !== postShift.id &&
+        getCarnivalGapTurnNumber(
+          findShiftById(shifts || DEFAULT_INITIAL_SHIFTS, a.shiftId) ||
+            ({ id: a.shiftId, name: a.shiftId, label: a.shiftId, startTime: '', endTime: '' } as Shift)
+        ) !== postTurnNumber
+    );
+
+    const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+    for (const other of otherDayAssignments) {
+      const otherShift = findShiftById(allKnownShifts, other.shiftId);
+      if (otherShift) {
+        // Between consecutive Carnival GAP shifts, consecutive shifts do not conflict
+        const isOtherCarnivalGap =
+          otherShift.dayId === 'miercoles' &&
+          (otherShift.category === 'GAP' || otherShift.hasBases);
+        if (isOtherCarnivalGap) {
+          continue;
+        }
+        if (doShiftsOverlap(otherShift, postShift as Shift)) {
+          return {
+            shift: postShift,
+            turnNumber: postTurnNumber,
+            isAvailable: false,
+            unavailableReason: `Conflicto con horario de ${otherShift.name}`,
+          };
+        }
+      }
+    }
+
+    // 6. Base capacity in posterior shift
+    const baseOccupants = assignments.filter((a) => {
+      if (a.dayId !== 'miercoles') return false;
+      if (a.personId === person.id) return false;
+      const isPostShift =
+        a.shiftId === postShift.id ||
+        getCarnivalGapTurnNumber(
+          findShiftById(shifts || DEFAULT_INITIAL_SHIFTS, a.shiftId) ||
+            ({ id: a.shiftId, name: a.shiftId, label: a.shiftId, startTime: '', endTime: '' } as Shift)
+        ) === postTurnNumber;
+      if (!isPostShift) return false;
+      return areBasesEqual(
+        a.baseId || a.baseNumber,
+        targetBase.id || targetBase.baseNumber,
+        a.baseName,
+        targetBase.name
+      );
+    });
+
+    const maxBaseCap = targetBase.gapCapacity || targetBase.defaultCapacity || 2;
+    if (baseOccupants.length >= maxBaseCap) {
+      return {
+        shift: postShift,
+        turnNumber: postTurnNumber,
+        isAvailable: false,
+        unavailableReason: `BASE COMPLETA (${baseOccupants.length}/${maxBaseCap})`,
+      };
+    }
+
+    // 7. Shift total capacity in posterior shift
+    if (postShift.capacity) {
+      const shiftGapOccupants = assignments.filter((a) => {
+        if (a.dayId !== 'miercoles') return false;
+        if (a.personId === person.id) return false;
+        if (a.assignedType !== 'GAP') return false;
+        return (
+          a.shiftId === postShift.id ||
+          getCarnivalGapTurnNumber(
+            findShiftById(shifts || DEFAULT_INITIAL_SHIFTS, a.shiftId) ||
+              ({ id: a.shiftId, name: a.shiftId, label: a.shiftId, startTime: '', endTime: '' } as Shift)
+          ) === postTurnNumber
+        );
+      });
+      if (shiftGapOccupants.length >= postShift.capacity) {
+        return {
+          shift: postShift,
+          turnNumber: postTurnNumber,
+          isAvailable: false,
+          unavailableReason: `CUPO COMPLETO — NO HAY MÁS CUPOS (${shiftGapOccupants.length}/${postShift.capacity})`,
+        };
+      }
+    }
+
+    // All checks passed!
+    return {
+      shift: postShift,
+      turnNumber: postTurnNumber,
+      isAvailable: true,
+    };
+  };
+
+  const handleCandidateAssignClick = (candidatePerson: Person, fnName: string) => {
+    const isCarnivalGapAssignment =
+      selectedDayId === 'miercoles' &&
+      (activeShift.category === 'GAP' || carnivalCategory === 'GAP' || baseAssignTab === 'GAP') &&
+      (modalBase !== null || selectedBaseNumber !== null);
+
+    if (!isCarnivalGapAssignment) {
+      handleQuickAssignCandidate(candidatePerson, fnName);
+      return;
+    }
+
+    // Resolve target base object
+    const targetBaseObj = modalBase || (selectedBaseNumber !== null
+      ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+      : null);
+
+    if (!targetBaseObj) {
+      handleQuickAssignCandidate(candidatePerson, fnName);
+      return;
+    }
+
+    const gapShifts = getOfficialCarnivalGapShifts(shifts);
+    const currentTurnNumber = getCarnivalGapTurnNumber(activeShift);
+    const currentShiftIndex = currentTurnNumber - 1;
+    const posteriorShifts = currentShiftIndex >= 0 ? gapShifts.slice(currentShiftIndex + 1) : [];
+
+    // If no posterior shifts (e.g. Turno 3) -> assign directly without prompt (Rule 17)
+    if (posteriorShifts.length === 0) {
+      handleQuickAssignCandidate(candidatePerson, fnName);
+      return;
+    }
+
+    const evaluatedStatuses: CarnivalPosteriorShiftStatus[] = posteriorShifts.map((pShift, idx) =>
+      evaluatePosteriorShiftEligibility(
+        candidatePerson,
+        pShift,
+        currentTurnNumber + 1 + idx,
+        targetBaseObj as PhysicalBase
+      )
+    );
+
+    const eligibleShifts = evaluatedStatuses.filter((s) => s.isAvailable).map((s) => s.shift);
+
+    // If no posterior shifts are available -> assign directly without prompt (Rule 17)
+    if (eligibleShifts.length === 0) {
+      handleQuickAssignCandidate(candidatePerson, fnName);
+      return;
+    }
+
+    // Prompt admin with intelligent confirmation
+    setCarnivalAutoPrompt({
+      candidate: candidatePerson,
+      currentShift: activeShift,
+      currentTurnNumber,
+      targetBase: targetBaseObj as PhysicalBase,
+      fnName,
+      eligibleShifts,
+      allPosteriorStatuses: evaluatedStatuses,
+    });
+  };
+
+  const handleConfirmCarnivalBatchAssign = async () => {
+    if (!carnivalAutoPrompt) return;
+    const { candidate, currentShift, targetBase, fnName, eligibleShifts } = carnivalAutoPrompt;
+    setIsSubmitting(true);
+
+    try {
+      const baseIdToUse = targetBase.id ? String(targetBase.id) : undefined;
+      const baseNumToUse = targetBase.baseNumber !== undefined ? targetBase.baseNumber : undefined;
+      const baseNameToUse = targetBase.name || (baseNumToUse !== undefined ? getBaseDisplayName(baseNumToUse) : undefined);
+
+      const shiftsToAssign = [currentShift, ...eligibleShifts];
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const s of shiftsToAssign) {
+        const res = await assignPerson({
+          personId: candidate.id,
+          dayId: 'miercoles',
+          shiftId: s.id,
+          assignedType: 'GAP',
+          baseId: baseIdToUse,
+          baseNumber: baseNumToUse,
+          baseName: baseNameToUse,
+          assignedFunction: fnName || 'Encargado de Base',
+          roleInBase: fnName || 'Encargado de Base',
+        });
+
+        if (res.success) {
+          successCount++;
+        } else {
+          errors.push(`${s.name}: ${res.alertMessage || 'Error'}`);
+        }
+      }
+
+      // Background synchronization with Supabase
+      pullAssignmentsFromSupabase().catch((err) => console.warn('Supabase pull post batch assign:', err));
+
+      if (successCount === shiftsToAssign.length) {
+        setActionSuccessToast(
+          `¡${candidate.name} fue asignado(a) con éxito a los ${successCount} turnos de Carnival en ${baseNameToUse}! Guardado en Supabase.`
+        );
+      } else {
+        setActionSuccessToast(
+          `${candidate.name} fue asignado(a) a ${successCount} de ${shiftsToAssign.length} turnos. ${errors.join(' • ')}`
+        );
+      }
+
+      setCarnivalAutoPrompt(null);
+      setIsAssignModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      setModalAlert('Error en la asignación automática');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelCarnivalBatchAssign = async () => {
+    if (!carnivalAutoPrompt) return;
+    const { candidate, fnName } = carnivalAutoPrompt;
+    setCarnivalAutoPrompt(null);
+    // Assign only the current shift as requested by user ("SOLO ESTE TURNO")
+    await handleQuickAssignCandidate(candidate, fnName);
+    setIsAssignModalOpen(false);
   };
 
   const handleRemoveAssignment = async (assignmentId: string) => {
@@ -2824,7 +3210,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             <button
                               type="button"
                               onClick={() => {
-                                handleQuickAssignCandidate(
+                                handleCandidateAssignClick(
                                   person,
                                   selectedFunctionToUse || matchingFunctionsList[0] || ''
                                 );
@@ -2883,6 +3269,35 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
         );
       })()}
+
+      {/* Carnival GAP Consecutive Shifts Auto-Assign Modal */}
+      {carnivalAutoPrompt && (
+        <CarnivalAutoAssignModal
+          promptData={carnivalAutoPrompt}
+          isSubmitting={isSubmitting}
+          onConfirmAll={handleConfirmCarnivalBatchAssign}
+          onConfirmCurrentOnly={handleCancelCarnivalBatchAssign}
+          onClose={() => setCarnivalAutoPrompt(null)}
+        />
+      )}
+
+      {/* Floating Action Success Toast */}
+      {actionSuccessToast && (
+        <div
+          id="carnival-assignment-success-toast"
+          className="fixed bottom-6 right-6 z-80 bg-[#182535] text-white px-5 py-3.5 rounded-2xl shadow-xl border border-[#2E3F53] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 max-w-md font-montserrat"
+        >
+          <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0" />
+          <span className="text-xs font-semibold leading-tight">{actionSuccessToast}</span>
+          <button
+            type="button"
+            onClick={() => setActionSuccessToast(null)}
+            className="text-white/60 hover:text-white p-1 ml-auto shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

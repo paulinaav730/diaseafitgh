@@ -204,10 +204,10 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'CARNIVAL',
     dayId: 'miercoles',
     dayName: 'Miércoles',
-    description: 'Día de actividades simultáneas en campus con equipo GRUPO DE TRABAJO (GT).',
-    notes: '5 turnos programados para GRUPO DE TRABAJO (GT).',
-    isCarnival: false,
-    isDivided: false,
+    description: 'Día de actividades simultáneas en campus con equipo GRUPO DE TRABAJO (GT) y GAP.',
+    notes: '5 turnos GT y 3 turnos GAP con 22 bases físicas oficiales.',
+    isCarnival: true,
+    isDivided: true,
     isActive: true,
     order: 3,
   },
@@ -439,6 +439,50 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     forTypes: ['GT'],
   },
 
+  // MIÉRCOLES - CARNIVAL GAP (3 turnos con 22 bases físicas oficiales)
+  {
+    id: 'miercoles-gap-t1',
+    name: 'Turno 1',
+    dayId: 'miercoles',
+    eventId: 'carnival',
+    category: 'GAP',
+    startTime: '08:50',
+    endTime: '12:10',
+    label: '8:50 a. m. a 12:10 p. m.',
+    capacity: 55,
+    isActive: true,
+    hasBases: true,
+    forTypes: ['GAP'],
+  },
+  {
+    id: 'miercoles-gap-t2',
+    name: 'Turno 2',
+    dayId: 'miercoles',
+    eventId: 'carnival',
+    category: 'GAP',
+    startTime: '12:00',
+    endTime: '15:10',
+    label: '12:00 m. a 3:10 p. m.',
+    capacity: 55,
+    isActive: true,
+    hasBases: true,
+    forTypes: ['GAP'],
+  },
+  {
+    id: 'miercoles-gap-t3',
+    name: 'Turno 3',
+    dayId: 'miercoles',
+    eventId: 'carnival',
+    category: 'GAP',
+    startTime: '15:00',
+    endTime: '18:10',
+    label: '3:00 p. m. a 6:10 p. m.',
+    capacity: 55,
+    isActive: true,
+    hasBases: true,
+    forTypes: ['GAP'],
+  },
+
   // JUEVES - THE CHALLENGE & THE GAMES (GT)
   {
     id: 'jueves-t1',
@@ -647,13 +691,13 @@ export function findShiftById(
     return shifts.find((s) => s.id === 'miercoles-gt-t1');
   }
   if (shiftId === 'miercoles-gap-t1' || shiftId === 'miercoles-t2') {
-    return shifts.find((s) => s.id === 'miercoles-gt-t2');
+    return shifts.find((s) => s.id === 'miercoles-gap-t1') || shifts.find((s) => s.id === 'miercoles-gt-t2');
   }
   if (shiftId === 'miercoles-gap-t2' || shiftId === 'miercoles-t3') {
-    return shifts.find((s) => s.id === 'miercoles-gt-t3');
+    return shifts.find((s) => s.id === 'miercoles-gap-t2') || shifts.find((s) => s.id === 'miercoles-gt-t3');
   }
   if (shiftId === 'miercoles-gap-t3' || shiftId === 'miercoles-t4') {
-    return shifts.find((s) => s.id === 'miercoles-gt-t4');
+    return shifts.find((s) => s.id === 'miercoles-gap-t3') || shifts.find((s) => s.id === 'miercoles-gt-t4');
   }
   if (shiftId === 'miercoles-t5') return shifts.find((s) => s.id === 'miercoles-gt-t5');
   if (

@@ -238,6 +238,14 @@ export function initializeStorage(): void {
       localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
     }
 
+    // Guarantee Carnival is configured with its official dual GT/GAP architecture
+    eventsCache = eventsCache.map((ev) => {
+      if (ev.id === 'carnival' || ev.dayId === 'miercoles') {
+        return { ...ev, isCarnival: true, isDivided: true };
+      }
+      return ev;
+    });
+
     // Initialize shifts with defaults and preserve user modifications / custom shifts
     const shiftMap = new Map<string, ConfigurableShift>();
     DEFAULT_INITIAL_SHIFTS.forEach((ds) => shiftMap.set(ds.id, { ...ds }));
@@ -266,6 +274,13 @@ export function initializeStorage(): void {
         console.warn('Error parsing rawShifts from localStorage:', e);
       }
     }
+
+    // Always ensure the 3 official Carnival GAP shifts are present with hasBases: true
+    DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'miercoles' && s.category === 'GAP').forEach((gs) => {
+      if (!shiftMap.has(gs.id)) {
+        shiftMap.set(gs.id, { ...gs });
+      }
+    });
 
     shiftsCache = Array.from(shiftMap.values());
 
@@ -349,9 +364,6 @@ export function initializeStorage(): void {
 
     // Migration map for old shift IDs to their new corresponding shift
     const SHIFT_MIGRATION_MAP: Record<string, string> = {
-      'miercoles-gap-t1': 'miercoles-gt-t2',
-      'miercoles-gap-t2': 'miercoles-gt-t3',
-      'miercoles-gap-t3': 'miercoles-gt-t4',
       'miercoles-t1': 'miercoles-gt-t1',
       'miercoles-t2': 'miercoles-gt-t2',
       'miercoles-t3': 'miercoles-gt-t3',
@@ -1928,5 +1940,7 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 }
+
+export { pullAssignmentsFromSupabase };
 
 
