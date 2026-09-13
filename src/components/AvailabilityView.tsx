@@ -65,13 +65,21 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   const filteredPeople = useMemo(() => {
     const q = personSearchQuery.trim().toLowerCase();
     if (!q) return sortedPeople;
-    return sortedPeople.filter((p) => {
-      const matchName = p.name.toLowerCase().includes(q);
-      const matchDoc = p.documentId ? p.documentId.toLowerCase().includes(q) : false;
-      const matchSub = p.gtSubTeam ? p.gtSubTeam.toLowerCase().includes(q) : false;
-      const matchType = p.primaryType ? p.primaryType.toLowerCase().includes(q) : false;
-      return matchName || matchDoc || matchSub || matchType;
-    });
+    return sortedPeople
+      .filter((p) => {
+        const matchName = p.name.toLowerCase().includes(q);
+        const matchDoc = p.documentId ? p.documentId.toLowerCase().includes(q) : false;
+        const matchSub = p.gtSubTeam ? p.gtSubTeam.toLowerCase().includes(q) : false;
+        const matchType = p.primaryType ? p.primaryType.toLowerCase().includes(q) : false;
+        return matchName || matchDoc || matchSub || matchType;
+      })
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(q);
+        const bStarts = b.name.toLowerCase().startsWith(q);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      });
   }, [sortedPeople, personSearchQuery]);
 
   const selectedPerson = people.find((p) => p.id === selectedPersonId);
@@ -113,6 +121,11 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
     setSelectedPersonId(personId);
     setSelectedDayId(dayId);
     setSaveMessage(null);
+
+    const personObj = people.find((p) => p.id === personId);
+    if (personObj) {
+      setPersonSearchQuery(personObj.name);
+    }
 
     const existingRecord = availabilities.find(
       (a) => a.personId === personId && a.dayId === dayId
@@ -172,7 +185,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-[#334155] flex items-center gap-1.5">
                   <User className="w-4 h-4 text-[#B83A24]" />
-                  <span>Integrante / Staff *</span>
+                  <span>Buscar integrante por nombre *</span>
                 </label>
                 {selectedPerson && (
                   <button
@@ -188,7 +201,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                     className="text-[11px] text-[#B83A24] hover:underline cursor-pointer flex items-center gap-1 font-medium"
                   >
                     <X className="w-3 h-3" />
-                    Cambiar integrante
+                    Limpiar selección
                   </button>
                 )}
               </div>
@@ -206,11 +219,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                       <input
                         ref={searchInputRef}
                         type="text"
-                        placeholder={
-                          selectedPerson
-                            ? `Buscar o cambiar integrante... (Actual: ${selectedPerson.name})`
-                            : "Escribe nombre, cédula o subequipo..."
-                        }
+                        placeholder="Escribe el nombre del integrante a buscar..."
                         value={personSearchQuery}
                         onChange={(e) => {
                           setPersonSearchQuery(e.target.value);
@@ -222,7 +231,6 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             e.preventDefault();
                             handlePersonOrDayChange(filteredPeople[0].id, selectedDayId);
                             setIsPersonDropdownOpen(false);
-                            setPersonSearchQuery('');
                           } else if (e.key === 'Escape') {
                             setIsPersonDropdownOpen(false);
                           }
@@ -236,6 +244,10 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             type="button"
                             onClick={() => {
                               setPersonSearchQuery('');
+                              setSelectedPersonId('');
+                              setSelectedShifts([]);
+                              setNotes('');
+                              setIsPersonDropdownOpen(true);
                               searchInputRef.current?.focus();
                             }}
                             className="text-[#94A3B8] hover:text-[#182535] p-1 cursor-pointer"
@@ -269,11 +281,15 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                       <div className="absolute z-40 left-0 right-0 mt-1.5 bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl shadow-xl max-h-64 overflow-y-auto p-1.5 divide-y divide-[#FAF6EC]">
                         {filteredPeople.length === 0 ? (
                           <div className="p-4 text-center text-xs text-[#94A3B8]">
-                            No se encontraron integrantes con &quot;{personSearchQuery}&quot;
+                            No se encontraron integrantes con el nombre &quot;{personSearchQuery}&quot;
                           </div>
                         ) : (
                           filteredPeople.slice(0, 60).map((p) => {
                             const isSelected = p.id === selectedPersonId;
+                            const existingForDay = availabilities.find(
+                              (a) => a.personId === p.id && a.dayId === selectedDayId
+                            );
+                            const shiftsCount = existingForDay?.shiftIds.length || 0;
                             return (
                               <button
                                 key={p.id}
@@ -281,7 +297,6 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                                 onClick={() => {
                                   handlePersonOrDayChange(p.id, selectedDayId);
                                   setIsPersonDropdownOpen(false);
-                                  setPersonSearchQuery('');
                                 }}
                                 className={`w-full text-left p-2.5 rounded-xl transition-colors flex items-center justify-between gap-2 cursor-pointer ${
                                   isSelected
@@ -318,6 +333,15 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                                         • CC: {p.documentId}
                                       </span>
                                     )}
+                                    <span
+                                      className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-semibold border ${
+                                        shiftsCount > 0
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      }`}
+                                    >
+                                      {shiftsCount > 0 ? `${shiftsCount} turnos` : 'Sin turnos'}
+                                    </span>
                                   </div>
                                 </div>
                                 {isSelected ? (

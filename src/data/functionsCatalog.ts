@@ -220,7 +220,39 @@ export const DEFAULT_GROUP_FUNCTIONS: GroupFunction[] = [
     createdAt: '2026-09-01T00:00:00.000Z',
   },
 
-  // GAP (funciones propias de GAP)
+  // GAP (funciones oficiales de CARNIVAL GAP)
+  {
+    id: 'LÍDER DE BASE',
+    name: 'LÍDER DE BASE',
+    category: 'GAP',
+    description: 'Líder responsable de la base física',
+    isActive: true,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'CALIFICADOR',
+    name: 'CALIFICADOR',
+    category: 'GAP',
+    description: 'Calificador oficial de la base',
+    isActive: true,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'VEEDOR',
+    name: 'VEEDOR',
+    category: 'GAP',
+    description: 'Veedor oficial de la base',
+    isActive: true,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
+  {
+    id: 'VAR',
+    name: 'VAR',
+    category: 'GAP',
+    description: 'Función oficial VAR para revisión y soporte',
+    isActive: true,
+    createdAt: '2026-09-01T00:00:00.000Z',
+  },
   {
     id: 'fn_gap_1',
     name: 'Orientación',
@@ -314,3 +346,12 @@ export function getFilteredFunctions(
     return true;
   });
 }
+
+export const CARNIVAL_GAP_OFFICIAL_FUNCTIONS = [
+  'LÍDER DE BASE',
+  'CALIFICADOR',
+  'VEEDOR',
+  'VAR',
+] as const;
+
+export type CarnivalGapFunction = typeof CARNIVAL_GAP_OFFICIAL_FUNCTIONS[number];

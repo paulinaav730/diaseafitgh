@@ -28,10 +28,16 @@ import {
   areBasesEqual,
   DEFAULT_INITIAL_SHIFTS,
 } from '../data/eventStructure';
-import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
+import {
+  GT_SUBTEAMS,
+  getFilteredFunctions,
+  CARNIVAL_GAP_OFFICIAL_FUNCTIONS,
+  CarnivalGapFunction,
+} from '../data/functionsCatalog';
 import {
   assignPerson,
   removeAssignment,
+  updateAssignmentFunction,
   saveShiftRequirement,
   deleteShiftRequirement,
   pullAssignmentsFromSupabase,
@@ -282,6 +288,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [modalGtSubTeamFilter, setModalGtSubTeamFilter] = useState<string>('ALL');
   const [carnivalAutoPrompt, setCarnivalAutoPrompt] = useState<CarnivalAutoPromptData | null>(null);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
+  const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
+  const [roleChangeSuccess, setRoleChangeSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!actionSuccessToast) return;
@@ -752,6 +760,59 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     const maxCap = modalBase?.defaultCapacity || 2;
     return currentBaseOccupants.length >= maxCap;
   }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants]);
+
+  const getNextAvailableCarnivalGapFunction = (
+    occupants: Assignment[]
+  ): CarnivalGapFunction => {
+    const used = new Set(
+      occupants.map((a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase())
+    );
+    for (const fn of CARNIVAL_GAP_OFFICIAL_FUNCTIONS) {
+      if (!used.has(fn.toUpperCase())) {
+        return fn;
+      }
+    }
+    return 'VAR';
+  };
+
+  const handleManualFunctionChange = async (
+    assignmentId: string,
+    newFn: string,
+    baseIdOrNum?: string | number
+  ) => {
+    setRoleChangeError(null);
+    setRoleChangeSuccess(null);
+
+    if (baseIdOrNum !== undefined && baseIdOrNum !== null) {
+      const isCarnivalGap =
+        selectedDayId === 'miercoles' &&
+        (activeShift.category === 'GAP' || baseAssignTab === 'GAP');
+
+      if (isCarnivalGap) {
+        const occupantsInSameBase = currentBaseOccupants.filter((a) => a.id !== assignmentId);
+        const isDuplicate = occupantsInSameBase.some(
+          (a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase() === newFn.trim().toUpperCase()
+        );
+
+        if (isDuplicate) {
+          setRoleChangeError('Esta función ya está asignada en esta base.');
+          setTimeout(() => setRoleChangeError(null), 4000);
+          return false;
+        }
+      }
+    }
+
+    const res = await updateAssignmentFunction(assignmentId, newFn);
+    if (!res.success) {
+      setRoleChangeError(res.error || 'Error al actualizar la función.');
+      setTimeout(() => setRoleChangeError(null), 4000);
+      return false;
+    }
+
+    setRoleChangeSuccess(`Función actualizada a ${newFn}`);
+    setTimeout(() => setRoleChangeSuccess(null), 3000);
+    return true;
+  };
 
   // Quota calculation: ONLY GT counts towards the GT shift cupo (MESA does NOT consume cupo)
   const shiftCupoFilledCount = useMemo(() => {
@@ -1225,9 +1286,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         return;
       }
 
-      const defaultRole = assignedTypeToUse === 'GAP'
+      let defaultRole = assignedTypeToUse === 'GAP'
         ? 'Encargado de Base'
         : (isMesaPerson ? 'Coordinación' : 'Staff General');
+
+      if (
+        selectedDayId === 'miercoles' &&
+        assignedTypeToUse === 'GAP' &&
+        (modalBase !== null || selectedBaseNumber !== null)
+      ) {
+        defaultRole = getNextAvailableCarnivalGapFunction(currentBaseOccupants);
+      }
+
+      const roleToAssign =
+        fnName && fnName !== 'Encargado de Base' && fnName !== 'Base'
+          ? fnName
+          : defaultRole;
 
       const result = await assignPerson({
         personId: candidatePerson.id,
@@ -1235,11 +1309,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         shiftId: activeShift.id,
         assignedType: assignedTypeToUse,
         gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam || 'Logística') : undefined,
-        assignedFunction: fnName || defaultRole,
+        assignedFunction: roleToAssign,
         baseId: baseIdToUse,
         baseNumber: baseNumToUse,
         baseName: baseNameToUse,
-        roleInBase: fnName || defaultRole,
+        roleInBase: roleToAssign,
         requirementId: activeRequirement ? activeRequirement.id : undefined,
       });
 
@@ -2188,6 +2262,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       ) : (
                         baseAssignments.map((assign) => {
                           const person = people.find((p) => p.id === assign.personId);
+                          const fnLabel = (assign.assignedFunction || assign.roleInBase || 'Base').toUpperCase();
+                          const isLider = fnLabel.includes('LÍDER') || fnLabel.includes('LIDER');
+                          const isCalif = fnLabel.includes('CALIFICADOR');
+                          const isVeedor = fnLabel.includes('VEEDOR');
+                          const isVar = fnLabel.includes('VAR');
 
                           return (
                             <div
@@ -2195,11 +2274,27 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               className="p-2 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] flex items-center justify-between text-xs"
                             >
                               <div className="min-w-0 pr-2">
-                                <div className="font-semibold text-[#182535] truncate flex items-center gap-1">
+                                <div className="font-semibold text-[#182535] truncate flex items-center gap-1.5">
                                   <span>{person?.name || 'Persona'}</span>
                                 </div>
-                                <div className="text-[10px] text-[#64748B] font-mono truncate">
-                                  {person?.documentId} • {assign.assignedFunction || assign.roleInBase || 'Base'}
+                                <div className="text-[10px] text-[#64748B] font-mono truncate flex items-center gap-1.5 mt-0.5">
+                                  <span>{person?.documentId}</span>
+                                  <span>•</span>
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-bold text-[9px] border ${
+                                      isLider
+                                        ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                        : isCalif
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                        : isVeedor
+                                        ? 'bg-sky-50 text-sky-800 border-sky-300'
+                                        : isVar
+                                        ? 'bg-purple-50 text-purple-800 border-purple-300'
+                                        : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7]'
+                                    }`}
+                                  >
+                                    {assign.assignedFunction || assign.roleInBase || 'Base'}
+                                  </span>
                                 </div>
                               </div>
 
@@ -2214,22 +2309,52 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           );
                         })
                       )}
+
+                      {/* Unassigned official functions indicator */}
+                      {(() => {
+                        const usedFns = new Set(
+                          baseAssignments.map((a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase())
+                        );
+                        const unassigned = CARNIVAL_GAP_OFFICIAL_FUNCTIONS.filter((f) => !usedFns.has(f.toUpperCase()));
+                        if (unassigned.length === 0) return null;
+                        return (
+                          <div className="pt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-[#64748B]">
+                            <span className="text-[9px] text-[#94A3B8] font-semibold">Disponibles:</span>
+                            {unassigned.map((f) => (
+                              <span
+                                key={f}
+                                className="px-1.5 py-0.5 rounded bg-[#FAF6EC] border border-[#EADDC7] text-[9px] font-mono text-[#64748B]"
+                              >
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
-                  {/* Add Person to Base Button */}
+                  {/* Manage / Add Person to Base Button */}
                   <div className="mt-3 pt-3 border-t border-[#EADDC7]">
                     <button
                       onClick={() => handleOpenAssignModal(undefined, base.id)}
-                      disabled={isFull}
-                      className={`min-h-[40px] w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                      className={`min-h-[40px] w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isFull
-                          ? 'bg-[#FAF6EC] text-[#94A3B8] cursor-not-allowed border border-[#EADDC7]'
+                          ? 'bg-[#FAF6EC] hover:bg-[#F4ECE0] text-[#182535] border border-[#EADDC7]'
                           : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs'
                       }`}
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{isFull ? 'Base Completa' : 'Asignar a Base'}</span>
+                      {isFull ? (
+                        <>
+                          <Shield className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <span>Gestionar Funciones ({baseAssignments.length}/{base.defaultCapacity})</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Asignar a Base ({baseAssignments.length}/{base.defaultCapacity})</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -2914,6 +3039,151 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       Esta base ha alcanzado su capacidad máxima ({modalBase?.defaultCapacity || 2} personas).
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* 4 FUNCIONES OFICIALES GAP DE CARNIVAL */}
+              {selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null) && (activeShift.category === 'GAP' || baseAssignTab === 'GAP') && (
+                <div className="mt-3 p-3.5 bg-[#FFFDF8] rounded-2xl border-2 border-[#B83A24]/30 space-y-3 shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#B83A24]" />
+                      <h4 className="text-xs font-bold text-[#182535] font-dalek tracking-wider">
+                        4 FUNCIONES OFICIALES GAP — CARNIVAL
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF6EC] border border-[#EADDC7] text-[#64748B] font-bold">
+                      Cupo: {currentBaseOccupants.length} / {modalBase?.defaultCapacity || 2} personas
+                    </span>
+                  </div>
+
+                  {/* Toast Alerts for manual function changes */}
+                  {roleChangeError && (
+                    <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                      <span>{roleChangeError}</span>
+                    </div>
+                  )}
+                  {roleChangeSuccess && (
+                    <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                      <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+                      <span>{roleChangeSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Official 4 Functions List with direct selector & status */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((fn, idx) => {
+                      // Find if any occupant has this exact function
+                      const occupant = currentBaseOccupants.find(
+                        (a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase() === fn.toUpperCase()
+                      );
+                      const person = occupant ? people.find((p) => p.id === occupant.personId) : null;
+
+                      const isLider = fn.includes('LÍDER');
+                      const isCalif = fn.includes('CALIFICADOR');
+                      const isVeedor = fn.includes('VEEDOR');
+
+                      return (
+                        <div
+                          key={fn}
+                          className={`p-2.5 rounded-xl border flex flex-col justify-between gap-1.5 transition-all ${
+                            occupant
+                              ? isLider
+                                ? 'bg-amber-50/60 border-amber-300'
+                                : isCalif
+                                ? 'bg-emerald-50/60 border-emerald-300'
+                                : isVeedor
+                                ? 'bg-sky-50/60 border-sky-300'
+                                : 'bg-purple-50/60 border-purple-300'
+                              : 'bg-[#FAF6EC] border-[#EADDC7]/80 text-[#64748B]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] font-bold font-mono tracking-tight text-[#182535] flex items-center gap-1">
+                              <span className="w-4 h-4 rounded-full bg-[#182535] text-white text-[9px] flex items-center justify-center font-bold">
+                                {idx + 1}
+                              </span>
+                              <span>{fn}</span>
+                            </span>
+
+                            {occupant ? (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                Cubierta
+                              </span>
+                            ) : isBaseFull ? (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-medium text-[#94A3B8] bg-white border border-[#EADDC7]">
+                                Sin Asignar
+                              </span>
+                            ) : (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                                Disponible
+                              </span>
+                            )}
+                          </div>
+
+                          {occupant && person ? (
+                            <div className="flex items-center justify-between gap-1 pt-1 border-t border-[#EADDC7]/60">
+                              <div className="min-w-0 pr-1">
+                                <div className="text-xs font-bold text-[#182535] truncate">{person.name}</div>
+                                <div className="text-[10px] text-[#64748B] font-mono truncate">CC: {person.documentId}</div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                {/* Change function selector */}
+                                <select
+                                  value={occupant.assignedFunction || occupant.roleInBase || fn}
+                                  onChange={(e) =>
+                                    handleManualFunctionChange(
+                                      occupant.id,
+                                      e.target.value,
+                                      modalBase?.id || selectedBaseNumber || undefined
+                                    )
+                                  }
+                                  className="text-[10px] py-1 px-1.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] font-semibold cursor-pointer focus:outline-hidden hover:border-[#B83A24]"
+                                  title="Cambiar función oficial"
+                                >
+                                  {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((f) => (
+                                    <option key={f} value={f}>
+                                      {f}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveAssignment(occupant.id)}
+                                  className="p-1 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
+                                  title="Quitar persona de la base"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-[10px] text-[#94A3B8] italic pt-1">
+                              {isBaseFull
+                                ? 'Función desierta (Cupo de la base cubierto).'
+                                : 'Siguiente función en orden de prioridad al asignar abajo.'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Informative Note regarding Cupo vs Functions */}
+                  <div className="text-[11px] text-[#64748B] bg-[#FAF6EC] p-2.5 rounded-xl border border-[#EADDC7] flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-[#B83A24] shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-[#182535]">
+                        Regla Oficial de Cupos GAP:
+                      </p>
+                      <p>
+                        El número de funciones oficiales (4) <b>NO determina el cupo</b>. El cupo de la base ({modalBase?.defaultCapacity || 2} personas) determina cuántas personas pueden estar asignadas. La 4ta función VAR no aumenta el cupo automáticamente.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -22,7 +22,7 @@ import {
   doShiftsOverlap,
   areBasesEqual,
 } from '../data/eventStructure';
-import { DEFAULT_GROUP_FUNCTIONS } from '../data/functionsCatalog';
+import { DEFAULT_GROUP_FUNCTIONS, CARNIVAL_GAP_OFFICIAL_FUNCTIONS } from '../data/functionsCatalog';
 import {
   insertSingleAssignmentToSupabase,
   deleteSingleAssignmentFromSupabase,
@@ -157,8 +157,24 @@ export function initializeStorage(): void {
       functionCache = JSON.parse(rawFunctions);
     } else {
       functionCache = [...DEFAULT_GROUP_FUNCTIONS];
-      localStorage.setItem(STORAGE_KEYS.FUNCTIONS, JSON.stringify(functionCache));
     }
+    // Guarantee all official Carnival GAP functions are present in functionCache
+    CARNIVAL_GAP_OFFICIAL_FUNCTIONS.forEach((fnName) => {
+      const exists = functionCache.some(
+        (f) => f.name.trim().toUpperCase() === fnName.toUpperCase() && f.category === 'GAP'
+      );
+      if (!exists) {
+        functionCache.unshift({
+          id: fnName,
+          name: fnName,
+          category: 'GAP',
+          description: `Función oficial GAP: ${fnName}`,
+          isActive: true,
+          createdAt: '2026-09-01T00:00:00.000Z',
+        });
+      }
+    });
+    localStorage.setItem(STORAGE_KEYS.FUNCTIONS, JSON.stringify(functionCache));
 
     // Initialize requirements with stored values, defaults, and user modifications
     const reqMap = new Map<string, ShiftRequirement>();
@@ -1250,6 +1266,31 @@ export async function assignPerson(
 
   const normalizedAssignedType = assignedType || 'GT';
 
+  let resolvedAssignedFn = assignmentData.assignedFunction;
+  if (
+    dayId === 'miercoles' &&
+    shiftHasBases &&
+    normalizedAssignedType === 'GAP' &&
+    (!resolvedAssignedFn || resolvedAssignedFn === 'Encargado de Base' || resolvedAssignedFn === 'Base')
+  ) {
+    const existingInBase = assignmentCache.filter(
+      (a) =>
+        a.dayId === dayId &&
+        a.shiftId === shiftId &&
+        a.personId !== personId &&
+        (
+          (resolvedBaseId && a.baseId === resolvedBaseId) ||
+          (resolvedBaseNumber !== undefined && String(a.baseNumber) === String(resolvedBaseNumber)) ||
+          (resolvedBaseName && a.baseName === resolvedBaseName)
+        )
+    );
+    const usedFns = new Set(
+      existingInBase.map((a) => (a.assignedFunction || a.roleInBase || '').trim().toUpperCase())
+    );
+    const nextFn = CARNIVAL_GAP_OFFICIAL_FUNCTIONS.find((fn) => !usedFns.has(fn.toUpperCase())) || 'VAR';
+    resolvedAssignedFn = nextFn;
+  }
+
   const newAssignment: Assignment = {
     id:
       existingIndex >= 0
@@ -1263,8 +1304,8 @@ export async function assignPerson(
     baseId: resolvedBaseId,
     baseNumber: resolvedBaseNumber,
     baseName: resolvedBaseName,
-    assignedFunction: assignmentData.assignedFunction,
-    roleInBase: assignmentData.roleInBase || assignmentData.assignedFunction,
+    assignedFunction: resolvedAssignedFn,
+    roleInBase: assignmentData.roleInBase || resolvedAssignedFn,
     requirementId: assignmentData.requirementId,
     notes: assignmentData.notes,
     updatedAt: new Date().toISOString(),
@@ -1302,6 +1343,38 @@ export async function removeAssignment(assignmentId: string): Promise<void> {
   deleteSingleAssignmentFromSupabase(assignmentId).catch((err) => {
     console.warn('Background Supabase delete sync:', err);
   });
+}
+
+export async function updateAssignmentFunction(
+  assignmentId: string,
+  newFunction: string
+): Promise<{ success: boolean; error?: string }> {
+  initializeStorage();
+  const assignIdx = assignmentCache.findIndex((a) => a.id === assignmentId);
+  if (assignIdx === -1) {
+    return { success: false, error: 'Asignación no encontrada' };
+  }
+
+  const updatedAssignment: Assignment = {
+    ...assignmentCache[assignIdx],
+    assignedFunction: newFunction,
+    roleInBase: newFunction,
+    updatedAt: new Date().toISOString(),
+  };
+
+  assignmentCache = assignmentCache.map((a, idx) =>
+    idx === assignIdx ? updatedAssignment : a
+  );
+
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+
+  // Sync to Supabase in the background
+  insertSingleAssignmentToSupabase(updatedAssignment).catch((err) => {
+    console.warn('Background Supabase assignment function update:', err);
+  });
+
+  return { success: true };
 }
 
 
