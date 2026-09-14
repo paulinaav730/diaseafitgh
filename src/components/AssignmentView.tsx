@@ -2935,7 +2935,28 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 bg-[#FAF6EC]/50 p-2.5 px-4 rounded-xl border border-[#EADDC7]">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#182535]">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded text-[#B83A24] focus:ring-[#B83A24]"
+                  checked={filteredCurrentShiftAssignments.length > 0 && selectedAssignmentIds.length === filteredCurrentShiftAssignments.length}
+                  onChange={() => toggleSelectAllAssignments(filteredCurrentShiftAssignments.map(a => a.id))}
+                />
+                Seleccionar todos ({filteredCurrentShiftAssignments.length})
+              </label>
+              {selectedAssignmentIds.length > 0 && (
+                <button
+                  onClick={handleBulkRemoveAssignments}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#B83A24] hover:bg-[#9E2F1B] text-white rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Eliminar {selectedAssignmentIds.length} seleccionados
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredCurrentShiftAssignments.map((assign) => {
               const person = people.find((p) => p.id === assign.personId);
               const isMesaAssign = assign.assignedType === 'MESA';
@@ -2944,10 +2965,19 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               return (
                 <div
                   key={assign.id}
-                  className="p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] flex items-center justify-between text-xs"
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-colors ${selectedAssignmentIds.includes(assign.id) ? 'bg-[#FDF2EE] border-[#B83A24]/40 shadow-sm' : 'bg-[#FAF6EC] border-[#EADDC7]'}`}
                 >
-                  <div className="min-w-0 pr-2">
-                    <div className="font-semibold text-[#182535] truncate">{person?.name || 'Persona'}</div>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="pt-0.5">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded text-[#B83A24] focus:ring-[#B83A24] cursor-pointer"
+                        checked={selectedAssignmentIds.includes(assign.id)}
+                        onChange={() => toggleAssignmentSelection(assign.id)}
+                      />
+                    </div>
+                    <div className="min-w-0 pr-2">
+                      <div className="font-semibold text-[#182535] truncate">{person?.name || 'Persona'}</div>
                     <div className="text-[11px] text-[#64748B] font-mono truncate">
                       {person?.documentId || ''}
                     </div>
@@ -2992,6 +3022,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
                   </div>
 
+                  </div>
                   <button
                     onClick={() => handleRemoveAssignment(assign.id)}
                     className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
@@ -3003,6 +3034,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               );
             })}
           </div>
+          </>
         )}
       </div>
 
