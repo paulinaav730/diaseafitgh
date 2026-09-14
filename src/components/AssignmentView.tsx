@@ -37,6 +37,7 @@ import {
 import {
   assignPerson,
   removeAssignment,
+  removeMultipleAssignments,
   updateAssignmentFunction,
   saveShiftRequirement,
   deleteShiftRequirement,
@@ -71,6 +72,7 @@ import {
   Sliders,
   MapPin,
   Crown,
+  Loader2,
 } from 'lucide-react';
 
 interface AssignmentViewProps {
@@ -286,11 +288,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
   const [activeRosterFilter, setActiveRosterFilter] = useState<string>('ALL');
   const [assignedRosterSearch, setAssignedRosterSearch] = useState<string>('');
+  const [selectedRosterIds, setSelectedRosterIds] = useState<string[]>([]);
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+  const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
   const [modalGtSubTeamFilter, setModalGtSubTeamFilter] = useState<string>('ALL');
   const [carnivalAutoPrompt, setCarnivalAutoPrompt] = useState<CarnivalAutoPromptData | null>(null);
   const [actionSuccessToast, setActionSuccessToast] = useState<string | null>(null);
   const [roleChangeError, setRoleChangeError] = useState<string | null>(null);
   const [roleChangeSuccess, setRoleChangeSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedRosterIds([]);
+  }, [selectedDayId, selectedShiftId]);
 
   useEffect(() => {
     if (!actionSuccessToast) return;
@@ -1956,6 +1965,53 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleRemoveAssignment = async (assignmentId: string) => {
     if (confirm('¿Eliminar esta asignación?')) {
       await removeAssignment(assignmentId);
+      setSelectedRosterIds((prev) => prev.filter((id) => id !== assignmentId));
+    }
+  };
+
+  const handleToggleSelectRosterItem = (assignId: string) => {
+    setSelectedRosterIds((prev) =>
+      prev.includes(assignId) ? prev.filter((id) => id !== assignId) : [...prev, assignId]
+    );
+  };
+
+  const handleToggleSelectAllVisible = () => {
+    const visibleIds = filteredCurrentShiftAssignments.map((a) => a.id);
+    if (visibleIds.length === 0) return;
+    const allVisibleSelected = visibleIds.every((id) => selectedRosterIds.includes(id));
+    if (allVisibleSelected) {
+      // Deselect all visible
+      setSelectedRosterIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      // Select all visible
+      setSelectedRosterIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleSelectAllEntireShift = () => {
+    const allIds = currentShiftAssignments.map((a) => a.id);
+    setSelectedRosterIds(allIds);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedRosterIds([]);
+  };
+
+  const handleExecuteBatchDelete = async () => {
+    if (selectedRosterIds.length === 0) return;
+    setIsBatchDeleting(true);
+    try {
+      const count = selectedRosterIds.length;
+      await removeMultipleAssignments(selectedRosterIds);
+      pullAssignmentsFromSupabase().catch((err) => console.warn('Supabase pull post batch delete:', err));
+      setActionSuccessToast(`Se eliminaron con éxito ${count} asignaciones de este turno.`);
+      setSelectedRosterIds([]);
+      setShowBatchDeleteConfirm(false);
+    } catch (err) {
+      console.error(err);
+      setModalAlert('Error al eliminar las asignaciones seleccionadas');
+    } finally {
+      setIsBatchDeleting(false);
     }
   };
 

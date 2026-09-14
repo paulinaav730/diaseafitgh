@@ -26,6 +26,7 @@ import { DEFAULT_GROUP_FUNCTIONS, CARNIVAL_GAP_OFFICIAL_FUNCTIONS } from '../dat
 import {
   insertSingleAssignmentToSupabase,
   deleteSingleAssignmentFromSupabase,
+  deleteMultipleAssignmentsFromSupabase,
   pullAssignmentsFromSupabase,
   setupRealtimeSubscriptions,
   pushSingleShiftToSupabase,
@@ -1436,6 +1437,22 @@ export async function removeAssignment(assignmentId: string): Promise<void> {
   // 2. Remove in Supabase in background
   deleteSingleAssignmentFromSupabase(assignmentId).catch((err) => {
     console.warn('Background Supabase delete sync:', err);
+  });
+}
+
+export async function removeMultipleAssignments(assignmentIds: string[]): Promise<void> {
+  if (!assignmentIds || assignmentIds.length === 0) return;
+  initializeStorage();
+
+  // 1. Immediately remove locally
+  const idSet = new Set(assignmentIds);
+  assignmentCache = assignmentCache.filter((a) => !idSet.has(a.id));
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+
+  // 2. Remove in Supabase in background
+  deleteMultipleAssignmentsFromSupabase(assignmentIds).catch((err) => {
+    console.warn('Background Supabase batch delete sync:', err);
   });
 }
 

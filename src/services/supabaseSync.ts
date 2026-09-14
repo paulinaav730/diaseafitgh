@@ -724,6 +724,20 @@ export async function deleteSingleAssignmentFromSupabase(id: string): Promise<{ 
   }
 }
 
+export async function deleteMultipleAssignmentsFromSupabase(ids: string[]): Promise<{ success: boolean; error?: string }> {
+  if (!ids || ids.length === 0) return { success: true };
+  const client = getSupabase();
+  if (!client) return { success: false, error: 'No Supabase client' };
+  
+  try {
+    const { error } = await client.from('assignments').delete().in('id', ids);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
 // REALTIME SUBSCRIPTIONS
 let realtimeChannel: any = null;
 
