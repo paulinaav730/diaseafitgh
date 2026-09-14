@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Person, AvailabilityRecord, ConfigurableShift, Shift } from '../types';
+import { Person, AvailabilityRecord, ConfigurableShift, Shift, Assignment } from '../types';
 import {
   EVENT_SCHEDULE,
   CARNIVAL_GT_SHIFTS,
   CARNIVAL_GAP_SHIFTS,
-  findShiftById,
+  DEFAULT_INITIAL_SHIFTS,
 } from '../data/eventStructure';
-import { saveAvailability } from '../services/storageService';
+import { saveAvailability, RemovedAssignmentInfo } from '../services/storageService';
 import {
   Clock,
   CheckSquare,
@@ -22,24 +22,37 @@ import {
   Search,
   X,
   ChevronDown,
+  AlertTriangle,
+  UserMinus,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface AvailabilityViewProps {
   people: Person[];
   availabilities: AvailabilityRecord[];
   shifts?: (ConfigurableShift | Shift)[];
+  assignments?: Assignment[];
+  onNavigate?: (tab: string) => void;
 }
 
 export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   people,
   availabilities,
   shifts,
+  assignments = [],
+  onNavigate,
 }) => {
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Notification state when assignments are automatically removed
+  const [deassignedNotice, setDeassignedNotice] = useState<{
+    personName: string;
+    items: RemovedAssignmentInfo[];
+  } | null>(null);
 
   // Searchable combobox state
   const [personSearchQuery, setPersonSearchQuery] = useState<string>('');
@@ -116,6 +129,62 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
     return currentDay.shifts;
   }, [shifts, selectedDayId, currentDay]);
 
+  // Helper to look up shift details across configured, defaults, GT, and GAP
+  const lookupShift = (shiftId: string) => {
+    return (
+      (shifts || []).find((s) => s.id === shiftId) ||
+      DEFAULT_INITIAL_SHIFTS.find((s) => s.id === shiftId) ||
+      CARNIVAL_GT_SHIFTS.find((s) => s.id === shiftId) ||
+      CARNIVAL_GAP_SHIFTS.find((s) => s.id === shiftId)
+    );
+  };
+
+  // Active assignments for this person on the selected day
+  const personAssignmentsOnDay = useMemo(() => {
+    if (!selectedPersonId || !assignments || assignments.length === 0) return [];
+    return assignments.filter((a) => {
+      if (a.personId !== selectedPersonId) return false;
+      const shiftObj = lookupShift(a.shiftId);
+      const assignDay = a.dayId || shiftObj?.dayId;
+      return assignDay && assignDay.toLowerCase() === selectedDayId.toLowerCase();
+    });
+  }, [selectedPersonId, selectedDayId, assignments, shifts]);
+
+  // Assignments that will be automatically removed if saved with current unchecked shifts
+  const assignmentsAtRiskOfRemoval = useMemo(() => {
+    return personAssignmentsOnDay.filter((a) => !selectedShifts.includes(a.shiftId));
+  }, [personAssignmentsOnDay, selectedShifts]);
+
+  // Helper to render live assignment badge on each shift card
+  const renderAssignmentStatusBadge = (shiftId: string, isChecked: boolean) => {
+    const asgn = personAssignmentsOnDay.find((a) => a.shiftId === shiftId);
+    if (!asgn) return null;
+
+    if (isChecked) {
+      const baseOrType =
+        asgn.baseName ||
+        (asgn.baseNumber !== undefined ? `Base ${asgn.baseNumber}` : asgn.assignedType || 'General');
+      return (
+        <div className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+          <span className="truncate">
+            Asignado(a): <strong>{baseOrType}</strong>
+            {asgn.assignedFunction ? ` • ${asgn.assignedFunction}` : ''}
+          </span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-300 text-[11px] font-semibold animate-pulse">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span className="truncate">
+            Se quitará automáticamente de este turno al guardar
+          </span>
+        </div>
+      );
+    }
+  };
+
   // When person or day changes, prefill current availability if already saved
   const handlePersonOrDayChange = (personId: string, dayId: string) => {
     setSelectedPersonId(personId);
@@ -155,9 +224,25 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
     }
 
     try {
-      await saveAvailability(selectedPersonId, selectedDayId, selectedShifts, notes);
-      setSaveMessage('✓ Disponibilidad guardada correctamente.');
-      setTimeout(() => setSaveMessage(null), 3500);
+      const result = await saveAvailability(
+        selectedPersonId,
+        selectedDayId,
+        selectedShifts,
+        notes
+      );
+
+      if (result.removedAssignments && result.removedAssignments.length > 0) {
+        setDeassignedNotice({
+          personName: selectedPerson?.name || 'El integrante',
+          items: result.removedAssignments,
+        });
+        setSaveMessage(
+          `✓ Disponibilidad guardada. Se retiró automáticamente de ${result.removedAssignments.length} turno(s) asignado(s).`
+        );
+      } else {
+        setSaveMessage('✓ Disponibilidad guardada correctamente.');
+        setTimeout(() => setSaveMessage(null), 4000);
+      }
     } catch (err) {
       console.error(err);
       alert('Error al guardar la disponibilidad.');
@@ -543,6 +628,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             <div className="text-[10px] text-[#64748B] mt-1">
                               30 Bases físicas compartidas
                             </div>
+                            {renderAssignmentStatusBadge(shift.id, isChecked)}
                           </div>
                         </div>
                       );
@@ -613,6 +699,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             <div className="text-[10px] text-[#64748B] mt-1">
                               Staff general campus
                             </div>
+                            {renderAssignmentStatusBadge(shift.id, isChecked)}
                           </div>
                         </div>
                       );
@@ -685,6 +772,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             <div className="text-[10px] text-[#64748B] mt-1">
                               {shift.startTime} - {shift.endTime} • Coordinación General
                             </div>
+                            {renderAssignmentStatusBadge(shift.id, isChecked)}
                           </div>
                         </div>
                       );
@@ -768,6 +856,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                         <div className="text-[11px] text-[#64748B] mt-1">
                           {isMesaPerson ? 'Apto para: MESA' : `Apto para: ${(shift.forTypes || ['GT']).join(' / ')}`}
                         </div>
+                        {renderAssignmentStatusBadge(shift.id, isChecked)}
                       </div>
                     </div>
                   );
@@ -790,12 +879,51 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
             />
           </div>
 
+          {/* Real-time Pre-Save Warning if Assigned Shifts are Unchecked */}
+          {assignmentsAtRiskOfRemoval.length > 0 && selectedPerson && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-3 animate-in fade-in">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-2">
+                  <strong className="font-bold text-amber-950 font-dalek tracking-wide text-xs">
+                    AVISO: DESASIGNACIÓN AUTOMÁTICA AL GUARDAR
+                  </strong>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[10px] font-bold font-mono">
+                    {assignmentsAtRiskOfRemoval.length} {assignmentsAtRiskOfRemoval.length === 1 ? 'turno afectado' : 'turnos afectados'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  Has desmarcado la disponibilidad de <strong>{selectedPerson.name}</strong> en {assignmentsAtRiskOfRemoval.length === 1 ? 'un turno donde tiene una asignación activa' : `${assignmentsAtRiskOfRemoval.length} turnos donde tiene asignaciones activas`}. Al hacer clic en <strong>GUARDAR DISPONIBILIDAD</strong>, el sistema lo <strong>retirará automáticamente del turno</strong> y su cupo quedará libre:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                  {assignmentsAtRiskOfRemoval.map((a) => {
+                    const sObj = lookupShift(a.shiftId);
+                    return (
+                      <div
+                        key={a.id}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-100/70 border border-amber-200 text-[11px] text-amber-900 flex items-center justify-between gap-2"
+                      >
+                        <span className="font-semibold truncate">
+                          {sObj?.name || a.shiftId} {sObj?.label ? `(${sObj.label})` : ''}
+                        </span>
+                        <span className="text-[10px] text-amber-800 font-mono shrink-0">
+                          {a.baseName || (a.baseNumber !== undefined ? `Base ${a.baseNumber}` : a.assignedType || '')}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Submit */}
           <div className="flex items-center justify-between pt-3 border-t border-[#EADDC7]">
             <div>
               {saveMessage && (
-                <span className="text-xs font-bold text-[#16A34A] animate-in fade-in">
-                  {saveMessage}
+                <span className="text-xs font-bold text-[#16A34A] animate-in fade-in flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                  <span>{saveMessage}</span>
                 </span>
               )}
             </div>
@@ -803,7 +931,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
             <button
               type="submit"
               disabled={people.length === 0}
-              className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all font-dalek tracking-wider"
+              className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all font-dalek tracking-wider cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>GUARDAR DISPONIBILIDAD</span>
@@ -811,6 +939,98 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Deassignment Alert Notification Modal */}
+      {deassignedNotice && (
+        <div className="fixed inset-0 z-50 bg-[#182535]/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+                <UserMinus className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-bold text-[#182535] font-dalek tracking-wider">
+                  DESASIGNACIÓN AUTOMÁTICA
+                </h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
+                  Turnos actualizados y cupos liberados con éxito.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeassignedNotice(null)}
+                className="text-[#94A3B8] hover:text-[#182535] p-1 rounded-xl transition-colors cursor-pointer"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs text-amber-900 leading-relaxed">
+              Al retirar la disponibilidad de <strong>{deassignedNotice.personName}</strong>, se le retiró automáticamente de <strong>{deassignedNotice.items.length} {deassignedNotice.items.length === 1 ? 'turno asignado' : 'turnos asignados'}</strong>:
+            </div>
+
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1 divide-y divide-[#FAF6EC]">
+              {deassignedNotice.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-3 bg-white border border-[#EADDC7] rounded-xl flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#182535] flex items-center gap-1.5 truncate">
+                      <span>{item.shiftName}</span>
+                      {item.shiftLabel && (
+                        <span className="text-[10px] font-mono text-[#64748B] font-normal">
+                          • {item.shiftLabel}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-[#64748B] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <span>Día: <strong>{item.dayName}</strong></span>
+                      {item.baseName && (
+                        <span>• <strong>{item.baseName}</strong></span>
+                      )}
+                      {item.assignedFunction && (
+                        <span>• Función: <em>{item.assignedFunction}</em></span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200 shrink-0 font-mono">
+                    Cupo libre
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-[11px] text-[#64748B] bg-[#FAF6EC] p-3 rounded-xl border border-[#EADDC7] flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Los cupos ya están disponibles de inmediato para asignar a otros integrantes.</span>
+            </div>
+
+            <div className="pt-2 border-t border-[#EADDC7] flex items-center justify-end gap-2">
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeassignedNotice(null);
+                    onNavigate('assignments');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-xs font-bold text-[#182535] hover:bg-[#F3EEDC] transition-all cursor-pointer"
+                >
+                  Ir a Asignaciones
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setDeassignedNotice(null)}
+                className="px-5 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider transition-all cursor-pointer shadow-xs"
+              >
+                ENTENDIDO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

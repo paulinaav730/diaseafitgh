@@ -1537,74 +1537,336 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     };
   };
 
+  const evaluatePosteriorGtShiftEligibility = (
+    person: Person,
+    postShift: ConfigurableShift | Shift,
+    postIndex: number,
+    subTeamToUse?: string
+  ): CarnivalPosteriorShiftStatus => {
+    // 1. Active status
+    if (person.isActive === false) {
+      return {
+        shift: postShift,
+        turnNumber: postIndex + 1,
+        isAvailable: false,
+        unavailableReason: 'Persona inactiva',
+      };
+    }
+
+    // 2. MESA members should not be assigned as standard GT multi-shift
+    if (person.primaryType === 'MESA') {
+      return {
+        shift: postShift,
+        turnNumber: postIndex + 1,
+        isAvailable: false,
+        unavailableReason: 'Personal MESA',
+      };
+    }
+
+    // 3. Availability registered for this shift
+    const availRecord = availabilities.find(
+      (av) => av.personId === person.id && av.dayId === selectedDayId
+    );
+    let hasShiftAvailability = false;
+    if (availRecord && Array.isArray(availRecord.shiftIds) && availRecord.shiftIds.length > 0) {
+      if (availRecord.shiftIds.includes(postShift.id)) {
+        hasShiftAvailability = true;
+      } else {
+        const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+        for (const regId of availRecord.shiftIds) {
+          if (regId === postShift.id) {
+            hasShiftAvailability = true;
+            break;
+          }
+          const regShift = allKnownShifts.find((s) => s.id === regId);
+          if (
+            regShift &&
+            regShift.dayId === selectedDayId &&
+            regShift.startTime === postShift.startTime &&
+            regShift.endTime === postShift.endTime
+          ) {
+            hasShiftAvailability = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!hasShiftAvailability) {
+      return {
+        shift: postShift,
+        turnNumber: postIndex + 1,
+        isAvailable: false,
+        unavailableReason: 'Sin disponibilidad registrada en este turno',
+      };
+    }
+
+    // 4. Prior assignment check (No duplicate assignments in this shift)
+    const existingInShift = assignments.find(
+      (a) => a.personId === person.id && a.dayId === selectedDayId && a.shiftId === postShift.id
+    );
+
+    if (existingInShift) {
+      return {
+        shift: postShift,
+        turnNumber: postIndex + 1,
+        isAvailable: false,
+        unavailableReason: `Ya asignado(a) a este turno (${existingInShift.gtSubTeam || existingInShift.assignedFunction || 'GT'})`,
+      };
+    }
+
+    // 5. Schedule conflicts with other assignments on that day
+    const otherDayAssignments = assignments.filter(
+      (a) => a.personId === person.id && a.dayId === selectedDayId && a.shiftId !== postShift.id
+    );
+    const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+    for (const other of otherDayAssignments) {
+      const otherShift = findShiftById(allKnownShifts, other.shiftId);
+      if (otherShift && doShiftsOverlap(otherShift, postShift as Shift)) {
+        return {
+          shift: postShift,
+          turnNumber: postIndex + 1,
+          isAvailable: false,
+          unavailableReason: `Conflicto con horario de ${otherShift.name}`,
+        };
+      }
+    }
+
+    // 6. Subteam requirement capacity check
+    const effectiveSubTeam = subTeamToUse || person.gtSubTeam;
+    if (effectiveSubTeam) {
+      const matchingReq = requirements.find(
+        (r) =>
+          r.dayId === selectedDayId &&
+          r.shiftId === postShift.id &&
+          r.groupType === 'GT' &&
+          r.gtSubTeam?.toLowerCase() === effectiveSubTeam.toLowerCase()
+      );
+      if (matchingReq && matchingReq.capacity) {
+        const reqOccupants = assignments.filter(
+          (a) =>
+            a.dayId === selectedDayId &&
+            a.shiftId === postShift.id &&
+            (a.requirementId === matchingReq.id ||
+              (a.assignedType === 'GT' && a.gtSubTeam?.toLowerCase() === effectiveSubTeam.toLowerCase()))
+        );
+        if (reqOccupants.length >= matchingReq.capacity) {
+          return {
+            shift: postShift,
+            turnNumber: postIndex + 1,
+            isAvailable: false,
+            unavailableReason: `Cupo ${effectiveSubTeam} lleno (${reqOccupants.length}/${matchingReq.capacity})`,
+          };
+        }
+      }
+    }
+
+    // 7. Shift total capacity check
+    if (postShift.capacity) {
+      const shiftGtOccupants = assignments.filter(
+        (a) => a.dayId === selectedDayId && a.shiftId === postShift.id
+      );
+      if (shiftGtOccupants.length >= postShift.capacity) {
+        return {
+          shift: postShift,
+          turnNumber: postIndex + 1,
+          isAvailable: false,
+          unavailableReason: `Cupo total del turno lleno (${shiftGtOccupants.length}/${postShift.capacity})`,
+        };
+      }
+    }
+
+    // All checks passed!
+    return {
+      shift: postShift,
+      turnNumber: postIndex + 1,
+      isAvailable: true,
+    };
+  };
+
   const handleCandidateAssignClick = (candidatePerson: Person, fnName: string) => {
+    const isMesaPerson = candidatePerson.primaryType === 'MESA';
+
+    // 1. GAP Carnival logic
     const isCarnivalGapAssignment =
       selectedDayId === 'miercoles' &&
       (activeShift.category === 'GAP' || carnivalCategory === 'GAP' || baseAssignTab === 'GAP') &&
       (modalBase !== null || selectedBaseNumber !== null);
 
-    if (!isCarnivalGapAssignment) {
-      handleQuickAssignCandidate(candidatePerson, fnName);
+    if (isCarnivalGapAssignment) {
+      // Resolve target base object
+      const targetBaseObj = modalBase || (selectedBaseNumber !== null
+        ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+           (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+        : null);
+
+      if (!targetBaseObj) {
+        handleQuickAssignCandidate(candidatePerson, fnName);
+        return;
+      }
+
+      const gapShifts = getOfficialCarnivalGapShifts(shifts);
+      const currentTurnNumber = getCarnivalGapTurnNumber(activeShift);
+      const currentShiftIndex = currentTurnNumber - 1;
+      const posteriorShifts = currentShiftIndex >= 0 ? gapShifts.slice(currentShiftIndex + 1) : [];
+
+      // If no posterior shifts (e.g. Turno 3) -> assign directly without prompt (Rule 17)
+      if (posteriorShifts.length === 0) {
+        handleQuickAssignCandidate(candidatePerson, fnName);
+        return;
+      }
+
+      const evaluatedStatuses: CarnivalPosteriorShiftStatus[] = posteriorShifts.map((pShift, idx) =>
+        evaluatePosteriorShiftEligibility(
+          candidatePerson,
+          pShift,
+          currentTurnNumber + 1 + idx,
+          targetBaseObj as PhysicalBase
+        )
+      );
+
+      const eligibleShifts = evaluatedStatuses.filter((s) => s.isAvailable).map((s) => s.shift);
+
+      // If no posterior shifts are available -> assign directly without prompt (Rule 17)
+      if (eligibleShifts.length === 0) {
+        handleQuickAssignCandidate(candidatePerson, fnName);
+        return;
+      }
+
+      // Prompt admin with intelligent confirmation
+      setCarnivalAutoPrompt({
+        candidate: candidatePerson,
+        currentShift: activeShift,
+        currentTurnNumber,
+        targetBase: targetBaseObj as PhysicalBase,
+        groupType: 'GAP',
+        fnName,
+        eligibleShifts,
+        allPosteriorStatuses: evaluatedStatuses,
+      });
       return;
     }
 
-    // Resolve target base object
-    const targetBaseObj = modalBase || (selectedBaseNumber !== null
-      ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
-         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
-      : null);
+    // 2. GT Multi-Shift logic (Carnival GT or any day with multiple GT shifts)
+    const isGtAssignment =
+      !isMesaPerson &&
+      (baseAssignTab === 'GT' || activeShift.category === 'GT' || activeRequirement?.groupType === 'GT') &&
+      !activeShift.hasBases;
 
-    if (!targetBaseObj) {
-      handleQuickAssignCandidate(candidatePerson, fnName);
+    if (isGtAssignment) {
+      // Find all GT shifts for this day in chronological order
+      const dayGtShifts = allShiftsInDay
+        .filter((s) => (s.category === 'GT' || (!s.category && !s.hasBases)) && s.isActive !== false)
+        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+      const currentGtIndex = dayGtShifts.findIndex((s) => s.id === activeShift.id);
+      const posteriorGtShifts = currentGtIndex >= 0 ? dayGtShifts.slice(currentGtIndex + 1) : [];
+
+      if (posteriorGtShifts.length === 0) {
+        handleQuickAssignCandidate(candidatePerson, fnName);
+        return;
+      }
+
+      const subTeamToUse = activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam || 'Logística';
+      const roleToAssign = fnName || activeRequirement?.assignedFunction || candidatePerson.functions?.[0] || candidatePerson.roleTitle || 'Staff General';
+
+      const evaluatedStatuses: CarnivalPosteriorShiftStatus[] = posteriorGtShifts.map((pShift, idx) =>
+        evaluatePosteriorGtShiftEligibility(
+          candidatePerson,
+          pShift,
+          currentGtIndex + 1 + idx,
+          subTeamToUse
+        )
+      );
+
+      const eligibleShifts = evaluatedStatuses.filter((s) => s.isAvailable).map((s) => s.shift);
+
+      if (eligibleShifts.length === 0) {
+        handleQuickAssignCandidate(candidatePerson, fnName);
+        return;
+      }
+
+      // Prompt admin with intelligent confirmation for GT
+      setCarnivalAutoPrompt({
+        candidate: candidatePerson,
+        currentShift: activeShift,
+        currentTurnNumber: currentGtIndex + 1,
+        targetBase: null,
+        groupType: 'GT',
+        gtSubTeam: subTeamToUse,
+        fnName: roleToAssign,
+        eligibleShifts,
+        allPosteriorStatuses: evaluatedStatuses,
+      });
       return;
     }
 
-    const gapShifts = getOfficialCarnivalGapShifts(shifts);
-    const currentTurnNumber = getCarnivalGapTurnNumber(activeShift);
-    const currentShiftIndex = currentTurnNumber - 1;
-    const posteriorShifts = currentShiftIndex >= 0 ? gapShifts.slice(currentShiftIndex + 1) : [];
-
-    // If no posterior shifts (e.g. Turno 3) -> assign directly without prompt (Rule 17)
-    if (posteriorShifts.length === 0) {
-      handleQuickAssignCandidate(candidatePerson, fnName);
-      return;
-    }
-
-    const evaluatedStatuses: CarnivalPosteriorShiftStatus[] = posteriorShifts.map((pShift, idx) =>
-      evaluatePosteriorShiftEligibility(
-        candidatePerson,
-        pShift,
-        currentTurnNumber + 1 + idx,
-        targetBaseObj as PhysicalBase
-      )
-    );
-
-    const eligibleShifts = evaluatedStatuses.filter((s) => s.isAvailable).map((s) => s.shift);
-
-    // If no posterior shifts are available -> assign directly without prompt (Rule 17)
-    if (eligibleShifts.length === 0) {
-      handleQuickAssignCandidate(candidatePerson, fnName);
-      return;
-    }
-
-    // Prompt admin with intelligent confirmation
-    setCarnivalAutoPrompt({
-      candidate: candidatePerson,
-      currentShift: activeShift,
-      currentTurnNumber,
-      targetBase: targetBaseObj as PhysicalBase,
-      fnName,
-      eligibleShifts,
-      allPosteriorStatuses: evaluatedStatuses,
-    });
+    // Direct fallback
+    handleQuickAssignCandidate(candidatePerson, fnName);
   };
 
   const handleConfirmCarnivalBatchAssign = async () => {
     if (!carnivalAutoPrompt) return;
-    const { candidate, currentShift, targetBase, fnName, eligibleShifts } = carnivalAutoPrompt;
+    const { candidate, currentShift, targetBase, groupType = targetBase ? 'GAP' : 'GT', gtSubTeam, fnName, eligibleShifts } = carnivalAutoPrompt;
     setIsSubmitting(true);
 
     try {
+      if (groupType === 'GT' || !targetBase) {
+        // GT Multi-shift batch assignment
+        const shiftsToAssign = [currentShift, ...eligibleShifts];
+        let successCount = 0;
+        const errors: string[] = [];
+        const subTeamToUse = gtSubTeam || candidate.gtSubTeam || 'Logística';
+        const roleToAssign = fnName || candidate.functions?.[0] || candidate.roleTitle || 'Staff General';
+
+        for (const s of shiftsToAssign) {
+          const matchingReq = requirements.find(
+            (r) =>
+              r.dayId === selectedDayId &&
+              r.shiftId === s.id &&
+              r.groupType === 'GT' &&
+              r.gtSubTeam?.toLowerCase() === subTeamToUse.toLowerCase()
+          );
+
+          const res = await assignPerson({
+            personId: candidate.id,
+            dayId: selectedDayId,
+            shiftId: s.id,
+            assignedType: 'GT',
+            gtSubTeam: subTeamToUse,
+            assignedFunction: roleToAssign,
+            roleInBase: roleToAssign,
+            requirementId: matchingReq ? matchingReq.id : undefined,
+          });
+
+          if (res.success) {
+            successCount++;
+          } else {
+            errors.push(`${s.name}: ${res.alertMessage || 'Error'}`);
+          }
+        }
+
+        // Background synchronization with Supabase
+        pullAssignmentsFromSupabase().catch((err) =>
+          console.warn('Supabase pull post GT batch assign:', err)
+        );
+
+        if (successCount === shiftsToAssign.length) {
+          setActionSuccessToast(
+            `¡${candidate.name} fue asignado(a) con éxito a los ${successCount} turnos de GT (${subTeamToUse})! Guardado en Supabase.`
+          );
+        } else {
+          setActionSuccessToast(
+            `${candidate.name} fue asignado(a) a ${successCount} de ${shiftsToAssign.length} turnos de GT. ${errors.join(' • ')}`
+          );
+        }
+
+        setCarnivalAutoPrompt(null);
+        setIsAssignModalOpen(false);
+        return;
+      }
+
+      // GAP Carnival batch assignment
       const baseIdToUse = targetBase.id ? String(targetBase.id) : undefined;
       const baseNumToUse = targetBase.baseNumber !== undefined ? targetBase.baseNumber : undefined;
       const baseNameToUse = targetBase.name || (baseNumToUse !== undefined ? getBaseDisplayName(baseNumToUse) : undefined);

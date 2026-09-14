@@ -14,7 +14,9 @@ export interface CarnivalAutoPromptData {
   candidate: Person;
   currentShift: ConfigurableShift | Shift;
   currentTurnNumber: number;
-  targetBase: PhysicalBase;
+  targetBase?: PhysicalBase | null;
+  groupType?: 'GAP' | 'GT' | 'MESA';
+  gtSubTeam?: string;
   fnName: string;
   eligibleShifts: (ConfigurableShift | Shift)[];
   allPosteriorStatuses: CarnivalPosteriorShiftStatus[];
@@ -35,9 +37,19 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
   onConfirmCurrentOnly,
   onClose,
 }) => {
-  const { candidate, currentShift, targetBase, fnName, eligibleShifts, allPosteriorStatuses } = promptData;
+  const {
+    candidate,
+    currentShift,
+    targetBase,
+    groupType = targetBase ? 'GAP' : 'GT',
+    gtSubTeam,
+    fnName,
+    eligibleShifts,
+    allPosteriorStatuses,
+  } = promptData;
   const totalTurnsIfAll = eligibleShifts.length + 1;
   const isMultiple = eligibleShifts.length > 1;
+  const isGt = groupType === 'GT' || (!targetBase && !currentShift.hasBases);
 
   return (
     <div
@@ -46,7 +58,9 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
     >
       <div
         id="carnival-auto-assign-card"
-        className="bg-[#FFFDF8] border-2 border-[#B83A24] rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200"
+        className={`bg-[#FFFDF8] border-2 ${
+          isGt ? 'border-[#182535]' : 'border-[#B83A24]'
+        } rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200`}
       >
         {/* Close icon */}
         <button
@@ -54,17 +68,24 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
           id="btn-close-carnival-auto-modal"
           onClick={onClose}
           disabled={isSubmitting}
-          className="absolute top-4 right-4 text-[#64748B] hover:text-[#182535] p-1.5 rounded-xl hover:bg-[#FAF6EC] transition-all"
+          className="absolute top-4 right-4 text-[#64748B] hover:text-[#182535] p-1.5 rounded-xl hover:bg-[#FAF6EC] transition-all cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Top badge */}
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA] font-montserrat flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#B83A24]" />
-            Carnival GAP • Asignación Inteligente
-          </span>
+          {isGt ? (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#182535] text-white border border-[#2A3F55] font-montserrat flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              GT • Asignación Inteligente Multi-Turno
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA] font-montserrat flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#B83A24]" />
+              Carnival GAP • Asignación Inteligente
+            </span>
+          )}
         </div>
 
         {/* Person Name & Selection Header */}
@@ -74,10 +95,15 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
           </h3>
           <p className="text-xs text-[#64748B] font-montserrat">
             Documento: <span className="font-mono text-[#182535]">{candidate.documentId}</span>
+            {candidate.gtSubTeam && (
+              <span className="ml-2 px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7] text-[10px] font-bold text-[#182535]">
+                Equipo: {candidate.gtSubTeam}
+              </span>
+            )}
           </p>
         </div>
 
-        {/* Current Shift & Base Context */}
+        {/* Current Shift & Base/Subteam Context */}
         <div className="bg-[#FAF6EC] border border-[#EADDC7] rounded-2xl p-3.5 space-y-2 text-xs font-montserrat">
           <div className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
             Has seleccionado:
@@ -85,18 +111,25 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <span className="font-bold text-[#182535] block text-sm">
-                CARNIVAL — {currentShift.name.toUpperCase()}
+                {currentShift.dayId === 'miercoles' ? 'CARNIVAL — ' : ''}
+                {currentShift.name.toUpperCase()}
               </span>
               <span className="text-[#64748B] text-xs">
                 {currentShift.label || `${currentShift.startTime} a ${currentShift.endTime}`}
               </span>
             </div>
             <div className="sm:text-right">
-              <span className="px-2.5 py-1 rounded-lg bg-[#FFFDF8] border border-[#EADDC7] text-[#B83A24] font-bold text-xs inline-block">
-                {targetBase.name}
-              </span>
+              {targetBase ? (
+                <span className="px-2.5 py-1 rounded-lg bg-[#FFFDF8] border border-[#EADDC7] text-[#B83A24] font-bold text-xs inline-block">
+                  {targetBase.name}
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 rounded-lg bg-[#182535] text-white font-bold text-xs inline-block">
+                  GT: {gtSubTeam || 'Staff General'}
+                </span>
+              )}
               {fnName && (
-                <div className="text-[11px] text-[#64748B] mt-0.5">Rol: {fnName}</div>
+                <div className="text-[11px] text-[#64748B] mt-0.5">Función: {fnName}</div>
               )}
             </div>
           </div>
@@ -106,7 +139,7 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
         <div className="space-y-3">
           <p className="text-xs font-bold text-[#182535] font-montserrat">
             {isMultiple
-              ? 'Esta persona también está disponible para los siguientes turnos de Carnival:'
+              ? `Esta persona también está disponible para los siguientes turnos de ${isGt ? 'GT' : 'Carnival'}:`
               : `Esta persona también está disponible para:`}
           </p>
 
@@ -129,7 +162,7 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
                   </div>
                 </div>
                 <span className="text-[11px] font-semibold text-[#166534] bg-white/70 px-2 py-0.5 rounded-md border border-[#BBF7D0]">
-                  {targetBase.name}
+                  {targetBase ? targetBase.name : (gtSubTeam ? `GT ${gtSubTeam}` : 'GT')}
                 </span>
               </div>
             ))}
@@ -160,9 +193,15 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
         {/* Confirmation Question */}
         <div className="pt-2 border-t border-[#EADDC7]">
           <p className="text-xs sm:text-sm font-semibold text-[#182535] font-montserrat text-center">
-            {isMultiple
-              ? `¿Deseas asignarla automáticamente a los ${totalTurnsIfAll} turnos manteniendo la misma base?`
-              : `¿Deseas asignarla también a este turno manteniendo la misma base?`}
+            {targetBase ? (
+              isMultiple
+                ? `¿Deseas asignarla automáticamente a los ${totalTurnsIfAll} turnos manteniendo la misma base?`
+                : `¿Deseas asignarla también a este turno manteniendo la misma base?`
+            ) : (
+              isMultiple
+                ? `¿Deseas asignarla automáticamente a los ${totalTurnsIfAll} turnos de GT con el mismo equipo (${gtSubTeam || 'GT'}) y función?`
+                : `¿Deseas asignarla también a este turno de GT con el mismo equipo (${gtSubTeam || 'GT'}) y función?`
+            )}
           </p>
         </div>
 
@@ -174,7 +213,11 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
             id="btn-assign-all-carnival-shifts"
             disabled={isSubmitting}
             onClick={onConfirmAll}
-            className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] active:bg-[#852515] text-white font-bold text-xs font-montserrat shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl ${
+              isGt
+                ? 'bg-[#182535] hover:bg-[#2A3F55] active:bg-[#111A24]'
+                : 'bg-[#B83A24] hover:bg-[#9E2F1B] active:bg-[#852515]'
+            } text-white font-bold text-xs font-montserrat shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isSubmitting ? (
               <>
@@ -187,7 +230,7 @@ export const CarnivalAutoAssignModal: React.FC<CarnivalAutoAssignModalProps> = (
                 <span>
                   {isMultiple
                     ? `ASIGNAR A LOS ${totalTurnsIfAll} TURNOS`
-                    : 'ASIGNAR TAMBIÉN'}
+                    : 'ASIGNAR A AMBOS TURNOS'}
                 </span>
               </>
             )}

@@ -276,6 +276,8 @@ export default function App() {
                 people={people}
                 availabilities={availabilities}
                 shifts={shifts}
+                assignments={assignments}
+                onNavigate={(tab) => setCurrentTab(tab as TabType)}
               />
             )}
 

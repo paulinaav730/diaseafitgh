@@ -31,6 +31,7 @@ import {
   pushSingleShiftToSupabase,
   deleteSingleShiftFromSupabase,
   pushShiftsToSupabase,
+  pushAvailabilitiesToSupabase,
 } from './supabaseSync';
 import { isSupabaseConfigured } from './supabaseClient';
 
@@ -1047,12 +1048,29 @@ export async function deleteAllPeople(): Promise<void> {
 }
 
 // ----------------- AVAILABILITY -----------------
+export interface RemovedAssignmentInfo {
+  id: string;
+  shiftId: string;
+  shiftName: string;
+  shiftLabel?: string;
+  baseName?: string;
+  assignedFunction?: string;
+  personName: string;
+  dayName: string;
+  dayId: string;
+}
+
+export interface SaveAvailabilityResult {
+  record: AvailabilityRecord;
+  removedAssignments: RemovedAssignmentInfo[];
+}
+
 export async function saveAvailability(
   personId: string,
   dayId: string,
   shiftIds: string[],
   notes?: string
-): Promise<void> {
+): Promise<SaveAvailabilityResult> {
   initializeStorage();
   const existingIndex = availabilityCache.findIndex(
     (av) => av.personId === personId && av.dayId === dayId
@@ -1077,6 +1095,82 @@ export async function saveAvailability(
 
   localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
   availabilityListeners.forEach((fn) => fn([...availabilityCache]));
+
+  // Auto-push availability to Supabase in background
+  if (isSupabaseConfigured()) {
+    pushAvailabilitiesToSupabase([newRecord]).catch((err) => {
+      console.warn('Background Supabase availability sync:', err);
+    });
+  }
+
+  // --- AUTOMATIC REMOVAL OF ASSIGNMENTS WHEN AVAILABILITY IS REVOKED ---
+  // If a shift was unchecked/removed from availability for this person on this day,
+  // check if they currently had an assignment in that shift. If so, automatically remove it!
+  const person = peopleCache.find((p) => p.id === personId);
+  const personName = person?.name || 'Integrante';
+  const dayNames: Record<string, string> = {
+    lunes: 'Lunes',
+    martes: 'Martes',
+    miercoles: 'Miércoles',
+    jueves: 'Jueves',
+    viernes: 'Viernes',
+  };
+  const dayName = dayNames[dayId.toLowerCase()] || dayId;
+
+  const affectedAssignments = assignmentCache.filter((a) => {
+    if (a.personId !== personId) return false;
+    // Match day: check a.dayId, or fallback to shift's configured dayId
+    const shiftObj = shiftsCache.find((s) => s.id === a.shiftId) || DEFAULT_INITIAL_SHIFTS.find((s) => s.id === a.shiftId);
+    const assignDay = a.dayId || shiftObj?.dayId;
+    if (assignDay && assignDay.toLowerCase() !== dayId.toLowerCase()) return false;
+
+    // Check if the shift is now REMOVED from the new shiftIds
+    return !shiftIds.includes(a.shiftId);
+  });
+
+  const removedAssignments: RemovedAssignmentInfo[] = [];
+
+  if (affectedAssignments.length > 0) {
+    const affectedIds = new Set(affectedAssignments.map((a) => a.id));
+
+    for (const a of affectedAssignments) {
+      const shiftObj = shiftsCache.find((s) => s.id === a.shiftId) || DEFAULT_INITIAL_SHIFTS.find((s) => s.id === a.shiftId);
+      const shiftName = shiftObj?.name || a.shiftId;
+      const shiftLabel = shiftObj?.label || (shiftObj?.startTime ? `${shiftObj.startTime} - ${shiftObj.endTime}` : undefined);
+
+      let baseDisplayName = a.baseName;
+      if (!baseDisplayName && a.baseNumber !== undefined) {
+        baseDisplayName = `Base ${a.baseNumber}`;
+      }
+
+      removedAssignments.push({
+        id: a.id,
+        shiftId: a.shiftId,
+        shiftName,
+        shiftLabel,
+        baseName: baseDisplayName,
+        assignedFunction: a.assignedFunction || a.roleInBase,
+        personName,
+        dayName,
+        dayId,
+      });
+
+      // Remove from Supabase in background
+      deleteSingleAssignmentFromSupabase(a.id).catch((err) => {
+        console.warn('Background Supabase delete sync on availability revoke:', err);
+      });
+    }
+
+    // Immediately remove from local assignmentCache
+    assignmentCache = assignmentCache.filter((a) => !affectedIds.has(a.id));
+    localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+    assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+  }
+
+  return {
+    record: newRecord,
+    removedAssignments,
+  };
 }
 
 // ----------------- ASSIGNMENTS WITH CONTINUITY AND CAPACITY CHECKS -----------------
