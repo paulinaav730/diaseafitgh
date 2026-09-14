@@ -282,6 +282,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const [isContinuityLocked, setIsContinuityLocked] = useState(false);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [showOnlyAvailableInModal, setShowOnlyAvailableInModal] = useState(true);
+  const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<string[]>([]);
   const [shiftCategoryFilter, setShiftCategoryFilter] = useState<'ALL' | 'GT' | 'GAP' | 'MESA'>('ALL');
   const [activeRosterFilter, setActiveRosterFilter] = useState<string>('ALL');
   const [assignedRosterSearch, setAssignedRosterSearch] = useState<string>('');
@@ -1926,6 +1927,31 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     await handleQuickAssignCandidate(candidate, fnName);
     setIsAssignModalOpen(false);
   };
+
+  const handleBulkRemoveAssignments = async () => {
+    if (selectedAssignmentIds.length === 0) return;
+    if (confirm(`¿Eliminar las ${selectedAssignmentIds.length} asignaciones seleccionadas?`)) {
+      for (const id of selectedAssignmentIds) {
+        await removeAssignment(id);
+      }
+      setSelectedAssignmentIds([]);
+    }
+  };
+
+  const toggleSelectAllAssignments = (allIds) => {
+    if (selectedAssignmentIds.length === allIds.length) {
+      setSelectedAssignmentIds([]);
+    } else {
+      setSelectedAssignmentIds(allIds);
+    }
+  };
+
+  const toggleAssignmentSelection = (id) => {
+    setSelectedAssignmentIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
 
   const handleRemoveAssignment = async (assignmentId: string) => {
     if (confirm('¿Eliminar esta asignación?')) {
