@@ -598,7 +598,7 @@ export function initializeStorage(): void {
       pushBasesToSupabase(basesCache).catch(() => {});
     }
 
-    // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 65 & 66
+    // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 63 & 70
     let shiftsModified = false;
     shiftsCache = shiftsCache.map((s) => {
       const isJuevesTheGames =
@@ -611,9 +611,9 @@ export function initializeStorage(): void {
           s.startTime === '13:00' ||
           s.startTime === '12:30');
       if (isJuevesTheGames) {
-        if (!s.hasBases || s.capacity !== 65) {
+        if (!s.hasBases || s.capacity !== 63) {
           shiftsModified = true;
-          return { ...s, hasBases: true, capacity: 65 };
+          return { ...s, hasBases: true, capacity: 63 };
         }
       }
       const isViernesTheGames =
@@ -627,9 +627,9 @@ export function initializeStorage(): void {
           s.name.toLowerCase().includes('the games') ||
           s.name.toLowerCase().includes('turno 1'));
       if (isViernesTheGames) {
-        if (!s.hasBases || s.capacity !== 66) {
+        if (!s.hasBases || s.capacity !== 70) {
           shiftsModified = true;
-          return { ...s, hasBases: true, capacity: 66 };
+          return { ...s, hasBases: true, capacity: 70 };
         }
       }
       return s;
@@ -1416,10 +1416,9 @@ export async function assignPerson(
     );
 
     if (assignedType !== 'MESA' && currentOccupants.length >= maxCapacity) {
-      const displayName = resolvedBaseName || getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
       return {
         success: false,
-        alertMessage: `CUPO COMPLETO: ${displayName} ya alcanzó su capacidad máxima de ${maxCapacity} personas en este turno.`,
+        alertMessage: 'Base completa — no hay más cupos GAP disponibles.',
       };
     }
   }
@@ -1476,7 +1475,7 @@ export async function assignPerson(
 
   let resolvedAssignedFn = assignmentData.assignedFunction;
   if (
-    dayId === 'miercoles' &&
+    (dayId === 'miercoles' || dayId === 'jueves' || dayId === 'viernes') &&
     shiftHasBases &&
     normalizedAssignedType === 'GAP' &&
     (!resolvedAssignedFn || resolvedAssignedFn === 'Encargado de Base' || resolvedAssignedFn === 'Base')
@@ -2307,7 +2306,7 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
           ns.startTime === '12:30');
       if (isJuevesTheGames) {
         ns.hasBases = true;
-        ns.capacity = 65;
+        ns.capacity = 63;
       }
       const isViernesTheGames =
         ns.dayId === 'viernes' &&
@@ -2321,7 +2320,7 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
           ns.name.toLowerCase().includes('turno 1'));
       if (isViernesTheGames) {
         ns.hasBases = true;
-        ns.capacity = 66;
+        ns.capacity = 70;
       }
       shiftMap.set(ns.id, ns);
     }

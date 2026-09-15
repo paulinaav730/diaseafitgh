@@ -1356,12 +1356,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         return;
       }
 
+      // Base capacity check
+      if (targetBaseObj && assignedTypeToUse === 'GAP') {
+        const maxCap = targetBaseObj.defaultCapacity || targetBaseObj.gapCapacity || targetBaseObj.capacity || 2;
+        if (currentBaseOccupants.length >= maxCap) {
+          setModalAlert('Base completa — no hay más cupos GAP disponibles.');
+          return;
+        }
+      }
+
       let defaultRole = assignedTypeToUse === 'GAP'
         ? 'Encargado de Base'
         : (isMesaPerson ? 'Coordinación' : 'Staff General');
 
       if (
-        selectedDayId === 'miercoles' &&
+        (selectedDayId === 'miercoles' || selectedDayId === 'jueves' || selectedDayId === 'viernes') &&
         assignedTypeToUse === 'GAP' &&
         (modalBase !== null || selectedBaseNumber !== null)
       ) {
@@ -2634,10 +2643,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           {isSpecial ? '★' : (base.baseNumber || String(base.id).replace(/^\D+/g, ''))}
                         </span>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-[#182535] text-xs font-montserrat truncate">
-                            {base.baseLabel || (isSpecial ? base.name : `BASE ${base.baseNumber || base.id}`)}
+                          <h4 className="font-bold text-[#182535] text-sm font-montserrat truncate">
+                            {selectedDayId === 'jueves' || selectedDayId === 'viernes'
+                              ? `BASE ${base.baseNumber || base.id}`
+                              : base.baseLabel || (isSpecial ? base.name : `BASE ${base.baseNumber || base.id}`)}
                           </h4>
-                          {base.gameName ? (
+                          {selectedDayId === 'jueves' || selectedDayId === 'viernes' ? (
+                            <p className="text-[11px] text-[#64748B] font-montserrat">
+                              Cupo GAP: {base.defaultCapacity} personas
+                            </p>
+                          ) : base.gameName ? (
                             <p className="text-[11px] text-[#64748B] font-montserrat truncate">
                               {base.gameName}
                             </p>
@@ -2646,7 +2661,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               {base.name}
                             </p>
                           )}
-                          {isSpecial && (
+                          {isSpecial && (selectedDayId !== 'jueves' && selectedDayId !== 'viernes') && (
                             <span className="text-[9px] uppercase font-bold text-[#C87F17] font-mono block">
                               Base Especial
                             </span>
@@ -2663,7 +2678,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]'
                         }`}
                       >
-                        {baseAssignments.length} / {base.defaultCapacity} {selectedDayId === 'miercoles' ? 'GAP' : 'personas'}
+                        {baseAssignments.length} / {base.defaultCapacity} GAP
                       </span>
                     </div>
 
@@ -2755,18 +2770,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       className={`min-h-[40px] w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isFull
                           ? 'bg-[#FAF6EC] hover:bg-[#F4ECE0] text-[#182535] border border-[#EADDC7]'
-                          : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs'
+                          : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs font-bold'
                       }`}
                     >
                       {isFull ? (
                         <>
-                          <Shield className="w-3.5 h-3.5 text-[#B83A24]" />
-                          <span>Gestionar Funciones ({baseAssignments.length}/{base.defaultCapacity})</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Base completa ({baseAssignments.length}/{base.defaultCapacity})</span>
                         </>
                       ) : (
                         <>
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Asignar a Base ({baseAssignments.length}/{base.defaultCapacity})</span>
+                          <span>+ ASIGNAR PERSONA ({baseAssignments.length}/{base.defaultCapacity})</span>
                         </>
                       )}
                     </button>
@@ -3342,23 +3357,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
-                          {modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
+                          {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                         </span>
                         {modalBase.isSpecial && (
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-[#FEF8EC] border border-[#E5A12E]/50 text-[#C87F17] font-bold">
                             BASE ESPECIAL
                           </span>
                         )}
-                        <span className="text-[11px] text-[#64748B] font-montserrat">
-                          • {activeShift.name} ({activeShift.label})
-                        </span>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-extrabold text-[#182535] font-montserrat mt-0.5">
-                        {modalBase.gameName || modalBase.name}
+                      <h3 className="text-xl sm:text-2xl font-black text-[#182535] font-montserrat mt-0.5">
+                        {selectedDayId === 'jueves' || selectedDayId === 'viernes'
+                          ? `BASE ${modalBase.baseNumber || modalBase.id}`
+                          : modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
                       </h3>
-                      <p className="text-xs text-[#64748B] mt-0.5 font-montserrat">
-                        Cupo GAP de la base: <b className="text-[#182535] font-mono">{currentBaseOccupants.length} / {modalBase.defaultCapacity}</b>
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-[#64748B] mt-1 font-montserrat flex-wrap">
+                        <span>Cupo GAP: <b className="text-[#182535] font-mono">{modalBase.defaultCapacity}</b></span>
+                        <span>•</span>
+                        <span>Personas asignadas: <b className={`font-mono font-bold ${isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}`}>{currentBaseOccupants.length}/{modalBase.defaultCapacity}</b></span>
+                      </div>
                     </div>
                   ) : (
                     <div>
@@ -3411,6 +3427,243 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                 )}
 
+                {modalBase ? (
+                  <div className="space-y-3.5">
+                    {/* Status Banner */}
+                    <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
+                            {currentDay.eventName} • {activeShift.name}
+                          </span>
+                          <h2 className="text-xl sm:text-2xl font-black text-[#182535] font-montserrat">
+                            {selectedDayId === 'jueves' || selectedDayId === 'viernes'
+                              ? `BASE ${modalBase.baseNumber || modalBase.id}`
+                              : modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
+                          </h2>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="px-3 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-xs font-montserrat">
+                            <span className="text-[#64748B] font-bold">Cupo GAP: </span>
+                            <span className="text-[#182535] font-extrabold">{modalBase.defaultCapacity}</span>
+                          </div>
+                          <div className={`px-3 py-1.5 rounded-xl border text-xs font-montserrat font-bold ${
+                            isBaseFull
+                              ? 'bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]'
+                              : 'bg-[#FDF2EE] border-[#F6C7BA] text-[#B83A24]'
+                          }`}>
+                            <span>Personas asignadas: </span>
+                            <span className="font-mono font-extrabold">{currentBaseOccupants.length}/{modalBase.defaultCapacity}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {isBaseFull ? (
+                        <div className="p-3.5 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl text-[#16A34A] text-xs font-bold flex items-center gap-2.5">
+                          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#16A34A]" />
+                          <div>
+                            <div className="font-bold text-sm">Base completa — no hay más cupos GAP disponibles.</div>
+                            <div className="text-[11px] text-[#475569] font-normal">Capacidad máxima alcanzada ({modalBase.defaultCapacity}/{modalBase.defaultCapacity}). No se permiten más asignaciones a esta base.</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 bg-[#FAF6EC] border border-[#EADDC7] rounded-xl text-xs text-[#182535] flex items-center justify-between">
+                          <span className="text-[#64748B]">
+                            Cupos GAP disponibles: <strong className="text-[#182535]">{modalBase.defaultCapacity - currentBaseOccupants.length}</strong>
+                          </span>
+                          <span className="text-[11px] font-bold text-[#B83A24] font-montserrat">
+                            {modalBase.defaultCapacity - currentBaseOccupants.length === 1
+                              ? 'Falta 1 persona GAP'
+                              : `Faltan ${modalBase.defaultCapacity - currentBaseOccupants.length} personas GAP`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Personas Asignadas y Funciones Oficiales */}
+                    <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-[#B83A24]" />
+                          <h3 className="text-xs font-bold text-[#182535] uppercase font-montserrat tracking-wide">
+                            Personas Asignadas ({currentBaseOccupants.length}/{modalBase.defaultCapacity})
+                          </h3>
+                        </div>
+                        <span className="text-[10px] text-[#64748B] font-montserrat hidden sm:inline">
+                          Funciones: LÍDER DE BASE, CALIFICADOR, VEEDOR, VAR
+                        </span>
+                      </div>
+
+                      {/* Toast Alerts for function updates */}
+                      {roleChangeError && (
+                        <div className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                          <span>{roleChangeError}</span>
+                        </div>
+                      )}
+                      {roleChangeSuccess && (
+                        <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                          <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+                          <span>{roleChangeSuccess}</span>
+                        </div>
+                      )}
+
+                      {currentBaseOccupants.length === 0 ? (
+                        <div className="p-4 rounded-xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center text-xs text-[#94A3B8]">
+                          No hay personas asignadas todavía a esta base.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {currentBaseOccupants.map((occ, idx) => {
+                            const person = people.find((p) => p.id === occ.personId);
+                            const currentFn = occ.assignedFunction || occ.roleInBase || 'LÍDER DE BASE';
+
+                            return (
+                              <div
+                                key={occ.id}
+                                className="p-3 rounded-xl border border-[#EADDC7] bg-[#FAF6EC] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="w-6 h-6 rounded-full bg-[#182535] text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                                    {idx + 1}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-xs text-[#182535] truncate">
+                                      {person?.name || 'Persona Asignada'}
+                                    </div>
+                                    <div className="text-[10px] text-[#64748B] font-mono">
+                                      C.C: {person?.documentId || 'S/N'} • @{person?.username || person?.documentId}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                  <label className="text-[10px] font-bold text-[#64748B] font-montserrat">
+                                    Función:
+                                  </label>
+                                  <select
+                                    value={currentFn}
+                                    onChange={(e) =>
+                                      handleManualFunctionChange(occ.id, e.target.value, modalBase.id)
+                                    }
+                                    className="text-xs font-bold py-1 px-2.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                                  >
+                                    {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((fn) => (
+                                      <option key={fn} value={fn}>
+                                        {fn}
+                                      </option>
+                                    ))}
+                                  </select>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveAssignment(occ.id)}
+                                    className="p-1.5 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
+                                    title="Quitar persona de la base"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section: Asignar Persona GAP */}
+                    {isBaseFull ? (
+                      <div className="p-4 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] text-center space-y-1">
+                        <p className="text-xs font-bold text-[#16A34A] font-montserrat">
+                          Base completa — no hay más cupos GAP disponibles.
+                        </p>
+                        <p className="text-[11px] text-[#64748B]">
+                          Para agregar otra persona, primero debe quitar a una de las {modalBase.defaultCapacity} personas asignadas arriba.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-3">
+                        <div className="flex items-center justify-between pb-1 border-b border-[#EADDC7]">
+                          <div className="flex items-center gap-1.5">
+                            <Plus className="w-4 h-4 text-[#B83A24]" />
+                            <h3 className="text-xs font-bold text-[#182535] uppercase font-montserrat tracking-wide">
+                              + ASIGNAR PERSONA ({currentBaseOccupants.length}/{modalBase.defaultCapacity})
+                            </h3>
+                          </div>
+                          <span className="text-[11px] font-bold text-[#B83A24] font-mono">
+                            {filteredCandidates.length} disponibles
+                          </span>
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative">
+                          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            placeholder="Buscar persona para asignar..."
+                            value={candidateSearchQuery}
+                            onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                          />
+                          {candidateSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setCandidateSearchQuery('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Candidates list */}
+                        {filteredCandidates.length === 0 ? (
+                          <div className="p-6 rounded-xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-1">
+                            <p className="text-xs font-bold text-[#182535] font-montserrat">
+                              No hay candidatos GAP disponibles para este turno
+                            </p>
+                            <p className="text-[11px] text-[#64748B]">
+                              Solo se muestran integrantes activos con disponibilidad registrada en este turno y sin asignaciones previas.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            {filteredCandidates.map(({ person }) => {
+                              const nextFn = getNextAvailableCarnivalGapFunction(currentBaseOccupants);
+
+                              return (
+                                <div
+                                  key={person.id}
+                                  className="p-3 rounded-xl border border-[#EADDC7] bg-[#FAF6EC] hover:border-[#B83A24]/40 flex items-center justify-between gap-2 transition-colors"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-xs text-[#182535] truncate">
+                                      {person.name}
+                                    </div>
+                                    <div className="text-[10px] text-[#64748B] font-mono">
+                                      C.C: {person.documentId || 'S/N'} • @{person.username || person.documentId}
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCandidateAssignClick(person, nextFn)}
+                                    disabled={isSubmitting}
+                                    className="min-h-[34px] px-3 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Asignar ({nextFn})</span>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
                 {/* MANDATORY BASE SELECTION (for shifts requiring a base) */}
                 {shiftRequiresBase && (
                   <div className="p-3.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] space-y-2">
@@ -3994,16 +4247,26 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     })}
                   </div>
                 )}
+                </div>
+              </>
+            )}
               </div>
-            </div>
 
             {/* Modal Footer */}
             <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
-                <span className="text-xs text-[#64748B]">
-                  {shiftCupoFilledCount} / {activeShift.capacity || 0} cupos {isShiftMesa ? 'MESA' : 'GT'} ocupados
-                  {assignedMesaCount > 0 && !isShiftMesa && (
-                    <span className="text-purple-700 font-medium ml-1">
-                      (+{assignedMesaCount} MESA asignados)
+                <span className="text-xs text-[#64748B] font-montserrat">
+                  {modalBase ? (
+                    <span>
+                      Ocupación Base: <strong className={isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}>{currentBaseOccupants.length} / {modalBase.defaultCapacity}</strong> personas GAP
+                    </span>
+                  ) : (
+                    <span>
+                      {shiftCupoFilledCount} / {activeShift.capacity || 0} cupos {isShiftMesa ? 'MESA' : 'GT'} ocupados
+                      {assignedMesaCount > 0 && !isShiftMesa && (
+                        <span className="text-purple-700 font-medium ml-1">
+                          (+{assignedMesaCount} MESA asignados)
+                        </span>
+                      )}
                     </span>
                   )}
                 </span>
