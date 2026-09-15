@@ -457,25 +457,45 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     }
 
     if (selectedDayId === 'jueves') {
-      return THE_GAMES_JUEVES_BASES.map((b) => ({
-        id: b.id,
-        baseNumber: b.baseNumber || b.id,
-        name: b.name,
-        defaultCapacity: b.capacity || b.defaultCapacity || 2,
-        suggestedCapacity: b.capacity || b.defaultCapacity || 2,
-        isSpecial: b.isSpecial,
-      }));
+      return THE_GAMES_JUEVES_BASES.map((b) => {
+        const custom = (bases || []).find(
+          (cb) => cb.isActive !== false &&
+            (String(cb.id) === String(b.id) || String(cb.baseNumber) === String(b.baseNumber))
+        );
+        const cap = custom?.gapCapacity || custom?.capacity || custom?.defaultCapacity || b.capacity || b.defaultCapacity;
+        return {
+          id: b.id,
+          baseNumber: b.baseNumber || b.id,
+          baseLabel: custom?.baseLabel || b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
+          gameName: custom?.gameName || b.gameName,
+          name: custom?.name || b.name,
+          gapCapacity: cap,
+          defaultCapacity: cap,
+          suggestedCapacity: cap,
+          isSpecial: b.isSpecial || custom?.isSpecial,
+        };
+      });
     }
 
     if (selectedDayId === 'viernes') {
-      return THE_GAMES_VIERNES_BASES.map((b) => ({
-        id: b.id,
-        baseNumber: b.baseNumber || b.id,
-        name: b.name,
-        defaultCapacity: b.capacity || b.defaultCapacity || 2,
-        suggestedCapacity: b.capacity || b.defaultCapacity || 2,
-        isSpecial: b.isSpecial,
-      }));
+      return THE_GAMES_VIERNES_BASES.map((b) => {
+        const custom = (bases || []).find(
+          (cb) => cb.isActive !== false &&
+            (String(cb.id) === String(b.id) || String(cb.baseNumber) === String(b.baseNumber))
+        );
+        const cap = custom?.gapCapacity || custom?.capacity || custom?.defaultCapacity || b.capacity || b.defaultCapacity;
+        return {
+          id: b.id,
+          baseNumber: b.baseNumber || b.id,
+          baseLabel: custom?.baseLabel || b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
+          gameName: custom?.gameName || b.gameName,
+          name: custom?.name || b.name,
+          gapCapacity: cap,
+          defaultCapacity: cap,
+          suggestedCapacity: cap,
+          isSpecial: b.isSpecial || custom?.isSpecial,
+        };
+      });
     }
 
     return [];
@@ -2497,7 +2517,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40 font-dalek">
-                  GAP • {activeShift.name} ({activeShift.label})
+                  {activeShift.category || 'GT'} • {activeShift.name} ({activeShift.label})
                 </span>
                 <span className="text-xs text-[#16A34A] font-semibold flex items-center gap-1 font-montserrat">
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -2508,18 +2528,26 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
               <p className="text-xs text-[#64748B] font-montserrat">
-                Bases 1 a 19 + Toro, Speed y Arcade — 22 bases oficiales con cupos específicos de GAP.
+                {selectedDayId === 'miercoles'
+                  ? 'Bases 1 a 19 + Toro, Speed y Arcade — 22 bases oficiales con cupos específicos de GAP.'
+                  : selectedDayId === 'jueves'
+                  ? 'Bases 1 a 15 de The Games (Jueves) con cupos específicos por base.'
+                  : 'Bases 16 a 30 de The Games (Viernes) con cupos específicos por base.'}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[#B83A24] font-mono bg-[#FDF2EE] border border-[#F6C7BA] px-2.5 py-1 rounded-lg font-bold">
-                Cupos GAP: 2 a 3 por base • 22 bases oficiales
+                {selectedDayId === 'miercoles'
+                  ? 'Cupos GAP: 2 a 3 por base • 22 bases oficiales'
+                  : selectedDayId === 'jueves'
+                  ? 'Cupos: 3 a 5 por base • 15 bases oficiales'
+                  : 'Cupos: 2 a 7 por base • 15 bases oficiales'}
               </span>
             </div>
           </div>
 
-          {/* Grid of 22 physical bases */}
+          {/* Grid of physical bases */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
             {physicalBases.map((base) => {
               const baseAssignments = currentShiftAssignments.filter(
@@ -2530,9 +2558,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   (base.baseNumber !== undefined && String(a.baseNumber) === String(base.baseNumber)) ||
                   (a.baseName && base.name && a.baseName.toLowerCase() === base.name.toLowerCase()) ||
                   (base.code && (a.baseNumber === base.code || a.baseId === base.code)) ||
-                  (base.id === 20 && (a.baseNumber === '20' || a.baseNumber === '28' || a.baseId === 'carnival_20' || a.baseId === 'carnival_28' || a.baseId === 'toro' || a.baseNumber === 'toro' || String(a.baseName).toLowerCase() === 'base toro')) ||
-                  (base.id === 21 && (a.baseNumber === '21' || a.baseNumber === '29' || a.baseId === 'carnival_21' || a.baseId === 'carnival_29' || a.baseId === 'speedway' || a.baseNumber === 'speedway' || a.baseId === 'speed' || a.baseNumber === 'speed' || String(a.baseName).toLowerCase() === 'base speed')) ||
-                  (base.id === 22 && (a.baseNumber === '22' || a.baseNumber === '30' || a.baseId === 'carnival_22' || a.baseId === 'carnival_30' || a.baseId === 'arcade' || a.baseNumber === 'arcade' || String(a.baseName).toLowerCase() === 'base arcade'))
+                  (selectedDayId === 'miercoles' && (
+                    (base.id === 20 && (a.baseNumber === '20' || a.baseNumber === '28' || a.baseId === 'carnival_20' || a.baseId === 'carnival_28' || a.baseId === 'toro' || a.baseNumber === 'toro' || String(a.baseName).toLowerCase() === 'base toro')) ||
+                    (base.id === 21 && (a.baseNumber === '21' || a.baseNumber === '29' || a.baseId === 'carnival_21' || a.baseId === 'carnival_29' || a.baseId === 'speedway' || a.baseNumber === 'speedway' || a.baseId === 'speed' || a.baseNumber === 'speed' || String(a.baseName).toLowerCase() === 'base speed')) ||
+                    (base.id === 22 && (a.baseNumber === '22' || a.baseNumber === '30' || a.baseId === 'carnival_22' || a.baseId === 'carnival_30' || a.baseId === 'arcade' || a.baseNumber === 'arcade' || String(a.baseName).toLowerCase() === 'base arcade'))
+                  ))
               );
               const isFull = baseAssignments.length >= base.defaultCapacity;
               const isSpecial = base.isSpecial;

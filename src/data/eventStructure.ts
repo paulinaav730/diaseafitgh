@@ -79,7 +79,22 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
     return `BASE ${num}`;
   }
 
-  const match = s.match(/(?:carnival|games_jueves|games_viernes)_(\d+)/i);
+  if (s.startsWith('games_jueves_')) {
+    const num = Number(s.replace('games_jueves_', ''));
+    if (num === 13) return 'Base vivo';
+    if (num === 14) return 'Macro 1';
+    if (num === 15) return 'Macro 2';
+    return `BASE ${num}`;
+  }
+  if (s.startsWith('games_viernes_')) {
+    const num = Number(s.replace('games_viernes_', ''));
+    if (num === 28) return 'Bicis';
+    if (num === 29) return 'Macro 1';
+    if (num === 30) return 'Macro 2';
+    return `BASE ${num}`;
+  }
+
+  const match = s.match(/^carnival_(\d+)$/i);
   if (match) {
     const num = Number(match[1]);
     if (num === 20 || num === 28) return 'BASE TORO';
@@ -124,41 +139,42 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
   return s;
 }
 
-// 15 Physical Bases for The Games
+// 15 Physical Bases for The Games (Jueves: Bases 1 a 15)
 export const THE_GAMES_JUEVES_BASES: ConfigurableBase[] = [
-  { id: 'games_jueves_1', name: 'Base 1', baseNumber: '1', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 1 },
-  { id: 'games_jueves_2', name: 'Base 2', baseNumber: '2', defaultCapacity: 3, capacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 2 },
-  { id: 'games_jueves_3', name: 'Base 3', baseNumber: '3', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 3 },
-  { id: 'games_jueves_4', name: 'Base 4', baseNumber: '4', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 4 },
-  { id: 'games_jueves_5', name: 'Base 5', baseNumber: '5', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 5 },
-  { id: 'games_jueves_6', name: 'Base 6', baseNumber: '6', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 6 },
-  { id: 'games_jueves_7', name: 'Base 7', baseNumber: '7', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 7 },
-  { id: 'games_jueves_8', name: 'Base 8', baseNumber: '8', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 8 },
-  { id: 'games_jueves_9', name: 'Base 9', baseNumber: '9', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 9 },
-  { id: 'games_jueves_10', name: 'Base 10', baseNumber: '10', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 10 },
-  { id: 'games_jueves_11', name: 'Base 11', baseNumber: '11', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 11 },
-  { id: 'games_jueves_12', name: 'Base 12', baseNumber: '12', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 12 },
-  { id: 'games_jueves_13', name: 'Base vivo', baseNumber: '13', defaultCapacity: 3, capacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 13, isSpecial: true },
-  { id: 'games_jueves_14', name: 'Macro 1', baseNumber: '14', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 14, isSpecial: true },
-  { id: 'games_jueves_15', name: 'Macro 2', baseNumber: '15', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 15, isSpecial: true },
+  { id: 'games_jueves_1', name: 'Base 1', baseLabel: 'BASE 1', baseNumber: '1', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 1 },
+  { id: 'games_jueves_2', name: 'Base 2', baseLabel: 'BASE 2', baseNumber: '2', defaultCapacity: 3, capacity: 3, gapCapacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 2 },
+  { id: 'games_jueves_3', name: 'Base 3', baseLabel: 'BASE 3', baseNumber: '3', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 3 },
+  { id: 'games_jueves_4', name: 'Base 4', baseLabel: 'BASE 4', baseNumber: '4', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 4 },
+  { id: 'games_jueves_5', name: 'Base 5', baseLabel: 'BASE 5', baseNumber: '5', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 5 },
+  { id: 'games_jueves_6', name: 'Base 6', baseLabel: 'BASE 6', baseNumber: '6', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 6 },
+  { id: 'games_jueves_7', name: 'Base 7', baseLabel: 'BASE 7', baseNumber: '7', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 7 },
+  { id: 'games_jueves_8', name: 'Base 8', baseLabel: 'BASE 8', baseNumber: '8', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 8 },
+  { id: 'games_jueves_9', name: 'Base 9', baseLabel: 'BASE 9', baseNumber: '9', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 9 },
+  { id: 'games_jueves_10', name: 'Base 10', baseLabel: 'BASE 10', baseNumber: '10', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 10 },
+  { id: 'games_jueves_11', name: 'Base 11', baseLabel: 'BASE 11', baseNumber: '11', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 11 },
+  { id: 'games_jueves_12', name: 'Base 12', baseLabel: 'BASE 12', baseNumber: '12', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 12 },
+  { id: 'games_jueves_13', name: 'Base 13 — Base vivo', baseLabel: 'BASE 13', gameName: 'Base vivo', baseNumber: '13', defaultCapacity: 3, capacity: 3, gapCapacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 13 },
+  { id: 'games_jueves_14', name: 'Base 14 — Macro 1', baseLabel: 'BASE 14', gameName: 'Macro 1', baseNumber: '14', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 14 },
+  { id: 'games_jueves_15', name: 'Base 15 — Macro 2', baseLabel: 'BASE 15', gameName: 'Macro 2', baseNumber: '15', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 15 },
 ];
 
+// 15 Physical Bases for The Games (Viernes: Bases 16 a 30)
 export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = [
-  { id: 'games_viernes_16', name: 'Base 16', baseNumber: '16', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 16 },
-  { id: 'games_viernes_17', name: 'Base 17', baseNumber: '17', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 17 },
-  { id: 'games_viernes_18', name: 'Base 18', baseNumber: '18', defaultCapacity: 6, capacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 18 },
-  { id: 'games_viernes_19', name: 'Base 19', baseNumber: '19', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 19 },
-  { id: 'games_viernes_20', name: 'Base 20', baseNumber: '20', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 20 },
-  { id: 'games_viernes_21', name: 'Base 21', baseNumber: '21', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 21 },
-  { id: 'games_viernes_22', name: 'Base 22', baseNumber: '22', defaultCapacity: 6, capacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 22 },
-  { id: 'games_viernes_23', name: 'Base 23', baseNumber: '23', defaultCapacity: 7, capacity: 7, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 23 },
-  { id: 'games_viernes_24', name: 'Base 24', baseNumber: '24', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 24 },
-  { id: 'games_viernes_25', name: 'Base 25', baseNumber: '25', defaultCapacity: 6, capacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 25 },
-  { id: 'games_viernes_26', name: 'Base 26', baseNumber: '26', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 26 },
-  { id: 'games_viernes_27', name: 'Base 27', baseNumber: '27', defaultCapacity: 4, capacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 27 },
-  { id: 'games_viernes_28', name: 'Bicis', baseNumber: '28', defaultCapacity: 2, capacity: 2, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28, isSpecial: true },
-  { id: 'games_viernes_29', name: 'Macro 1', baseNumber: '29', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 29, isSpecial: true },
-  { id: 'games_viernes_30', name: 'Macro 2', baseNumber: '30', defaultCapacity: 5, capacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 30, isSpecial: true },
+  { id: 'games_viernes_16', name: 'Base 16', baseLabel: 'BASE 16', baseNumber: '16', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 16 },
+  { id: 'games_viernes_17', name: 'Base 17', baseLabel: 'BASE 17', baseNumber: '17', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 17 },
+  { id: 'games_viernes_18', name: 'Base 18', baseLabel: 'BASE 18', baseNumber: '18', defaultCapacity: 6, capacity: 6, gapCapacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 18 },
+  { id: 'games_viernes_19', name: 'Base 19', baseLabel: 'BASE 19', baseNumber: '19', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 19 },
+  { id: 'games_viernes_20', name: 'Base 20', baseLabel: 'BASE 20', baseNumber: '20', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 20 },
+  { id: 'games_viernes_21', name: 'Base 21', baseLabel: 'BASE 21', baseNumber: '21', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 21 },
+  { id: 'games_viernes_22', name: 'Base 22', baseLabel: 'BASE 22', baseNumber: '22', defaultCapacity: 6, capacity: 6, gapCapacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 22 },
+  { id: 'games_viernes_23', name: 'Base 23', baseLabel: 'BASE 23', baseNumber: '23', defaultCapacity: 7, capacity: 7, gapCapacity: 7, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 23 },
+  { id: 'games_viernes_24', name: 'Base 24', baseLabel: 'BASE 24', baseNumber: '24', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 24 },
+  { id: 'games_viernes_25', name: 'Base 25', baseLabel: 'BASE 25', baseNumber: '25', defaultCapacity: 6, capacity: 6, gapCapacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 25 },
+  { id: 'games_viernes_26', name: 'Base 26', baseLabel: 'BASE 26', baseNumber: '26', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 26 },
+  { id: 'games_viernes_27', name: 'Base 27', baseLabel: 'BASE 27', baseNumber: '27', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 27 },
+  { id: 'games_viernes_28', name: 'Base 28 — Bicis', baseLabel: 'BASE 28', gameName: 'Bicis', baseNumber: '28', defaultCapacity: 2, capacity: 2, gapCapacity: 2, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28 },
+  { id: 'games_viernes_29', name: 'Base 29 — Macro 1', baseLabel: 'BASE 29', gameName: 'Macro 1', baseNumber: '29', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 29 },
+  { id: 'games_viernes_30', name: 'Base 30 — Macro 2', baseLabel: 'BASE 30', gameName: 'Macro 2', baseNumber: '30', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 30 },
 ];
 
 export const THE_GAMES_PHYSICAL_BASES: ConfigurableBase[] = [
@@ -545,9 +561,9 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     startTime: '13:00',
     endTime: '21:00',
     label: '1:00 p. m. a 9:00 p. m.',
-    capacity: 50,
+    capacity: 65,
     isActive: true,
-    hasBases: false,
+    hasBases: true,
     forTypes: ['GT'],
   },
 
@@ -561,9 +577,9 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     startTime: '06:00',
     endTime: '21:30',
     label: '6:00 a. m. a 9:30 p. m.',
-    capacity: 58,
+    capacity: 66,
     isActive: true,
-    hasBases: false,
+    hasBases: true,
     forTypes: ['GT'],
   },
 ];

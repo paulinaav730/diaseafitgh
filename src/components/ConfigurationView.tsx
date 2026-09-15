@@ -919,8 +919,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none"
               >
                 <option value="all">Todas las Bases ({bases.length})</option>
-                <option value="carnival">Carnival (22 bases oficiales)</option>
-                <option value="the-games">The Games (15 bases)</option>
+                <option value="carnival">Carnival ({bases.filter(b => b.eventId === 'carnival').length || 22} bases)</option>
+                <option value="the-games">The Games ({bases.filter(b => b.eventId === 'the-games').length || 30} bases)</option>
               </select>
             </div>
 

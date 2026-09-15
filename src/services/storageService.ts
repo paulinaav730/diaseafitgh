@@ -13,6 +13,8 @@ import {
 import { ExcelMaestroParsedRow } from './excelService';
 import {
   CARNIVAL_PHYSICAL_BASES,
+  THE_GAMES_JUEVES_BASES,
+  THE_GAMES_VIERNES_BASES,
   getBaseDisplayName,
   DEFAULT_INITIAL_EVENTS,
   DEFAULT_INITIAL_SHIFTS,
@@ -32,6 +34,7 @@ import {
   pushSingleShiftToSupabase,
   deleteSingleShiftFromSupabase,
   pushShiftsToSupabase,
+  pushBasesToSupabase,
   pushAvailabilitiesToSupabase,
 } from './supabaseSync';
 import { isSupabaseConfigured } from './supabaseClient';
@@ -565,6 +568,51 @@ export function initializeStorage(): void {
         localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
         assignmentListeners.forEach((fn) => fn([...assignmentCache]));
       }
+    }
+
+    // Ensure The Games bases in cache match the official updated capacities and names
+    const gamesBasesInCache = basesCache.filter(
+      (b) => b.eventId === 'the-games' || String(b.id).startsWith('games_') || b.dayId === 'jueves' || b.dayId === 'viernes'
+    );
+    const expectedGamesBases = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES];
+    const needsTheGamesUpdate =
+      gamesBasesInCache.length !== 30 ||
+      gamesBasesInCache.some((b) => {
+        const expected = expectedGamesBases.find((eb) => eb.id === b.id);
+        return expected && (b.defaultCapacity !== expected.defaultCapacity || b.name !== expected.name);
+      });
+
+    if (needsTheGamesUpdate) {
+      const nonGamesBases = basesCache.filter(
+        (b) => !(b.eventId === 'the-games' || String(b.id).startsWith('games_') || b.dayId === 'jueves' || b.dayId === 'viernes')
+      );
+      basesCache = [...nonGamesBases, ...expectedGamesBases];
+      localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
+      baseListeners.forEach((fn) => fn([...basesCache]));
+      pushBasesToSupabase(basesCache).catch(() => {});
+    }
+
+    // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 65 & 66
+    let shiftsModified = false;
+    shiftsCache = shiftsCache.map((s) => {
+      if (s.id === 'jueves-t2-gt' || (s.dayId === 'jueves' && s.name.toLowerCase().includes('the games'))) {
+        if (!s.hasBases || s.capacity !== 65) {
+          shiftsModified = true;
+          return { ...s, hasBases: true, capacity: 65 };
+        }
+      }
+      if (s.id === 'viernes-gt' || (s.dayId === 'viernes' && (s.eventId === 'the-games' || s.name.toLowerCase().includes('the games')))) {
+        if (!s.hasBases || s.capacity !== 66) {
+          shiftsModified = true;
+          return { ...s, hasBases: true, capacity: 66 };
+        }
+      }
+      return s;
+    });
+    if (shiftsModified) {
+      localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+      shiftListeners.forEach((fn) => fn([...shiftsCache]));
+      pushShiftsToSupabase(shiftsCache).catch(() => {});
     }
     
     // Initialize Realtime
