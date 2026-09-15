@@ -579,7 +579,13 @@ export function initializeStorage(): void {
       gamesBasesInCache.length !== 30 ||
       gamesBasesInCache.some((b) => {
         const expected = expectedGamesBases.find((eb) => eb.id === b.id);
-        return expected && (b.defaultCapacity !== expected.defaultCapacity || b.name !== expected.name);
+        return (
+          !expected ||
+          b.defaultCapacity !== expected.defaultCapacity ||
+          b.capacity !== expected.defaultCapacity ||
+          b.gapCapacity !== expected.defaultCapacity ||
+          b.name !== expected.name
+        );
       });
 
     if (needsTheGamesUpdate) {
@@ -1281,29 +1287,66 @@ export async function assignPerson(
         resolvedBaseId = `carnival_${carn.id}`;
         resolvedBaseNumber = String(carn.id);
         resolvedBaseName = carn.name;
-        maxCapacity = carn.gapCapacity || carn.defaultCapacity;
+        maxCapacity = carn.gapCapacity || carn.defaultCapacity || 2;
+      }
+    } else if (dayId === 'jueves') {
+      const gBase = THE_GAMES_JUEVES_BASES.find(
+        (b) =>
+          b.id === rawBaseId ||
+          String(b.baseNumber) === String(rawBaseNumber || rawBaseId).replace('games_jueves_', '') ||
+          (rawBaseId && b.id === `games_jueves_${rawBaseId}`) ||
+          (rawBaseNumber && b.id === `games_jueves_${rawBaseNumber}`) ||
+          (assignmentData.baseName && b.name.toLowerCase() === assignmentData.baseName.toLowerCase()) ||
+          b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()
+      );
+      if (gBase) {
+        resolvedBaseId = String(gBase.id);
+        resolvedBaseNumber = gBase.baseNumber || gBase.id;
+        resolvedBaseName = gBase.name;
+        maxCapacity = gBase.gapCapacity || gBase.capacity || gBase.defaultCapacity || 4;
+      }
+    } else if (dayId === 'viernes') {
+      const gBase = THE_GAMES_VIERNES_BASES.find(
+        (b) =>
+          b.id === rawBaseId ||
+          String(b.baseNumber) === String(rawBaseNumber || rawBaseId).replace('games_viernes_', '') ||
+          (rawBaseId && b.id === `games_viernes_${rawBaseId}`) ||
+          (rawBaseNumber && b.id === `games_viernes_${rawBaseNumber}`) ||
+          (assignmentData.baseName && b.name.toLowerCase() === assignmentData.baseName.toLowerCase()) ||
+          b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()
+      );
+      if (gBase) {
+        resolvedBaseId = String(gBase.id);
+        resolvedBaseNumber = gBase.baseNumber || gBase.id;
+        resolvedBaseName = gBase.name;
+        maxCapacity = gBase.gapCapacity || gBase.capacity || gBase.defaultCapacity || 4;
       }
     }
 
-    if (!resolvedBaseName) {
-      const targetBaseObj = basesCache.find(
-        (b) =>
-          (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
-          (rawBaseNumber !== undefined &&
-            (String(b.baseNumber) === String(rawBaseNumber) ||
-              String(b.id) === String(rawBaseNumber) ||
-              b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
-      );
+    // Always check basesCache for custom admin overrides or matches
+    const targetBaseObj = basesCache.find(
+      (b) =>
+        (resolvedBaseId && b.id === resolvedBaseId) ||
+        (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
+        (rawBaseNumber !== undefined &&
+          (String(b.baseNumber) === String(rawBaseNumber) ||
+            String(b.id) === String(rawBaseNumber) ||
+            b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
+    );
 
-      if (targetBaseObj) {
-        resolvedBaseId = String(targetBaseObj.id);
-        resolvedBaseNumber = targetBaseObj.baseNumber || targetBaseObj.id;
+    if (targetBaseObj) {
+      resolvedBaseId = String(targetBaseObj.id);
+      resolvedBaseNumber = targetBaseObj.baseNumber || targetBaseObj.id;
+      if (!resolvedBaseName) {
         resolvedBaseName = targetBaseObj.name;
-        maxCapacity = targetBaseObj.gapCapacity || targetBaseObj.capacity || targetBaseObj.defaultCapacity || 2;
-      } else {
-        if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
-          resolvedBaseName = getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
-        }
+      }
+      const customCap = targetBaseObj.gapCapacity || targetBaseObj.capacity || targetBaseObj.defaultCapacity;
+      if (customCap && customCap > 0) {
+        maxCapacity = customCap;
+      }
+    } else {
+      if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
+        resolvedBaseName = getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
       }
     }
   }
@@ -1347,10 +1390,11 @@ export async function assignPerson(
           (resolvedBaseNumber !== undefined && String(a.baseNumber) === String(resolvedBaseNumber)) ||
           (resolvedBaseName && a.baseName === resolvedBaseName)
         ) &&
-        a.personId !== personId
+        a.personId !== personId &&
+        a.assignedType !== 'MESA'
     );
 
-    if (currentOccupants.length >= maxCapacity) {
+    if (assignedType !== 'MESA' && currentOccupants.length >= maxCapacity) {
       const displayName = resolvedBaseName || getBaseDisplayName(resolvedBaseNumber || resolvedBaseId);
       return {
         success: false,
@@ -2182,7 +2226,36 @@ export function replaceAllAvailabilitiesFromCloud(newAvail: AvailabilityRecord[]
 }
 
 export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
-  basesCache = newBases;
+  if (!newBases || newBases.length === 0) return;
+  const expectedGames = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES];
+  const merged = newBases.map((b) => {
+    const eg = expectedGames.find(
+      (g) => g.id === b.id || (g.dayId === b.dayId && String(g.baseNumber) === String(b.baseNumber))
+    );
+    if (eg) {
+      const cap = Math.max(eg.defaultCapacity, b.defaultCapacity || 0, b.capacity || 0, b.gapCapacity || 0);
+      return {
+        ...b,
+        name: eg.name || b.name,
+        baseLabel: eg.baseLabel || b.baseLabel,
+        gameName: eg.gameName || b.gameName,
+        defaultCapacity: cap,
+        capacity: cap,
+        gapCapacity: cap,
+        suggestedCapacity: cap,
+      };
+    }
+    return b;
+  });
+
+  // Make sure all expected The Games bases are present in basesCache
+  for (const eg of expectedGames) {
+    if (!merged.some((b) => b.id === eg.id || (b.dayId === eg.dayId && String(b.baseNumber) === String(eg.baseNumber)))) {
+      merged.push({ ...eg });
+    }
+  }
+
+  basesCache = merged;
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
 }

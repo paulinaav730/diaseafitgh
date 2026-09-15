@@ -1,6 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord, ConfigurableShift } from '../types';
-import { getBaseDisplayName, CARNIVAL_PHYSICAL_BASES } from '../data/eventStructure';
+import { getBaseDisplayName, CARNIVAL_PHYSICAL_BASES, THE_GAMES_JUEVES_BASES, THE_GAMES_VIERNES_BASES } from '../data/eventStructure';
 
 export interface SupabaseSyncStatus {
   isConfigured: boolean;
@@ -242,16 +242,24 @@ export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
           )
         : null;
 
-      const baseLabel = b.baseLabel || carnivalBase?.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name);
-      const gameName = b.gameName || carnivalBase?.gameName || '';
-      const gapCap = b.gapCapacity || b.capacity || b.defaultCapacity || carnivalBase?.gapCapacity || 2;
-      const isSpec = b.isSpecial ?? (carnivalBase?.isSpecial || false);
-      const fullName = isCarnival ? (isSpec ? baseLabel : `${baseLabel} — ${gameName}`) : b.name;
+      const isTheGamesJueves = b.dayId === 'jueves' || String(b.id).startsWith('games_jueves_');
+      const isTheGamesViernes = b.dayId === 'viernes' || String(b.id).startsWith('games_viernes_');
+      const gamesBase = isTheGamesJueves
+        ? THE_GAMES_JUEVES_BASES.find((gb) => gb.id === b.id || String(gb.baseNumber) === String(b.baseNumber))
+        : isTheGamesViernes
+        ? THE_GAMES_VIERNES_BASES.find((gb) => gb.id === b.id || String(gb.baseNumber) === String(b.baseNumber))
+        : null;
+
+      const baseLabel = b.baseLabel || carnivalBase?.baseLabel || gamesBase?.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name);
+      const gameName = b.gameName || carnivalBase?.gameName || gamesBase?.gameName || '';
+      const gapCap = b.gapCapacity || b.capacity || b.defaultCapacity || gamesBase?.defaultCapacity || carnivalBase?.gapCapacity || 2;
+      const isSpec = b.isSpecial ?? (carnivalBase?.isSpecial || gamesBase?.isSpecial || false);
+      const fullName = isCarnival ? (isSpec ? baseLabel : `${baseLabel} — ${gameName}`) : (b.name || gamesBase?.name);
 
       return {
         id: b.id,
-        event_id: b.eventId || (isCarnival ? 'carnival' : null),
-        day_id: b.dayId || (isCarnival ? 'miercoles' : null),
+        event_id: b.eventId || (isCarnival ? 'carnival' : gamesBase ? 'the-games' : null),
+        day_id: b.dayId || (isCarnival ? 'miercoles' : gamesBase?.dayId || null),
         name: fullName,
         base_number: isNaN(Number(b.baseNumber)) ? null : Number(b.baseNumber),
         physical_location: baseLabel,
@@ -263,7 +271,7 @@ export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
         }),
         category: `${gapCap} GAP`,
         color: b.color || '#B83A24',
-        order_index: b.orderIndex || carnivalBase?.orderIndex || 0,
+        order_index: b.orderIndex || carnivalBase?.orderIndex || gamesBase?.orderIndex || 0,
         is_active: b.isActive !== false,
         updated_at: new Date().toISOString(),
       };
@@ -303,23 +311,31 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
           )
         : null;
 
-      const baseLabel = meta.baseLabel || carnivalBase?.baseLabel || (r.base_number ? `BASE ${r.base_number}` : r.name);
-      const gameName = meta.gameName || carnivalBase?.gameName || '';
-      const gapCap = meta.gapCapacity || carnivalBase?.gapCapacity || carnivalBase?.defaultCapacity || (r.category && r.category.includes('GAP') ? parseInt(r.category) : 2);
-      const isSpec = meta.isSpecial ?? (carnivalBase?.isSpecial || r.name?.toLowerCase().includes('toro') || r.name?.toLowerCase().includes('speed') || r.name?.toLowerCase().includes('arcade'));
+      const isTheGamesJueves = r.day_id === 'jueves' || String(r.id).startsWith('games_jueves_');
+      const isTheGamesViernes = r.day_id === 'viernes' || String(r.id).startsWith('games_viernes_');
+      const gamesBase = isTheGamesJueves
+        ? THE_GAMES_JUEVES_BASES.find((gb) => gb.id === r.id || String(gb.baseNumber) === String(r.base_number))
+        : isTheGamesViernes
+        ? THE_GAMES_VIERNES_BASES.find((gb) => gb.id === r.id || String(gb.baseNumber) === String(r.base_number))
+        : null;
+
+      const baseLabel = meta.baseLabel || carnivalBase?.baseLabel || gamesBase?.baseLabel || (r.base_number ? `BASE ${r.base_number}` : r.name);
+      const gameName = meta.gameName || carnivalBase?.gameName || gamesBase?.gameName || '';
+      const gapCap = meta.gapCapacity || gamesBase?.defaultCapacity || gamesBase?.gapCapacity || carnivalBase?.gapCapacity || carnivalBase?.defaultCapacity || (r.category && r.category.includes('GAP') ? parseInt(r.category) : 2);
+      const isSpec = meta.isSpecial ?? (carnivalBase?.isSpecial || gamesBase?.isSpecial || r.name?.toLowerCase().includes('toro') || r.name?.toLowerCase().includes('speed') || r.name?.toLowerCase().includes('arcade'));
 
       return {
         id: r.id,
-        eventId: r.event_id || (isCarnival ? 'carnival' : undefined),
-        dayId: r.day_id || (isCarnival ? 'miercoles' : ''),
-        name: carnivalBase?.name || r.name,
+        eventId: r.event_id || (isCarnival ? 'carnival' : gamesBase ? 'the-games' : undefined),
+        dayId: r.day_id || (isCarnival ? 'miercoles' : gamesBase?.dayId || ''),
+        name: carnivalBase?.name || gamesBase?.name || r.name,
         baseLabel,
         gameName,
         gapCapacity: gapCap,
         baseNumber: r.base_number !== null && r.base_number !== undefined ? String(r.base_number) : (r.id ? String(r.id).replace(/^[a-z_]+_/, '') : undefined),
         category: r.category || `${gapCap} GAP`,
         color: r.color || '#B83A24',
-        orderIndex: r.order_index || carnivalBase?.orderIndex || 0,
+        orderIndex: r.order_index || carnivalBase?.orderIndex || gamesBase?.orderIndex || 0,
         isActive: r.is_active !== false,
         capacity: gapCap,
         defaultCapacity: gapCap,

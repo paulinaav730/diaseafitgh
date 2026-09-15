@@ -777,6 +777,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     const bName = modalBase?.name;
 
     return currentShiftAssignments.filter((a) => {
+      if (a.assignedType === 'MESA') return false;
       if (bId && (a.baseId === bId || String(a.baseId) === bId)) return true;
       if (bNum && (String(a.baseNumber) === bNum || String(a.baseId) === bNum)) return true;
       if (bName && a.baseName && a.baseName.toLowerCase() === bName.toLowerCase()) return true;
@@ -787,9 +788,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const isBaseFull = useMemo(() => {
     if (!activeShift?.hasBases && !modalBase) return false;
     if (!modalBase && selectedBaseNumber === null) return false;
-    const maxCap = modalBase?.defaultCapacity || 2;
+    const targetObj = modalBase || (selectedBaseNumber !== null
+      ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES, ...CARNIVAL_PHYSICAL_BASES].find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+      : null);
+    const maxCap = targetObj?.gapCapacity || targetObj?.capacity || targetObj?.defaultCapacity || 2;
     return currentBaseOccupants.length >= maxCap;
-  }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants]);
+  }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants, physicalBases, bases]);
 
   const getNextAvailableCarnivalGapFunction = (
     occupants: Assignment[]
@@ -3414,12 +3420,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           setModalBase(found);
                           setSelectedBaseNumber(found.baseNumber || found.id);
                         } else {
+                          const fallbackBase = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES, ...CARNIVAL_PHYSICAL_BASES].find(
+                            (b) => String(b.id) === val || String(b.baseNumber) === val || b.name.toLowerCase() === val.toLowerCase()
+                          );
+                          const resolvedCap = fallbackBase?.gapCapacity || fallbackBase?.capacity || fallbackBase?.defaultCapacity || 2;
                           setModalBase({
                             id: val,
                             baseNumber: val,
-                            name: getBaseDisplayName(val),
-                            defaultCapacity: 2,
-                            suggestedCapacity: 2,
+                            name: fallbackBase?.name || getBaseDisplayName(val),
+                            defaultCapacity: resolvedCap,
+                            suggestedCapacity: resolvedCap,
+                            gapCapacity: resolvedCap,
+                            capacity: resolvedCap,
                           });
                           setSelectedBaseNumber(val);
                         }
