@@ -364,17 +364,45 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   }, [isDivided, isCarnival, carnivalCategory, shiftCategoryFilter, allShiftsInDay, gtShiftsInDay, gapShiftsInDay, mesaShiftsInDay]);
 
   // Current active shift object
-  const activeShift =
-    availableShifts.find((s) => s.id === selectedShiftId) ||
-    availableShifts[0] || {
-      id: 'default-shift',
-      dayId: selectedDayId,
-      name: 'Turno Estándar',
-      startTime: '08:00',
-      endTime: '12:00',
-      category: 'GT' as PersonType,
-      hasBases: false,
-    };
+  const activeShift = useMemo(() => {
+    const rawShift =
+      availableShifts.find((s) => s.id === selectedShiftId) ||
+      availableShifts[0] || {
+        id: 'default-shift',
+        dayId: selectedDayId,
+        name: 'Turno Estándar',
+        startTime: '08:00',
+        endTime: '12:00',
+        category: 'GT' as PersonType,
+        hasBases: false,
+      };
+
+    if (
+      selectedDayId === 'jueves' &&
+      (rawShift.hasBases ||
+        rawShift.id.includes('games') ||
+        rawShift.id.includes('t2') ||
+        rawShift.name.toLowerCase().includes('the games') ||
+        rawShift.name.toLowerCase().includes('turno 2'))
+    ) {
+      return { ...rawShift, capacity: 65, hasBases: true };
+    }
+
+    if (
+      selectedDayId === 'viernes' &&
+      rawShift.category !== 'MESA' &&
+      !rawShift.name.toLowerCase().includes('mesa') &&
+      (rawShift.hasBases ||
+        rawShift.id.includes('viernes') ||
+        rawShift.eventId === 'the-games' ||
+        rawShift.name.toLowerCase().includes('the games') ||
+        rawShift.name.toLowerCase().includes('turno 1'))
+    ) {
+      return { ...rawShift, capacity: 66, hasBases: true };
+    }
+
+    return rawShift;
+  }, [availableShifts, selectedShiftId, selectedDayId]);
 
   const handleDaySelect = (dayId: string) => {
     setSelectedDayId(dayId);
@@ -458,42 +486,32 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
     if (selectedDayId === 'jueves') {
       return THE_GAMES_JUEVES_BASES.map((b) => {
-        const custom = (bases || []).find(
-          (cb) => cb.isActive !== false &&
-            (String(cb.id) === String(b.id) || String(cb.baseNumber) === String(b.baseNumber))
-        );
-        const cap = custom?.gapCapacity || custom?.capacity || custom?.defaultCapacity || b.capacity || b.defaultCapacity;
         return {
           id: b.id,
           baseNumber: b.baseNumber || b.id,
-          baseLabel: custom?.baseLabel || b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
-          gameName: custom?.gameName || b.gameName,
-          name: custom?.name || b.name,
-          gapCapacity: cap,
-          defaultCapacity: cap,
-          suggestedCapacity: cap,
-          isSpecial: b.isSpecial || custom?.isSpecial,
+          baseLabel: b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
+          gameName: b.gameName,
+          name: b.name,
+          gapCapacity: b.defaultCapacity,
+          defaultCapacity: b.defaultCapacity,
+          suggestedCapacity: b.defaultCapacity,
+          isSpecial: b.isSpecial,
         };
       });
     }
 
     if (selectedDayId === 'viernes') {
       return THE_GAMES_VIERNES_BASES.map((b) => {
-        const custom = (bases || []).find(
-          (cb) => cb.isActive !== false &&
-            (String(cb.id) === String(b.id) || String(cb.baseNumber) === String(b.baseNumber))
-        );
-        const cap = custom?.gapCapacity || custom?.capacity || custom?.defaultCapacity || b.capacity || b.defaultCapacity;
         return {
           id: b.id,
           baseNumber: b.baseNumber || b.id,
-          baseLabel: custom?.baseLabel || b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
-          gameName: custom?.gameName || b.gameName,
-          name: custom?.name || b.name,
-          gapCapacity: cap,
-          defaultCapacity: cap,
-          suggestedCapacity: cap,
-          isSpecial: b.isSpecial || custom?.isSpecial,
+          baseLabel: b.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name),
+          gameName: b.gameName,
+          name: b.name,
+          gapCapacity: b.defaultCapacity,
+          defaultCapacity: b.defaultCapacity,
+          suggestedCapacity: b.defaultCapacity,
+          isSpecial: b.isSpecial,
         };
       });
     }
@@ -697,26 +715,41 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (foundInPhysical) {
         targetBase = foundInPhysical;
       } else {
-        const foundInConfig = (bases || []).find(
+        const foundInTheGames = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES].find(
           (b) => String(b.id) === String(baseId) || String(b.baseNumber) === String(baseId)
         );
-        if (foundInConfig) {
+        if (foundInTheGames) {
           targetBase = {
-            id: foundInConfig.id,
-            baseNumber: foundInConfig.baseNumber || foundInConfig.id,
-            name: foundInConfig.name,
-            defaultCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
-            suggestedCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
-            isSpecial: foundInConfig.isSpecial,
+            id: foundInTheGames.id,
+            baseNumber: foundInTheGames.baseNumber || foundInTheGames.id,
+            name: foundInTheGames.name,
+            defaultCapacity: foundInTheGames.defaultCapacity,
+            suggestedCapacity: foundInTheGames.defaultCapacity,
+            gapCapacity: foundInTheGames.defaultCapacity,
+            isSpecial: foundInTheGames.isSpecial,
           };
         } else {
-          targetBase = {
-            id: String(baseId),
-            baseNumber: baseId,
-            name: getBaseDisplayName(baseId),
-            defaultCapacity: 2,
-            suggestedCapacity: 2,
-          };
+          const foundInConfig = (bases || []).find(
+            (b) => String(b.id) === String(baseId) || String(b.baseNumber) === String(baseId)
+          );
+          if (foundInConfig) {
+            targetBase = {
+              id: foundInConfig.id,
+              baseNumber: foundInConfig.baseNumber || foundInConfig.id,
+              name: foundInConfig.name,
+              defaultCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
+              suggestedCapacity: foundInConfig.capacity || foundInConfig.defaultCapacity || 2,
+              isSpecial: foundInConfig.isSpecial,
+            };
+          } else {
+            targetBase = {
+              id: String(baseId),
+              baseNumber: baseId,
+              name: getBaseDisplayName(baseId),
+              defaultCapacity: 2,
+              suggestedCapacity: 2,
+            };
+          }
         }
       }
     }
@@ -790,10 +823,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     if (!modalBase && selectedBaseNumber === null) return false;
     const targetObj = modalBase || (selectedBaseNumber !== null
       ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
-         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
-         [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES, ...CARNIVAL_PHYSICAL_BASES].find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+         [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES].find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         CARNIVAL_PHYSICAL_BASES.find((b) => String(b.id) === String(selectedBaseNumber)) ||
+         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
       : null);
-    const maxCap = targetObj?.gapCapacity || targetObj?.capacity || targetObj?.defaultCapacity || 2;
+    const maxCap = targetObj?.defaultCapacity || targetObj?.gapCapacity || targetObj?.capacity || 2;
     return currentBaseOccupants.length >= maxCap;
   }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants, physicalBases, bases]);
 
@@ -2629,7 +2663,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]'
                         }`}
                       >
-                        {baseAssignments.length} / {base.defaultCapacity} GAP
+                        {baseAssignments.length} / {base.defaultCapacity} {selectedDayId === 'miercoles' ? 'GAP' : 'personas'}
                       </span>
                     </div>
 

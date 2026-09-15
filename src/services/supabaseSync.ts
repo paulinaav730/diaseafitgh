@@ -252,7 +252,7 @@ export async function pushBasesToSupabase(bases: any[]): Promise<boolean> {
 
       const baseLabel = b.baseLabel || carnivalBase?.baseLabel || gamesBase?.baseLabel || (b.baseNumber ? `BASE ${b.baseNumber}` : b.name);
       const gameName = b.gameName || carnivalBase?.gameName || gamesBase?.gameName || '';
-      const gapCap = b.gapCapacity || b.capacity || b.defaultCapacity || gamesBase?.defaultCapacity || carnivalBase?.gapCapacity || 2;
+      const gapCap = gamesBase ? gamesBase.defaultCapacity : (b.gapCapacity || b.capacity || b.defaultCapacity || carnivalBase?.gapCapacity || 2);
       const isSpec = b.isSpecial ?? (carnivalBase?.isSpecial || gamesBase?.isSpecial || false);
       const fullName = isCarnival ? (isSpec ? baseLabel : `${baseLabel} — ${gameName}`) : (b.name || gamesBase?.name);
 

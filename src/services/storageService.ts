@@ -601,13 +601,32 @@ export function initializeStorage(): void {
     // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 65 & 66
     let shiftsModified = false;
     shiftsCache = shiftsCache.map((s) => {
-      if (s.id === 'jueves-t2-gt' || (s.dayId === 'jueves' && s.name.toLowerCase().includes('the games'))) {
+      const isJuevesTheGames =
+        s.dayId === 'jueves' &&
+        (s.id === 'jueves-t2-gt' ||
+          s.id === 'jueves-t2' ||
+          s.hasBases ||
+          s.name.toLowerCase().includes('the games') ||
+          s.name.toLowerCase().includes('turno 2') ||
+          s.startTime === '13:00' ||
+          s.startTime === '12:30');
+      if (isJuevesTheGames) {
         if (!s.hasBases || s.capacity !== 65) {
           shiftsModified = true;
           return { ...s, hasBases: true, capacity: 65 };
         }
       }
-      if (s.id === 'viernes-gt' || (s.dayId === 'viernes' && (s.eventId === 'the-games' || s.name.toLowerCase().includes('the games')))) {
+      const isViernesTheGames =
+        s.dayId === 'viernes' &&
+        s.category !== 'MESA' &&
+        !s.name.toLowerCase().includes('mesa') &&
+        (s.id === 'viernes-gt' ||
+          s.id.includes('viernes') ||
+          s.hasBases ||
+          s.eventId === 'the-games' ||
+          s.name.toLowerCase().includes('the games') ||
+          s.name.toLowerCase().includes('turno 1'));
+      if (isViernesTheGames) {
         if (!s.hasBases || s.capacity !== 66) {
           shiftsModified = true;
           return { ...s, hasBases: true, capacity: 66 };
@@ -1303,7 +1322,7 @@ export async function assignPerson(
         resolvedBaseId = String(gBase.id);
         resolvedBaseNumber = gBase.baseNumber || gBase.id;
         resolvedBaseName = gBase.name;
-        maxCapacity = gBase.gapCapacity || gBase.capacity || gBase.defaultCapacity || 4;
+        maxCapacity = gBase.defaultCapacity;
       }
     } else if (dayId === 'viernes') {
       const gBase = THE_GAMES_VIERNES_BASES.find(
@@ -1319,7 +1338,7 @@ export async function assignPerson(
         resolvedBaseId = String(gBase.id);
         resolvedBaseNumber = gBase.baseNumber || gBase.id;
         resolvedBaseName = gBase.name;
-        maxCapacity = gBase.gapCapacity || gBase.capacity || gBase.defaultCapacity || 4;
+        maxCapacity = gBase.defaultCapacity;
       }
     }
 
@@ -1340,9 +1359,11 @@ export async function assignPerson(
       if (!resolvedBaseName) {
         resolvedBaseName = targetBaseObj.name;
       }
-      const customCap = targetBaseObj.gapCapacity || targetBaseObj.capacity || targetBaseObj.defaultCapacity;
-      if (customCap && customCap > 0) {
-        maxCapacity = customCap;
+      if (dayId !== 'jueves' && dayId !== 'viernes') {
+        const customCap = targetBaseObj.gapCapacity || targetBaseObj.capacity || targetBaseObj.defaultCapacity;
+        if (customCap && customCap > 0) {
+          maxCapacity = customCap;
+        }
       }
     } else {
       if (!resolvedBaseName && (resolvedBaseNumber !== undefined || resolvedBaseId)) {
@@ -2233,16 +2254,15 @@ export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
       (g) => g.id === b.id || (g.dayId === b.dayId && String(g.baseNumber) === String(b.baseNumber))
     );
     if (eg) {
-      const cap = Math.max(eg.defaultCapacity, b.defaultCapacity || 0, b.capacity || 0, b.gapCapacity || 0);
       return {
         ...b,
-        name: eg.name || b.name,
-        baseLabel: eg.baseLabel || b.baseLabel,
-        gameName: eg.gameName || b.gameName,
-        defaultCapacity: cap,
-        capacity: cap,
-        gapCapacity: cap,
-        suggestedCapacity: cap,
+        name: eg.name,
+        baseLabel: eg.baseLabel,
+        gameName: eg.gameName,
+        defaultCapacity: eg.defaultCapacity,
+        capacity: eg.defaultCapacity,
+        gapCapacity: eg.defaultCapacity,
+        suggestedCapacity: eg.defaultCapacity,
       };
     }
     return b;
@@ -2275,6 +2295,33 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
         ns.startTime = '13:00';
         ns.endTime = '21:00';
         ns.label = '1:00 p. m. a 9:00 p. m.';
+      }
+      const isJuevesTheGames =
+        ns.dayId === 'jueves' &&
+        (ns.id === 'jueves-t2-gt' ||
+          ns.id === 'jueves-t2' ||
+          ns.hasBases ||
+          ns.name.toLowerCase().includes('the games') ||
+          ns.name.toLowerCase().includes('turno 2') ||
+          ns.startTime === '13:00' ||
+          ns.startTime === '12:30');
+      if (isJuevesTheGames) {
+        ns.hasBases = true;
+        ns.capacity = 65;
+      }
+      const isViernesTheGames =
+        ns.dayId === 'viernes' &&
+        ns.category !== 'MESA' &&
+        !ns.name.toLowerCase().includes('mesa') &&
+        (ns.id === 'viernes-gt' ||
+          ns.id.includes('viernes') ||
+          ns.hasBases ||
+          ns.eventId === 'the-games' ||
+          ns.name.toLowerCase().includes('the games') ||
+          ns.name.toLowerCase().includes('turno 1'));
+      if (isViernesTheGames) {
+        ns.hasBases = true;
+        ns.capacity = 66;
       }
       shiftMap.set(ns.id, ns);
     }

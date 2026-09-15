@@ -81,18 +81,24 @@ export function getBaseDisplayName(base: number | string | undefined | null): st
 
   if (s.startsWith('games_jueves_')) {
     const num = Number(s.replace('games_jueves_', ''));
-    if (num === 13) return 'Base vivo';
-    if (num === 14) return 'Macro 1';
-    if (num === 15) return 'Macro 2';
-    return `BASE ${num}`;
+    if (num === 13) return 'Base 13 (Base vivo)';
+    if (num === 14) return 'Base 14 (Macro 1)';
+    if (num === 15) return 'Base 15 (Macro 2)';
+    return `Base ${num}`;
   }
   if (s.startsWith('games_viernes_')) {
     const num = Number(s.replace('games_viernes_', ''));
-    if (num === 28) return 'Bicis';
-    if (num === 29) return 'Macro 1';
-    if (num === 30) return 'Macro 2';
-    return `BASE ${num}`;
+    if (num === 28) return 'Base 28 (Bicis)';
+    if (num === 29) return 'Base 29 (Macro 1)';
+    if (num === 30) return 'Base 30 (Macro 2)';
+    return `Base ${num}`;
   }
+  if (s === '13' || s === 'base_13') return 'Base 13 (Base vivo)';
+  if (s === '14' || s === 'base_14') return 'Base 14 (Macro 1)';
+  if (s === '15' || s === 'base_15') return 'Base 15 (Macro 2)';
+  if (s === '28' || s === 'base_28') return 'Base 28 (Bicis)';
+  if (s === '29' || s === 'base_29') return 'Base 29 (Macro 1)';
+  if (s === '30' || s === 'base_30') return 'Base 30 (Macro 2)';
 
   const match = s.match(/^carnival_(\d+)$/i);
   if (match) {
@@ -153,9 +159,9 @@ export const THE_GAMES_JUEVES_BASES: ConfigurableBase[] = [
   { id: 'games_jueves_10', name: 'Base 10', baseLabel: 'BASE 10', baseNumber: '10', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 10 },
   { id: 'games_jueves_11', name: 'Base 11', baseLabel: 'BASE 11', baseNumber: '11', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 11 },
   { id: 'games_jueves_12', name: 'Base 12', baseLabel: 'BASE 12', baseNumber: '12', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 12 },
-  { id: 'games_jueves_13', name: 'Base 13 — Base vivo', baseLabel: 'BASE 13', gameName: 'Base vivo', baseNumber: '13', defaultCapacity: 3, capacity: 3, gapCapacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 13 },
-  { id: 'games_jueves_14', name: 'Base 14 — Macro 1', baseLabel: 'BASE 14', gameName: 'Macro 1', baseNumber: '14', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 14 },
-  { id: 'games_jueves_15', name: 'Base 15 — Macro 2', baseLabel: 'BASE 15', gameName: 'Macro 2', baseNumber: '15', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 15 },
+  { id: 'games_jueves_13', name: 'Base 13 (Base vivo)', baseLabel: 'BASE 13', gameName: 'Base vivo', baseNumber: '13', defaultCapacity: 3, capacity: 3, gapCapacity: 3, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 13 },
+  { id: 'games_jueves_14', name: 'Base 14 (Macro 1)', baseLabel: 'BASE 14', gameName: 'Macro 1', baseNumber: '14', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 14 },
+  { id: 'games_jueves_15', name: 'Base 15 (Macro 2)', baseLabel: 'BASE 15', gameName: 'Macro 2', baseNumber: '15', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 15 },
 ];
 
 // 15 Physical Bases for The Games (Viernes: Bases 16 a 30)
@@ -172,9 +178,9 @@ export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = [
   { id: 'games_viernes_25', name: 'Base 25', baseLabel: 'BASE 25', baseNumber: '25', defaultCapacity: 6, capacity: 6, gapCapacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 25 },
   { id: 'games_viernes_26', name: 'Base 26', baseLabel: 'BASE 26', baseNumber: '26', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 26 },
   { id: 'games_viernes_27', name: 'Base 27', baseLabel: 'BASE 27', baseNumber: '27', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 27 },
-  { id: 'games_viernes_28', name: 'Base 28 — Bicis', baseLabel: 'BASE 28', gameName: 'Bicis', baseNumber: '28', defaultCapacity: 2, capacity: 2, gapCapacity: 2, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28 },
-  { id: 'games_viernes_29', name: 'Base 29 — Macro 1', baseLabel: 'BASE 29', gameName: 'Macro 1', baseNumber: '29', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 29 },
-  { id: 'games_viernes_30', name: 'Base 30 — Macro 2', baseLabel: 'BASE 30', gameName: 'Macro 2', baseNumber: '30', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 30 },
+  { id: 'games_viernes_28', name: 'Base 28 (Bicis)', baseLabel: 'BASE 28', gameName: 'Bicis', baseNumber: '28', defaultCapacity: 2, capacity: 2, gapCapacity: 2, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28 },
+  { id: 'games_viernes_29', name: 'Base 29 (Macro 1)', baseLabel: 'BASE 29', gameName: 'Macro 1', baseNumber: '29', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 29 },
+  { id: 'games_viernes_30', name: 'Base 30 (Macro 2)', baseLabel: 'BASE 30', gameName: 'Macro 2', baseNumber: '30', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 30 },
 ];
 
 export const THE_GAMES_PHYSICAL_BASES: ConfigurableBase[] = [
