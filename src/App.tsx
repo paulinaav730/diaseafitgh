@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Person,
   Assignment,
@@ -10,6 +10,7 @@ import {
   AppEvent,
   ConfigurableShift,
   ConfigurableBase,
+  isPersonShirtFullyDelivered,
 } from './types';
 import {
   subscribeToPeople,
@@ -31,6 +32,7 @@ import { ConfigurationView } from './components/ConfigurationView';
 import { AvailabilityView } from './components/AvailabilityView';
 import { AttendanceView } from './components/AttendanceView';
 import { FoodView } from './components/FoodView';
+import { ShirtsView } from './components/ShirtsView';
 import { SettingsModal } from './components/SettingsModal';
 import { StaffMyDiasView } from './components/StaffMyDiasView';
 import { LoginModal } from './components/LoginModal';
@@ -178,6 +180,13 @@ export default function App() {
     setIsAuthModalOpen(true);
   };
 
+  // Conteo de personas activas con entrega de camiseta pendiente
+  const pendingShirtsCount = useMemo(() => {
+    return people.filter(
+      (p) => p.isActive !== false && !isPersonShirtFullyDelivered(p)
+    ).length;
+  }, [people]);
+
   return (
     <div className="min-h-screen bg-[#FBF8EE] text-[#182535] flex flex-col selection:bg-[#B83A24] selection:text-white font-montserrat">
       {/* Top Navigation */}
@@ -187,6 +196,7 @@ export default function App() {
         peopleCount={people.length}
         functionsCount={functions.length}
         shiftsCount={shifts.length}
+        pendingShirtsCount={pendingShirtsCount}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         currentUser={currentUser}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -296,6 +306,10 @@ export default function App() {
                 shifts={shifts}
                 events={events}
               />
+            )}
+
+            {currentTab === 'shirts' && (
+              <ShirtsView people={people} />
             )}
           </>
         ) : (

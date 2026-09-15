@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Person, Assignment, AttendanceRecord, ConfigurableShift, AppEvent, ConfigurableBase } from '../types';
+import {
+  Person,
+  Assignment,
+  AttendanceRecord,
+  ConfigurableShift,
+  AppEvent,
+  ConfigurableBase,
+  getPersonShirtQuota,
+  getPersonShirtDeliveredCount,
+  isPersonShirtFullyDelivered,
+} from '../types';
 import { DiasSpartanLogo } from './DiasSpartanLogo';
 import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import {
@@ -13,6 +23,7 @@ import {
   LogOut,
   ShieldCheck,
   Award,
+  Shirt,
 } from 'lucide-react';
 
 interface StaffMyDiasViewProps {
@@ -236,8 +247,33 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
             </span>
           </div>
           <div>
-            <span className="text-[#64748B] text-[11px] block">Talla Camiseta</span>
-            <span className="font-bold text-[#182535] text-sm">{person.shirtSize || 'No registrada'}</span>
+            <span className="text-[#64748B] text-[11px] block flex items-center gap-1">
+              <Shirt className="w-3 h-3 text-[#B83A24]" />
+              Camiseta Oficial
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span className="font-bold text-[#182535] text-sm">
+                Talla {person.shirtSize || 'M'}
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#FEF8EC] text-[#B83A24] border border-[#E5A12E]/40 font-mono">
+                {getPersonShirtQuota(person)} {getPersonShirtQuota(person) === 2 ? 'camisetas' : 'camiseta'}
+              </span>
+            </div>
+            <div className="mt-1">
+              {isPersonShirtFullyDelivered(person) ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                  <CheckCircle2 className="w-3 h-3" /> Entregada ({getPersonShirtDeliveredCount(person)}/{getPersonShirtQuota(person)})
+                </span>
+              ) : getPersonShirtDeliveredCount(person) > 0 ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
+                  <Clock className="w-3 h-3" /> Parcial ({getPersonShirtDeliveredCount(person)}/{getPersonShirtQuota(person)})
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#64748B] bg-[#FAF6EC] px-1.5 py-0.5 rounded-md border border-[#EADDC7]">
+                  <Clock className="w-3 h-3 text-amber-600" /> Pendiente entrega
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <span className="text-[#64748B] text-[11px] block">Alergias Alimentarias</span>

@@ -72,6 +72,10 @@ export function personToPostgres(p: Person) {
       p.alsoActsAsGap ? `[DUAL_GAP${p.gapRoleDescription ? ':' + p.gapRoleDescription : ''}]` : '',
       p.foodAllergies && p.foodAllergies !== 'Ninguna' ? `[ALLERGIES:${p.foodAllergies}]` : '',
       p.medicalConditions && p.medicalConditions !== 'Ninguna' ? `[CONDITIONS:${p.medicalConditions}]` : '',
+      typeof p.shirtDeliveredCount === 'number' ? `[SHIRT_COUNT:${p.shirtDeliveredCount}]` : p.shirtDelivered ? `[SHIRT_COUNT:${p.primaryType === 'MESA' ? 2 : 1}]` : '',
+      p.shirtDeliveredAt ? `[SHIRT_DATE:${p.shirtDeliveredAt}]` : '',
+      p.shirtDeliveredBy ? `[SHIRT_BY:${encodeURIComponent(p.shirtDeliveredBy)}]` : '',
+      p.shirtDeliveryNotes ? `[SHIRT_NOTES:${encodeURIComponent(p.shirtDeliveryNotes)}]` : '',
     ].filter(Boolean).join(' ').trim(),
     updated_at: new Date().toISOString(),
   };
@@ -88,9 +92,17 @@ export function postgresToPerson(r: any): Person {
     typeof r.notes === 'string' ? r.notes.match(/\[ALLERGIES:([^\]]+)\]/)?.[1] : undefined;
   const extractedConditions =
     typeof r.notes === 'string' ? r.notes.match(/\[CONDITIONS:([^\]]+)\]/)?.[1] : undefined;
+  const extractedShirtCount =
+    typeof r.notes === 'string' ? r.notes.match(/\[SHIRT_COUNT:(\d+)\]/)?.[1] : undefined;
+  const extractedShirtDate =
+    typeof r.notes === 'string' ? r.notes.match(/\[SHIRT_DATE:([^\]]+)\]/)?.[1] : undefined;
+  const extractedShirtBy =
+    typeof r.notes === 'string' ? r.notes.match(/\[SHIRT_BY:([^\]]+)\]/)?.[1] : undefined;
+  const extractedShirtNotes =
+    typeof r.notes === 'string' ? r.notes.match(/\[SHIRT_NOTES:([^\]]+)\]/)?.[1] : undefined;
   const cleanNotes =
     typeof r.notes === 'string'
-      ? r.notes.replace(/\[(DUAL_GAP|ALLERGIES|CONDITIONS)[^\]]*\]/g, '').trim()
+      ? r.notes.replace(/\[(DUAL_GAP|ALLERGIES|CONDITIONS|SHIRT_COUNT|SHIRT_DATE|SHIRT_BY|SHIRT_NOTES)[^\]]*\]/g, '').trim()
       : '';
 
   const rawPrimaryType = r.primary_type;
@@ -125,6 +137,11 @@ export function postgresToPerson(r: any): Person {
     functions: r.functions || [],
     roleTitle: r.role_title || 'Staff',
     shirtSize: r.shirt_size || 'M',
+    shirtDeliveredCount: extractedShirtCount !== undefined ? parseInt(extractedShirtCount, 10) : undefined,
+    shirtDelivered: extractedShirtCount !== undefined ? parseInt(extractedShirtCount, 10) >= (resolvedPrimaryType === 'MESA' ? 2 : 1) : false,
+    shirtDeliveredAt: extractedShirtDate || undefined,
+    shirtDeliveredBy: extractedShirtBy ? decodeURIComponent(extractedShirtBy) : undefined,
+    shirtDeliveryNotes: extractedShirtNotes ? decodeURIComponent(extractedShirtNotes) : undefined,
     foodAllergies: r.food_allergies || extractedAllergies || 'Ninguna',
     dietaryRestrictions: r.dietary_restrictions || 'Ninguna',
     medicalConditions: r.medical_conditions || extractedConditions || 'Ninguna',

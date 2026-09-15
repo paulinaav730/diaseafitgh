@@ -92,6 +92,11 @@ export interface Person {
   functions?: string[]; // Multiple functions: e.g. ["Montaje", "Apoyo logístico"]
   roleTitle?: string; // e.g. "Coordinador", "Líder de Base", "Staff"
   shirtSize?: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | string; // Talla de camiseta
+  shirtDelivered?: boolean; // Estado de entrega de camisetas (true si se completó la cuota)
+  shirtDeliveredCount?: number; // Cantidad de camisetas entregadas (MESA: 0, 1 o 2; GT/GAP: 0 o 1)
+  shirtDeliveredAt?: string; // Fecha y hora ISO de la entrega
+  shirtDeliveredBy?: string; // Nombre o identificador de quién entregó la(s) camiseta(s)
+  shirtDeliveryNotes?: string; // Observaciones de entrega (ej. cambio de talla, etc.)
   foodAllergies?: string; // Alergias alimentarias (ej. Maní, Mariscos, Ninguna)
   dietaryRestrictions?: string; // Restricción de comidas (ej. Vegetariana, Vegana, Celíaca, Ninguna)
   medicalConditions?: string; // Algún tipo de enfermedad o condición médica (ej. Asma, Diabetes, Ninguna)
@@ -99,6 +104,37 @@ export interface Person {
   isActive?: boolean;
   createdAt: string;
   updatedAt?: string;
+}
+
+/**
+ * Regla oficial DÍAS 2026:
+ * MESA recibe 2 camisetas ("MESA SON DOS")
+ * GT y GAP reciben 1 camiseta
+ */
+export function getPersonShirtQuota(p: Person): number {
+  return p.primaryType === 'MESA' ? 2 : 1;
+}
+
+/**
+ * Obtiene la cantidad de camisetas efectivamente entregadas a una persona
+ */
+export function getPersonShirtDeliveredCount(p: Person): number {
+  if (typeof p.shirtDeliveredCount === 'number') {
+    return Math.max(0, p.shirtDeliveredCount);
+  }
+  if (p.shirtDelivered) {
+    return getPersonShirtQuota(p);
+  }
+  return 0;
+}
+
+/**
+ * Verifica si la entrega de camisetas de una persona está completa al 100%
+ */
+export function isPersonShirtFullyDelivered(p: Person): boolean {
+  const quota = getPersonShirtQuota(p);
+  const delivered = getPersonShirtDeliveredCount(p);
+  return delivered >= quota;
 }
 
 export function getEffectivePersonType(p: Person): PersonType {

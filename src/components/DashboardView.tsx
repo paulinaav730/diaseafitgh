@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
+  Shirt,
 } from 'lucide-react';
 import { TabType } from './Navbar';
 import { exportPeopleToExcel } from '../services/excelService';
@@ -342,6 +343,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             <Utensils className="w-4 h-4 text-[#64748B]" />
             <span>Alimentación</span>
+          </button>
+
+          {/* Camisetas */}
+          <button
+            onClick={() => onNavigate('shirts')}
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FEF8EC] hover:bg-[#FDF0D5] text-[#B83A24] border border-[#E5A12E]/40 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+          >
+            <Shirt className="w-4 h-4 text-[#B83A24]" />
+            <span>Camisetas (MESA x2)</span>
           </button>
 
           {/* Cobertura */}

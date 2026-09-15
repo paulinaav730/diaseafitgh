@@ -9,6 +9,8 @@ import {
   ConfigurableShift,
   ConfigurableBase,
   PhysicalBase,
+  getPersonShirtQuota,
+  getPersonShirtDeliveredCount,
 } from '../types';
 import { ExcelMaestroParsedRow } from './excelService';
 import {
@@ -805,6 +807,74 @@ export async function addPerson(
 export async function updatePerson(id: string, updates: Partial<Person>): Promise<void> {
   initializeStorage();
   peopleCache = peopleCache.map((p) => (p.id === id ? { ...p, ...updates } : p));
+  localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
+  peopleListeners.forEach((fn) => fn([...peopleCache]));
+}
+
+/**
+ * Actualiza el conteo y estado de entrega de camiseta(s) para una persona.
+ * Para MESA, el cupo son 2 camisetas; para GT/GAP es 1 camiseta.
+ */
+export async function updatePersonShirtDelivery(
+  personId: string,
+  deliveredCount: number,
+  notes?: string,
+  deliveredBy?: string
+): Promise<void> {
+  initializeStorage();
+  const person = peopleCache.find((p) => p.id === personId);
+  if (!person) return;
+
+  const quota = getPersonShirtQuota(person);
+  const clampedCount = Math.max(0, Math.min(quota, deliveredCount));
+  const isFullyDelivered = clampedCount >= quota;
+
+  const updates: Partial<Person> = {
+    shirtDeliveredCount: clampedCount,
+    shirtDelivered: isFullyDelivered,
+    shirtDeliveredAt: clampedCount > 0 ? new Date().toISOString() : undefined,
+    ...(notes !== undefined ? { shirtDeliveryNotes: notes } : {}),
+    ...(deliveredBy !== undefined ? { shirtDeliveredBy: deliveredBy } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await updatePerson(personId, updates);
+}
+
+/**
+ * Actualiza la talla de camiseta de una persona
+ */
+export async function updatePersonShirtSize(personId: string, newSize: string): Promise<void> {
+  await updatePerson(personId, {
+    shirtSize: newSize,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Actualización masiva del estado de entrega de camisetas
+ */
+export async function batchUpdateShirtDelivery(
+  personIds: string[],
+  setDelivered: boolean
+): Promise<void> {
+  initializeStorage();
+  const now = new Date().toISOString();
+  const idsSet = new Set(personIds);
+
+  peopleCache = peopleCache.map((p) => {
+    if (!idsSet.has(p.id)) return p;
+    const quota = getPersonShirtQuota(p);
+    const count = setDelivered ? quota : 0;
+    return {
+      ...p,
+      shirtDeliveredCount: count,
+      shirtDelivered: setDelivered,
+      shirtDeliveredAt: setDelivered ? now : undefined,
+      updatedAt: now,
+    };
+  });
+
   localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
   peopleListeners.forEach((fn) => fn([...peopleCache]));
 }

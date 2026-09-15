@@ -1,5 +1,14 @@
 import * as XLSX from 'xlsx';
-import { Person, PersonType, GtSubTeam, ConfigurableShift, AvailabilityRecord } from '../types';
+import {
+  Person,
+  PersonType,
+  GtSubTeam,
+  ConfigurableShift,
+  AvailabilityRecord,
+  getPersonShirtQuota,
+  getPersonShirtDeliveredCount,
+  isPersonShirtFullyDelivered,
+} from '../types';
 
 export interface RecognizedShiftMatch {
   shiftId: string; // The official UUID / turn_id
@@ -1164,3 +1173,149 @@ export function downloadExcelTemplate(): void {
 export function exportPeopleToExcel(people: Person[]): void {
   exportPeopleToOfficialExcel(people, [], []);
 }
+
+/**
+ * Exporta reporte oficial de control e inventario de camisetas DÍAS 2026
+ * Aplica regla: MESA SON DOS CAMISETAS, GT/GAP 1 CAMISETA
+ */
+export function exportShirtDeliveryExcel(people: Person[]): void {
+  const activePeople = people.filter((p) => p.isActive !== false);
+
+  // 1. Sheet: LISTADO DETALLADO
+  const detailedRows = activePeople.map((p) => {
+    const quota = getPersonShirtQuota(p);
+    const delivered = getPersonShirtDeliveredCount(p);
+    const isComplete = delivered >= quota;
+    const isPartial = delivered > 0 && delivered < quota;
+    const statusText = isComplete
+      ? 'ENTREGADO COMPLETO'
+      : isPartial
+      ? `PARCIAL (${delivered}/${quota})`
+      : 'PENDIENTE';
+
+    return {
+      Documento: p.documentId,
+      'Nombre Completo': p.fullName || p.name,
+      Usuario: p.username || '',
+      'Tipo / Grupo': p.primaryType,
+      'Subequipo / Rol':
+        p.primaryType === 'GT'
+          ? p.gtTeams?.join(', ') || p.gtSubTeam || 'GT'
+          : p.roleTitle || p.primaryType,
+      'Talla de Camiseta': p.shirtSize || 'M',
+      'Cuota Asignada': quota,
+      'Camisetas Entregadas': delivered,
+      'Camisetas Pendientes': Math.max(0, quota - delivered),
+      'Estado de Entrega': statusText,
+      'Fecha y Hora de Entrega': p.shirtDeliveredAt
+        ? new Date(p.shirtDeliveredAt).toLocaleString('es-CO')
+        : 'Sin entregar',
+      'Entregado Por': p.shirtDeliveredBy || '',
+      Observaciones: p.shirtDeliveryNotes || '',
+    };
+  });
+
+  // 2. Sheet: RESUMEN POR TALLA
+  const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const allSizesFound = Array.from(
+    new Set(activePeople.map((p) => (p.shirtSize || 'M').trim().toUpperCase()))
+  );
+  const sortedSizes = [
+    ...standardSizes.filter((s) => allSizesFound.includes(s)),
+    ...allSizesFound.filter((s) => !standardSizes.includes(s)),
+  ];
+
+  const sizeSummaryRows = sortedSizes.map((size) => {
+    const peopleWithSize = activePeople.filter(
+      (p) => (p.shirtSize || 'M').trim().toUpperCase() === size
+    );
+
+    const mesaPeople = peopleWithSize.filter((p) => p.primaryType === 'MESA');
+    const gtPeople = peopleWithSize.filter((p) => p.primaryType === 'GT');
+    const gapPeople = peopleWithSize.filter((p) => p.primaryType === 'GAP');
+
+    const mesaShirts = mesaPeople.length * 2;
+    const gtShirts = gtPeople.length * 1;
+    const gapShirts = gapPeople.length * 1;
+    const totalRequired = mesaShirts + gtShirts + gapShirts;
+
+    const totalDelivered = peopleWithSize.reduce(
+      (acc, p) => acc + getPersonShirtDeliveredCount(p),
+      0
+    );
+    const totalPending = Math.max(0, totalRequired - totalDelivered);
+    const pct = totalRequired > 0 ? Math.round((totalDelivered / totalRequired) * 100) : 0;
+
+    return {
+      'Talla de Camiseta': size,
+      'Personas con esta Talla': peopleWithSize.length,
+      'Total Camisas Requeridas': totalRequired,
+      'Camisas MESA (2 c/u)': mesaShirts,
+      'Camisas GT (1 c/u)': gtShirts,
+      'Camisas GAP (1 c/u)': gapShirts,
+      'Camisas Entregadas': totalDelivered,
+      'Camisas Pendientes': totalPending,
+      '% Entregado': `${pct}%`,
+    };
+  });
+
+  // 3. Sheet: RESUMEN POR GRUPO
+  const mesaAll = activePeople.filter((p) => p.primaryType === 'MESA');
+  const gtAll = activePeople.filter((p) => p.primaryType === 'GT');
+  const gapAll = activePeople.filter((p) => p.primaryType === 'GAP');
+
+  const groups = [
+    { name: 'MESA (2 camisas c/u)', list: mesaAll, quotaPerPerson: 2 },
+    { name: 'GT - GRUPO DE TRABAJO (1 camisa c/u)', list: gtAll, quotaPerPerson: 1 },
+    { name: 'GAP - GRUPO DE APOYO (1 camisa c/u)', list: gapAll, quotaPerPerson: 1 },
+  ];
+
+  const groupSummaryRows = groups.map((g) => {
+    const totalReq = g.list.length * g.quotaPerPerson;
+    const totalDel = g.list.reduce((acc, p) => acc + getPersonShirtDeliveredCount(p), 0);
+    const totalPen = Math.max(0, totalReq - totalDel);
+    const pct = totalReq > 0 ? Math.round((totalDel / totalReq) * 100) : 0;
+
+    return {
+      Grupo: g.name,
+      'Total Integrantes': g.list.length,
+      'Cuota por Integrante': g.quotaPerPerson,
+      'Total Camisas Requeridas': totalReq,
+      'Total Camisas Entregadas': totalDel,
+      'Total Camisas Pendientes': totalPen,
+      '% de Avance': `${pct}%`,
+    };
+  });
+
+  // Totales generales
+  const grandTotalReq = groupSummaryRows.reduce((a, b) => a + b['Total Camisas Requeridas'], 0);
+  const grandTotalDel = groupSummaryRows.reduce((a, b) => a + b['Total Camisas Entregadas'], 0);
+  const grandTotalPen = Math.max(0, grandTotalReq - grandTotalDel);
+  const grandPct = grandTotalReq > 0 ? Math.round((grandTotalDel / grandTotalReq) * 100) : 0;
+
+  groupSummaryRows.push({
+    Grupo: 'TOTAL GENERAL DÍAS 2026',
+    'Total Integrantes': activePeople.length,
+    'Cuota por Integrante': 0,
+    'Total Camisas Requeridas': grandTotalReq,
+    'Total Camisas Entregadas': grandTotalDel,
+    'Total Camisas Pendientes': grandTotalPen,
+    '% de Avance': `${grandPct}%`,
+  });
+
+  const workbook = XLSX.utils.book_new();
+
+  const wsList = XLSX.utils.json_to_sheet(detailedRows);
+  const wsSizes = XLSX.utils.json_to_sheet(sizeSummaryRows);
+  const wsGroups = XLSX.utils.json_to_sheet(groupSummaryRows);
+
+  XLSX.utils.book_append_sheet(workbook, wsList, 'LISTADO DE ENTREGA');
+  XLSX.utils.book_append_sheet(workbook, wsSizes, 'INVENTARIO POR TALLA');
+  XLSX.utils.book_append_sheet(workbook, wsGroups, 'RESUMEN POR GRUPO');
+
+  XLSX.writeFile(
+    workbook,
+    `CONTROL_CAMISETAS_DIAS_2026_${new Date().toISOString().split('T')[0]}.xlsx`
+  );
+}
+

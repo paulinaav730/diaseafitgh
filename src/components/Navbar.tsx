@@ -21,6 +21,7 @@ import {
   Flame,
   Tag,
   Layers,
+  Shirt,
 } from 'lucide-react';
 import { CurrentUser } from '../types';
 import { DiasSpartanLogo } from './DiasSpartanLogo';
@@ -33,7 +34,8 @@ export type TabType =
   | 'functions'
   | 'availability'
   | 'attendance'
-  | 'food';
+  | 'food'
+  | 'shirts';
 
 interface NavbarProps {
   currentTab: TabType;
@@ -41,6 +43,7 @@ interface NavbarProps {
   peopleCount: number;
   functionsCount?: number;
   shiftsCount?: number;
+  pendingShirtsCount?: number;
   onOpenSettings: () => void;
   currentUser: CurrentUser | null;
   onOpenAuthModal: () => void;
@@ -61,6 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   peopleCount,
   functionsCount,
   shiftsCount,
+  pendingShirtsCount,
   onOpenSettings,
   currentUser,
   onOpenAuthModal,
@@ -94,6 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'availability', label: 'Disponibilidad', icon: Clock },
     { id: 'attendance', label: 'Control en Vivo', icon: Radio },
     { id: 'food', label: 'Alimentación', icon: Utensils },
+    { id: 'shirts', label: 'Camisetas', icon: Shirt, badge: pendingShirtsCount },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
