@@ -915,35 +915,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       const isGt = effectiveType === 'GT';
       const isPersonActive = person.isActive !== false;
 
-      // When a specific requirement explicitly specifies MESA, only MESA members match
-      if (isMesaRequirement && !isMesa) {
-        return {
-          person,
-          isPersonActive,
-          isAlreadyAssigned: false,
-          conflictingAssignment: undefined,
-          isAvailableInShift: false,
-          carnivalContinuityConflict: false,
-          priorCarnivalBaseName: undefined,
-          isCategoryAllowedForGap: false,
-          isCategoryAllowedForGt: false,
-          isCategoryAllowedForMesa: false,
-          isEligibleForGap: false,
-          isEligibleForGt: false,
-          isEligibleForMesa: false,
-          matchesRequirementGroup: false,
-          matchingFunctionsList: [],
-        };
-      }
-
       // 1. Group / Subteam matching for requirements:
       let matchesRequirementGroup = true;
+      let isDirectSubteamMatch = false;
       if (activeRequirement) {
         if (activeRequirement.groupType === 'MESA') {
           matchesRequirementGroup = isMesa;
         } else if (activeRequirement.groupType === 'GT') {
-          const matchesSub = matchesGtSubTeam(person, activeRequirement.gtSubTeam);
-          matchesRequirementGroup = (isGt || isMesa) && matchesSub;
+          isDirectSubteamMatch = matchesGtSubTeam(person, activeRequirement.gtSubTeam);
+          // Any active GT member (or MESA) can be assigned to fulfill a GT requirement
+          matchesRequirementGroup = isGt || isMesa;
         } else if (activeRequirement.groupType === 'GAP') {
           matchesRequirementGroup =
             effectiveType === 'GAP' || (isGt && Boolean(person.alsoActsAsGap));
@@ -959,6 +940,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           a.dayId === selectedDayId &&
           a.shiftId === activeShift.id
       );
+
+      // Total assignments count across the week and today
+      const totalAssignmentsCount = assignments.filter((a) => a.personId === person.id).length;
+      const dayAssignmentsCount = assignments.filter(
+        (a) => a.personId === person.id && a.dayId === selectedDayId
+      ).length;
 
       // 3. Overlapping shift conflict on the same day:
       // Note: Thursday morning T1 (06:00-12:00) and afternoon T2 (13:00-21:00) do NOT overlap
@@ -1022,15 +1009,17 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             const isT1 = (sid: string) =>
               sid === 'jueves-t1' ||
               sid === 'shift_jueves_gt_mtrxjh9q_r2t' ||
-              /(?:t1|turno\s*1)/i.test(sid);
+              /(?:t1|turno\s*1|mañana|challenge)/i.test(sid);
             const isT2 = (sid: string) =>
               sid === 'jueves-t2' ||
               sid === 'jueves-t2-gt' ||
               sid === 'shift_jueves_mtqcifm4_nt5' ||
               sid === 'shift_jueves_gap_mtrxwlwl_l9j' ||
-              /(?:t2|turno\s*2)/i.test(sid);
+              /(?:t2|turno\s*2|games|tarde|pm)/i.test(sid);
 
-            if (isT1(activeShift.id) && availRecord.shiftIds.some(isT1)) {
+            if (availRecord.shiftIds.some((sid) => sid === 'jueves' || /(?:todo|all|completo)/i.test(sid))) {
+              isAvailableInShift = true;
+            } else if (isT1(activeShift.id) && availRecord.shiftIds.some(isT1)) {
               isAvailableInShift = true;
             } else if (isT2(activeShift.id) && availRecord.shiftIds.some(isT2)) {
               isAvailableInShift = true;
@@ -1039,7 +1028,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
           // Check Viernes aliases
           if (selectedDayId === 'viernes') {
-            if (availRecord.shiftIds.some((sid) => sid === 'viernes-gt' || sid === 'viernes-gap')) {
+            if (availRecord.shiftIds.some((sid) => sid === 'viernes' || sid === 'viernes-gt' || sid === 'viernes-gap' || /(?:viernes|games|todo|all|completo)/i.test(sid))) {
               isAvailableInShift = true;
             }
           }
@@ -1172,13 +1161,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // - is GT or MESA (MESA participates in GT shifts / Turno MESA with GT logic)
       let isCategoryAllowedForGt = false;
       if (isGt || isMesa) {
-        if (activeRequirement && activeRequirement.groupType === 'GT' && activeRequirement.gtSubTeam) {
-          if (matchesGtSubTeam(person, activeRequirement.gtSubTeam)) {
-            isCategoryAllowedForGt = true;
-          }
-        } else {
-          isCategoryAllowedForGt = true;
-        }
+        isCategoryAllowedForGt = true;
       }
 
       // MESA Eligibility:
@@ -1213,9 +1196,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         !isAlreadyAssigned &&
         !conflictingAssignment;
 
-      const isEligibleForGap = baseAvailable && isCategoryAllowedForGap && matchesRequirementGroup && matchesFunctions;
-      const isEligibleForGt = baseAvailable && isCategoryAllowedForGt && matchesRequirementGroup && matchesFunctions;
-      const isEligibleForMesa = baseAvailable && isCategoryAllowedForMesa && matchesRequirementGroup && matchesFunctions;
+      // Tab eligibility: who qualifies for GAP, GT, and MESA respectively among unassigned people
+      const isEligibleForGap = baseAvailable && isCategoryAllowedForGap;
+      const isEligibleForGt = baseAvailable && isCategoryAllowedForGt;
+      const isEligibleForMesa = baseAvailable && isCategoryAllowedForMesa;
 
       return {
         person,
@@ -1233,6 +1217,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         isEligibleForMesa,
         matchesRequirementGroup,
         matchingFunctionsList,
+        isDirectSubteamMatch,
+        totalAssignmentsCount,
+        dayAssignmentsCount,
       };
     });
   }, [
@@ -1250,20 +1237,43 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   ]);
 
   const gapCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGap && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
-  }, [candidatePool]);
+    const withAvail = candidatePool.filter((c) => c.isEligibleForGap && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+    if (withAvail > 0 || showOnlyAvailableInModal) return withAvail;
+    return candidatePool.filter((c) => c.isEligibleForGap && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   const gtCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForGt && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
-  }, [candidatePool]);
+    const withAvail = candidatePool.filter((c) => c.isEligibleForGt && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+    if (withAvail > 0 || showOnlyAvailableInModal) return withAvail;
+    return candidatePool.filter((c) => c.isEligibleForGt && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   const mesaCandidatesCount = useMemo(() => {
-    return candidatePool.filter((c) => c.isEligibleForMesa && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
-  }, [candidatePool]);
+    const withAvail = candidatePool.filter((c) => c.isEligibleForMesa && c.isAvailableInShift && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+    if (withAvail > 0 || showOnlyAvailableInModal) return withAvail;
+    return candidatePool.filter((c) => c.isEligibleForMesa && !c.isAlreadyAssigned && !c.conflictingAssignment).length;
+  }, [candidatePool, showOnlyAvailableInModal]);
 
   // Filter candidates based on active requirement or active tab [GAP] vs [GT] vs [MESA]
   const filteredCandidates = useMemo(() => {
     const q = candidateSearchQuery.trim().toLowerCase();
+
+    // Check how many have exact registered availability in the active tab [GAP] vs [GT] vs [MESA]
+    const availableInShiftCount = candidatePool.filter(
+      (c) =>
+        c.isPersonActive &&
+        !c.isAlreadyAssigned &&
+        !c.conflictingAssignment &&
+        c.isAvailableInShift &&
+        (baseAssignTab === 'MESA'
+          ? c.isEligibleForMesa
+          : baseAssignTab === 'GAP'
+          ? c.isEligibleForGap
+          : c.isEligibleForGt)
+    ).length;
+
+    // Enforce shift availability ONLY if toggled on, no active search query, and there are actually available candidates registered
+    const enforceShiftAvailability = showOnlyAvailableInModal && !q && availableInShiftCount > 0;
 
     return candidatePool.filter((c) => {
       // Must be active
@@ -1272,32 +1282,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       // Exclude already assigned in THIS shift or real shift overlap conflict
       if (c.isAlreadyAssigned || c.conflictingAssignment) return false;
 
-      // Must have registered exact availability in this shift (strictly exclude unavailable persons)
-      if (!c.isAvailableInShift) return false;
+      // Availability filter
+      if (enforceShiftAvailability && !c.isAvailableInShift) return false;
 
-      // Filter by requirement or active Tab [GAP] vs [GT] vs [MESA]
-      if (activeRequirement) {
-        if (!c.matchesRequirementGroup) return false;
-        if (activeRequirement.groupType === 'MESA') {
-          if (!c.isEligibleForMesa) return false;
-        } else if (activeRequirement.groupType === 'GT') {
-          if (!c.isEligibleForGt) return false;
-        } else if (activeRequirement.groupType === 'GAP') {
-          if (!c.isEligibleForGap) return false;
-        }
+      // Filter candidates based on active Tab [GAP] vs [GT] vs [MESA]
+      if (baseAssignTab === 'MESA') {
+        if (!c.isEligibleForMesa) return false;
+      } else if (baseAssignTab === 'GAP') {
+        if (!c.isEligibleForGap) return false;
       } else {
-        if (baseAssignTab === 'MESA') {
-          if (!c.isEligibleForMesa) return false;
-        } else if (baseAssignTab === 'GAP') {
-          if (!c.isEligibleForGap) return false;
-        } else {
-          if (!c.isEligibleForGt) return false;
-          // Filter candidate by GT Sub-team in modal
-          if (modalGtSubTeamFilter !== 'ALL') {
-            if (!matchesGtSubTeam(c.person, modalGtSubTeamFilter)) {
-              return false;
-            }
-          }
+        // GT tab
+        if (!c.isEligibleForGt) return false;
+        // Filter candidate by GT Sub-team in modal if user specifically toggled one
+        if (modalGtSubTeamFilter !== 'ALL' && !matchesGtSubTeam(c.person, modalGtSubTeamFilter)) {
+          return false;
         }
       }
 
@@ -1306,10 +1304,28 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         const matchName = c.person.name.toLowerCase().includes(q);
         const matchDoc = (c.person.documentId || '').toLowerCase().includes(q);
         const matchUser = (c.person.username || '').toLowerCase().includes(q);
-        if (!matchName && !matchDoc && !matchUser) return false;
+        const matchSub = (c.person.gtSubTeam || '').toLowerCase().includes(q);
+        if (!matchName && !matchDoc && !matchUser && !matchSub) return false;
       }
 
       return true;
+    }).sort((a, b) => {
+      // 1. In GT tab, candidates matching the requirement's subteam at the top
+      if (baseAssignTab === 'GT') {
+        if (a.isDirectSubteamMatch && !b.isDirectSubteamMatch) return -1;
+        if (!a.isDirectSubteamMatch && b.isDirectSubteamMatch) return 1;
+      }
+
+      // 2. People who have ZERO assignments today prioritized at the top (unassigned)
+      if (a.dayAssignmentsCount === 0 && b.dayAssignmentsCount > 0) return -1;
+      if (a.dayAssignmentsCount > 0 && b.dayAssignmentsCount === 0) return 1;
+
+      // 3. Available in shift at the top
+      if (a.isAvailableInShift && !b.isAvailableInShift) return -1;
+      if (!a.isAvailableInShift && b.isAvailableInShift) return 1;
+
+      // 4. Alphabetical by name
+      return a.person.name.localeCompare(b.person.name, 'es', { sensitivity: 'base' });
     });
   }, [
     candidatePool,
@@ -1333,7 +1349,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       // Tab or requirement determines assigned type; MESA is strictly assigned as MESA
       let assignedTypeToUse: PersonType = baseAssignTab;
-      if (activeRequirement) {
+      if (activeRequirement && activeRequirement.groupType === baseAssignTab) {
         assignedTypeToUse = activeRequirement.groupType;
       }
       if (isMesaPerson) {
@@ -1393,7 +1409,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         baseNumber: baseNumToUse,
         baseName: baseNameToUse,
         roleInBase: roleToAssign,
-        requirementId: activeRequirement ? activeRequirement.id : undefined,
+        requirementId: (activeRequirement && activeRequirement.groupType === assignedTypeToUse) ? activeRequirement.id : undefined,
       });
 
       if (!result.success) {
@@ -3344,8 +3360,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       {/* MODAL 2: ASIGNAR PERSONAS AL TURNO / CUPO / BASE */}
       {isAssignModalOpen && (() => {
         const isContextMesa = activeRequirement?.groupType === 'MESA' || baseAssignTab === 'MESA' || isShiftMesa;
-        const shiftRequiresBase = isContextMesa ? false : Boolean(activeShift.hasBases || modalBase !== null);
-        const hasValidBase = isContextMesa ? true : Boolean(modalBase || selectedBaseNumber !== null);
+        const isContextGt = activeRequirement?.groupType === 'GT' || (!modalBase && baseAssignTab === 'GT') || (!modalBase && activeShift.category === 'GT');
+        // A physical base is strictly and ONLY required when assigning to a physical base card (modalBase !== null)
+        // or when in the GAP tab assigning without a specific requirement on a shift with bases.
+        // GT and MESA NEVER require a physical base!
+        const shiftRequiresBase = (isContextMesa || isContextGt || Boolean(activeRequirement))
+          ? false
+          : Boolean(modalBase !== null || (baseAssignTab === 'GAP' && activeShift.hasBases));
+        const hasValidBase = (isContextMesa || isContextGt || Boolean(activeRequirement) || !shiftRequiresBase)
+          ? true
+          : Boolean(modalBase || selectedBaseNumber !== null);
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
@@ -3880,80 +3904,68 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                 )}
 
-                {/* [GAP] / [GT] / [MESA] TABS */}
-                {!activeRequirement && (
-                  <div className="flex items-center gap-2 p-1 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7]">
-                    {isShiftMesa ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBaseAssignTab('GT');
-                            setModalAssignedType('GT');
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                            baseAssignTab === 'GT'
-                              ? 'bg-[#182535] text-white shadow-xs'
-                              : 'text-[#64748B] hover:text-[#182535]'
-                          }`}
-                        >
-                          <Shield className="w-3.5 h-3.5" />
-                          <span>[GT] Selección GT ({gtCandidatesCount})</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBaseAssignTab('MESA');
-                            setModalAssignedType('MESA');
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                            baseAssignTab === 'MESA'
-                              ? 'bg-purple-700 text-white shadow-xs'
-                              : 'text-[#64748B] hover:text-[#182535]'
-                          }`}
-                        >
-                          <Crown className="w-3.5 h-3.5" />
-                          <span>[MESA] Integrantes MESA ({mesaCandidatesCount})</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBaseAssignTab('GAP');
-                            setModalAssignedType('GAP');
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                            baseAssignTab === 'GAP'
-                              ? 'bg-[#B83A24] text-white shadow-xs'
-                              : 'text-[#64748B] hover:text-[#182535]'
-                          }`}
-                        >
-                          <Grid className="w-3.5 h-3.5" />
-                          <span>[GAP] Encargados de Base ({gapCandidatesCount})</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBaseAssignTab('GT');
-                            setModalAssignedType('GT');
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
-                            baseAssignTab === 'GT'
-                              ? 'bg-[#182535] text-white shadow-xs'
-                              : 'text-[#64748B] hover:text-[#182535]'
-                          }`}
-                        >
-                          <Shield className="w-3.5 h-3.5" />
-                          <span>[GT] Apoyo / Logística ({gtCandidatesCount})</span>
-                        </button>
-                      </>
+                {/* [GAP] / [GT] / [MESA] TABS - ALWAYS VISIBLE TO SEPARATE GAP AND GT */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-[#64748B] px-1 font-montserrat">
+                    <span>SELECCIONAR PESTAÑA DE PERSONAL:</span>
+                    {activeRequirement && (
+                      <span className="text-[#B83A24] font-semibold">
+                        Cupo actual: {activeRequirement.groupType} {activeRequirement.gtSubTeam ? `(${activeRequirement.gtSubTeam})` : ''}
+                      </span>
                     )}
                   </div>
-                )}
+                  <div className="flex items-center gap-2 p-1.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBaseAssignTab('GAP');
+                        setModalAssignedType('GAP');
+                      }}
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                        baseAssignTab === 'GAP'
+                          ? 'bg-[#B83A24] text-white shadow-xs'
+                          : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                      }`}
+                    >
+                      <Grid className="w-4 h-4" />
+                      <span>Pestaña GAP ({gapCandidatesCount} sin asignar)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBaseAssignTab('GT');
+                        setModalAssignedType('GT');
+                      }}
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                        baseAssignTab === 'GT'
+                          ? 'bg-[#182535] text-white shadow-xs'
+                          : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                      }`}
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Pestaña GT ({gtCandidatesCount} sin asignar)</span>
+                    </button>
+
+                    {(isShiftMesa || activeRequirement?.groupType === 'MESA' || mesaCandidatesCount > 0) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBaseAssignTab('MESA');
+                          setModalAssignedType('MESA');
+                        }}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                          baseAssignTab === 'MESA'
+                            ? 'bg-purple-700 text-white shadow-xs'
+                            : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                        }`}
+                      >
+                        <Crown className="w-4 h-4" />
+                        <span>MESA ({mesaCandidatesCount})</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
 
                 {/* Search Control */}
                 <div className="pt-2 pb-1 border-b border-[#EADDC7]/60">
@@ -3977,8 +3989,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     )}
                   </div>
 
-                  {/* GT Sub-team Selection in Modal ("Seleccionar y no copiar") */}
-                  {!activeRequirement && baseAssignTab === 'GT' && (
+                  {/* GT Sub-team Selection in Modal */}
+                  {(baseAssignTab === 'GT' || activeRequirement?.groupType === 'GT') && (
                     <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
@@ -4010,9 +4022,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
                           }`}
                         >
-                          Todos
+                          Todos los GT
                         </button>
-                        {GT_SUBTEAMS.map((subteam) => (
+                        {activeRequirement?.gtSubTeam && (
+                          <button
+                            type="button"
+                            onClick={() => setModalGtSubTeamFilter(activeRequirement.gtSubTeam!)}
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                              modalGtSubTeamFilter === activeRequirement.gtSubTeam
+                                ? 'bg-[#182535] text-white shadow-2xs'
+                                : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                            }`}
+                          >
+                            ⭐ Solo {activeRequirement.gtSubTeam}
+                          </button>
+                        )}
+                        {GT_SUBTEAMS.filter((st) => st !== activeRequirement?.gtSubTeam).map((subteam) => (
                           <button
                             key={subteam}
                             type="button"
@@ -4048,7 +4073,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       </button>
                     </div>
                     <span>
-                      Categoría activa: <b>{baseAssignTab}</b>
+                      Pestaña activa:{' '}
+                      <b className={baseAssignTab === 'GAP' ? 'text-[#B83A24]' : baseAssignTab === 'GT' ? 'text-[#182535]' : 'text-purple-700'}>
+                        {baseAssignTab === 'GT'
+                          ? `GT ${modalGtSubTeamFilter !== 'ALL' ? `(${modalGtSubTeamFilter})` : '(Todo GT)'}`
+                          : baseAssignTab}
+                      </b>
                     </span>
                   </div>
                 </div>
@@ -4059,15 +4089,28 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
                       <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
                       <p className="font-bold text-[#182535] text-xs font-montserrat">
-                        No hay candidatos disponibles en {baseAssignTab} para este turno
+                        No hay candidatos disponibles en la pestaña{' '}
+                        {baseAssignTab === 'GT'
+                          ? `GT ${modalGtSubTeamFilter !== 'ALL' ? `(${modalGtSubTeamFilter})` : ''}`
+                          : baseAssignTab}{' '}
+                        para este turno
                       </p>
                       <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
-                        Solo se muestran integrantes activos sin conflictos de horario. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
+                        Solo se muestran integrantes activos sin conflictos de horario en esta pestaña. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                    {filteredCandidates.map(({ person, matchingFunctionsList, carnivalContinuityConflict, priorCarnivalBaseName, isAvailableInShift }) => {
+                    {filteredCandidates.map(({
+                      person,
+                      matchingFunctionsList,
+                      carnivalContinuityConflict,
+                      priorCarnivalBaseName,
+                      isAvailableInShift,
+                      isDirectSubteamMatch,
+                      totalAssignmentsCount,
+                      dayAssignmentsCount,
+                    }) => {
                       const isSelected = modalPersonId === person.id;
                       const selectedFunctionToUse =
                         isSelected && modalAssignedFunction
@@ -4121,6 +4164,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   </>
                                 );
                               })()}
+                              {isDirectSubteamMatch && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  ⭐ Equipo directo ({person.gtSubTeam})
+                                </span>
+                              )}
                               {carnivalContinuityConflict && priorCarnivalBaseName && (
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
                                   En otro turno: {priorCarnivalBaseName}
@@ -4129,6 +4177,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               {!isAvailableInShift && (
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300">
                                   Sin turno registrado
+                                </span>
+                              )}
+                              {totalAssignmentsCount === 0 ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                                  Sin asignaciones previas
+                                </span>
+                              ) : dayAssignmentsCount === 0 ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                  0 turnos hoy ({totalAssignmentsCount} total)
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-[#64748B] bg-[#FAF6EC] border border-[#EADDC7]">
+                                  {dayAssignmentsCount} {dayAssignmentsCount === 1 ? 'turno hoy' : 'turnos hoy'}
                                 </span>
                               )}
                             </div>
@@ -4221,11 +4283,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-2xs transition-all ${
                                 cannotAssign
                                   ? 'bg-[#FAF6EC] text-[#94A3B8] border border-[#EADDC7] cursor-not-allowed'
-                                  : baseAssignTab === 'GAP'
-                                  ? 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white cursor-pointer'
-                                  : isShiftMesa || baseAssignTab === 'MESA' || activeRequirement?.groupType === 'MESA'
+                                  : baseAssignTab === 'GT'
+                                  ? 'bg-[#182535] hover:bg-[#2A3F55] text-white cursor-pointer'
+                                  : baseAssignTab === 'MESA'
                                   ? 'bg-purple-700 hover:bg-purple-800 text-white cursor-pointer'
-                                  : 'bg-[#182535] hover:bg-[#2A3F55] text-white cursor-pointer'
+                                  : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white cursor-pointer'
                               }`}
                             >
                               <Plus className="w-3.5 h-3.5" />
@@ -4234,11 +4296,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   ? 'Base Llena'
                                   : shiftRequiresBase && !hasValidBase
                                   ? 'Seleccione Base'
-                                  : activeRequirement
-                                  ? `Asignar a ${activeRequirement.gtSubTeam || activeRequirement.groupType}`
-                                  : isShiftMesa || baseAssignTab === 'MESA'
+                                  : activeRequirement && activeRequirement.groupType === baseAssignTab
+                                  ? `Asignar a ${activeRequirement.gtSubTeam ? `GT ${activeRequirement.gtSubTeam}` : activeRequirement.groupType}`
+                                  : baseAssignTab === 'MESA'
                                   ? 'Asignar a MESA'
-                                  : `Asignar ${baseAssignTab}`}
+                                  : `Asignar a ${baseAssignTab}`}
                               </span>
                             </button>
                           </div>
