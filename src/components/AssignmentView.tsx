@@ -818,6 +818,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     });
   }, [modalBase, selectedBaseNumber, currentShiftAssignments]);
 
+  const currentBaseGapOccupants = useMemo(() => {
+    return currentBaseOccupants.filter((a) => a.assignedType === 'GAP');
+  }, [currentBaseOccupants]);
+
+  const currentBaseGtOccupants = useMemo(() => {
+    return currentBaseOccupants.filter((a) => a.assignedType === 'GT');
+  }, [currentBaseOccupants]);
+
   const isBaseFull = useMemo(() => {
     if (!activeShift?.hasBases && !modalBase) return false;
     if (!modalBase && selectedBaseNumber === null) return false;
@@ -828,8 +836,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
          (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
       : null);
     const maxCap = targetObj?.defaultCapacity || targetObj?.gapCapacity || targetObj?.capacity || 2;
-    return currentBaseOccupants.length >= maxCap;
-  }, [activeShift, modalBase, selectedBaseNumber, currentBaseOccupants, physicalBases, bases]);
+    return currentBaseGapOccupants.length >= maxCap;
+  }, [activeShift, modalBase, selectedBaseNumber, currentBaseGapOccupants, physicalBases, bases]);
 
   const getNextAvailableCarnivalGapFunction = (
     occupants: Assignment[]
@@ -1094,10 +1102,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         }
       }
 
-      // 5. Carnival continuity validation:
+      // 5. Carnival continuity validation (ONLY FOR GAP):
       let carnivalContinuityConflict = false;
       let priorCarnivalBaseName: string | undefined = undefined;
-      if (selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null)) {
+      if (selectedDayId === 'miercoles' && baseAssignTab === 'GAP' && (modalBase || selectedBaseNumber !== null)) {
         const priorAssign = assignments.find(
           (a) =>
             a.personId === person.id &&
@@ -1366,16 +1374,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       const baseNumToUse = targetBaseObj?.baseNumber !== undefined ? targetBaseObj.baseNumber : (selectedBaseNumber !== null ? selectedBaseNumber : undefined);
       const baseNameToUse = targetBaseObj?.name || (baseNumToUse !== undefined ? getBaseDisplayName(baseNumToUse) : undefined);
 
-      // MANDATORY base_id check when assigning to a base
-      if ((modalBase !== null || selectedBaseNumber !== null) && !baseIdToUse) {
+      // MANDATORY base_id check ONLY when assigning to a base as GAP
+      if (assignedTypeToUse === 'GAP' && (modalBase !== null || selectedBaseNumber !== null) && !baseIdToUse) {
         setModalAlert('Error: No se pudo resolver un base_id físico válido para esta base.');
         return;
       }
 
-      // Base capacity check
+      // Base capacity check ONLY applies to GAP (GT members do not consume base capacity)
       if (targetBaseObj && assignedTypeToUse === 'GAP') {
         const maxCap = targetBaseObj.defaultCapacity || targetBaseObj.gapCapacity || targetBaseObj.capacity || 2;
-        if (currentBaseOccupants.length >= maxCap) {
+        if (currentBaseGapOccupants.length >= maxCap) {
           setModalAlert('Base completa — no hay más cupos GAP disponibles.');
           return;
         }
@@ -1403,11 +1411,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         dayId: selectedDayId,
         shiftId: activeShift.id,
         assignedType: assignedTypeToUse,
-        gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam || 'Logística') : undefined,
+        gtSubTeam: assignedTypeToUse === 'GT' ? (activeRequirement?.gtSubTeam || candidatePerson.gtSubTeam || (modalGtSubTeamFilter !== 'ALL' ? modalGtSubTeamFilter : 'Logística')) : undefined,
         assignedFunction: roleToAssign,
-        baseId: baseIdToUse,
-        baseNumber: baseNumToUse,
-        baseName: baseNameToUse,
+        baseId: assignedTypeToUse === 'GAP' ? baseIdToUse : (modalBase || selectedBaseNumber !== null ? baseIdToUse : undefined),
+        baseNumber: assignedTypeToUse === 'GAP' ? baseNumToUse : (modalBase || selectedBaseNumber !== null ? baseNumToUse : undefined),
+        baseName: assignedTypeToUse === 'GAP' ? baseNameToUse : (modalBase || selectedBaseNumber !== null ? baseNameToUse : undefined),
         roleInBase: roleToAssign,
         requirementId: (activeRequirement && activeRequirement.groupType === assignedTypeToUse) ? activeRequirement.id : undefined,
       });
@@ -1782,10 +1790,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const handleCandidateAssignClick = (candidatePerson: Person, fnName: string) => {
     const isMesaPerson = candidatePerson.primaryType === 'MESA';
 
-    // 1. GAP Carnival logic
+    // 1. GAP Carnival logic (strictly and ONLY when assigning as GAP to a base)
     const isCarnivalGapAssignment =
       selectedDayId === 'miercoles' &&
-      (activeShift.category === 'GAP' || carnivalCategory === 'GAP' || baseAssignTab === 'GAP') &&
+      baseAssignTab === 'GAP' &&
+      !isMesaPerson &&
       (modalBase !== null || selectedBaseNumber !== null);
 
     if (isCarnivalGapAssignment) {
@@ -1842,11 +1851,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       return;
     }
 
-    // 2. GT Multi-Shift logic (Carnival GT or any day with multiple GT shifts)
+    // 2. GT Multi-Shift logic (Carnival GT or any day with GT shifts - GT NEVER requires bases)
     const isGtAssignment =
       !isMesaPerson &&
-      (baseAssignTab === 'GT' || activeShift.category === 'GT' || activeRequirement?.groupType === 'GT') &&
-      !activeShift.hasBases;
+      (baseAssignTab === 'GT' || activeRequirement?.groupType === 'GT');
 
     if (isGtAssignment) {
       // Find all GT shifts for this day in chronological order
@@ -3360,13 +3368,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       {/* MODAL 2: ASIGNAR PERSONAS AL TURNO / CUPO / BASE */}
       {isAssignModalOpen && (() => {
         const isContextMesa = activeRequirement?.groupType === 'MESA' || baseAssignTab === 'MESA' || isShiftMesa;
-        const isContextGt = activeRequirement?.groupType === 'GT' || (!modalBase && baseAssignTab === 'GT') || (!modalBase && activeShift.category === 'GT');
-        // A physical base is strictly and ONLY required when assigning to a physical base card (modalBase !== null)
-        // or when in the GAP tab assigning without a specific requirement on a shift with bases.
+        const isContextGt = activeRequirement?.groupType === 'GT' || baseAssignTab === 'GT' || activeShift.category === 'GT';
+        // A physical base is strictly and ONLY required when assigning in the GAP tab on a shift with bases.
         // GT and MESA NEVER require a physical base!
         const shiftRequiresBase = (isContextMesa || isContextGt || Boolean(activeRequirement))
           ? false
-          : Boolean(modalBase !== null || (baseAssignTab === 'GAP' && activeShift.hasBases));
+          : Boolean(baseAssignTab === 'GAP' && activeShift.hasBases);
         const hasValidBase = (isContextMesa || isContextGt || Boolean(activeRequirement) || !shiftRequiresBase)
           ? true
           : Boolean(modalBase || selectedBaseNumber !== null);
@@ -4119,8 +4126,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                       const cannotAssign =
                         isSubmitting ||
-                        (shiftRequiresBase && isBaseFull) ||
-                        (shiftRequiresBase && !hasValidBase);
+                        (baseAssignTab === 'GAP' && shiftRequiresBase && isBaseFull) ||
+                        (baseAssignTab === 'GAP' && shiftRequiresBase && !hasValidBase);
 
                       return (
                         <div
@@ -4292,10 +4299,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>
-                                {shiftRequiresBase && isBaseFull
-                                  ? 'Base Llena'
-                                  : shiftRequiresBase && !hasValidBase
+                                {baseAssignTab === 'GAP' && shiftRequiresBase && isBaseFull
+                                  ? 'Base GAP Llena'
+                                  : baseAssignTab === 'GAP' && shiftRequiresBase && !hasValidBase
                                   ? 'Seleccione Base'
+                                  : baseAssignTab === 'GT'
+                                  ? `Asignar a GT ${modalGtSubTeamFilter !== 'ALL' ? `(${modalGtSubTeamFilter})` : ''}`
                                   : activeRequirement && activeRequirement.groupType === baseAssignTab
                                   ? `Asignar a ${activeRequirement.gtSubTeam ? `GT ${activeRequirement.gtSubTeam}` : activeRequirement.groupType}`
                                   : baseAssignTab === 'MESA'
@@ -4319,7 +4328,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 <span className="text-xs text-[#64748B] font-montserrat">
                   {modalBase ? (
                     <span>
-                      Ocupación Base: <strong className={isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}>{currentBaseOccupants.length} / {modalBase.defaultCapacity}</strong> personas GAP
+                      Ocupación Base: <strong className={isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}>{currentBaseGapOccupants.length} / {modalBase.defaultCapacity}</strong> personas GAP
+                      {currentBaseGtOccupants.length > 0 && (
+                        <span className="ml-1.5 text-[#182535] font-semibold">
+                          (+{currentBaseGtOccupants.length} GT apoyo)
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <span>

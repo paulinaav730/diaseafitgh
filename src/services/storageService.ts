@@ -1442,13 +1442,14 @@ export async function assignPerson(
     }
   }
 
-  // Base continuity check for Carnival (only applies to shifts using bases)
-  if (dayId === 'miercoles' && shiftHasBases) {
+  // Base continuity check for Carnival (only applies to GAP assignments using bases)
+  if (dayId === 'miercoles' && shiftHasBases && assignedType === 'GAP') {
     const existingCarnivalWithBase = assignmentCache.find(
       (a) =>
         a.personId === personId &&
         a.dayId === 'miercoles' &&
         a.shiftId !== shiftId &&
+        a.assignedType === 'GAP' &&
         ((a.baseId && a.baseId !== 'null') || (a.baseNumber !== undefined && a.baseNumber !== null && a.baseNumber !== ''))
     );
 
@@ -1470,8 +1471,9 @@ export async function assignPerson(
     }
   }
 
-  // Base capacity validation (only applies to shifts using bases)
-  if (shiftHasBases && (resolvedBaseId || resolvedBaseNumber !== undefined)) {
+  // Base capacity validation (only applies to GAP assignments using bases)
+  // GT members are support/logistics staff and are NOT restricted by physical base game station capacity.
+  if (shiftHasBases && assignedType === 'GAP' && (resolvedBaseId || resolvedBaseNumber !== undefined)) {
     const currentOccupants = assignmentCache.filter(
       (a) =>
         a.dayId === dayId &&
@@ -1482,10 +1484,10 @@ export async function assignPerson(
           (resolvedBaseName && a.baseName === resolvedBaseName)
         ) &&
         a.personId !== personId &&
-        a.assignedType !== 'MESA'
+        a.assignedType === 'GAP'
     );
 
-    if (assignedType !== 'MESA' && currentOccupants.length >= maxCapacity) {
+    if (currentOccupants.length >= maxCapacity) {
       return {
         success: false,
         alertMessage: 'Base completa — no hay más cupos GAP disponibles.',
