@@ -137,7 +137,7 @@ export const THE_GAMES_JUEVES_BASES: ConfigurableBase[] = [
   { id: 'games_jueves_15', name: 'Base 15', baseLabel: 'BASE 15', baseNumber: '15', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'jueves', color: '#B83A24', orderIndex: 15 },
 ];
 
-// 15 Physical Bases for The Games (Viernes: Bases 16 a 30, Total 70 GAP)
+// 15 Physical Bases for The Games (Viernes: Bases 16 a 30, Total 73 GAP)
 export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = [
   { id: 'games_viernes_16', name: 'Base 16', baseLabel: 'BASE 16', baseNumber: '16', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 16 },
   { id: 'games_viernes_17', name: 'Base 17', baseLabel: 'BASE 17', baseNumber: '17', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 17 },
@@ -151,7 +151,7 @@ export const THE_GAMES_VIERNES_BASES: ConfigurableBase[] = [
   { id: 'games_viernes_25', name: 'Base 25', baseLabel: 'BASE 25', baseNumber: '25', defaultCapacity: 6, capacity: 6, gapCapacity: 6, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 25 },
   { id: 'games_viernes_26', name: 'Base 26', baseLabel: 'BASE 26', baseNumber: '26', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 26 },
   { id: 'games_viernes_27', name: 'Base 27', baseLabel: 'BASE 27', baseNumber: '27', defaultCapacity: 4, capacity: 4, gapCapacity: 4, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 27 },
-  { id: 'games_viernes_28', name: 'Base 28', baseLabel: 'BASE 28', baseNumber: '28', defaultCapacity: 2, capacity: 2, gapCapacity: 2, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28 },
+  { id: 'games_viernes_28', name: 'Base 28', baseLabel: 'BASE 28', baseNumber: '28', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 28 },
   { id: 'games_viernes_29', name: 'Base 29', baseLabel: 'BASE 29', baseNumber: '29', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 29 },
   { id: 'games_viernes_30', name: 'Base 30', baseLabel: 'BASE 30', baseNumber: '30', defaultCapacity: 5, capacity: 5, gapCapacity: 5, isActive: true, eventId: 'the-games', dayId: 'viernes', color: '#B83A24', orderIndex: 30 },
 ];
@@ -603,7 +603,7 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     startTime: '06:00',
     endTime: '21:30',
     label: '6:00 a. m. a 9:30 p. m.',
-    capacity: 70,
+    capacity: 73,
     isActive: true,
     hasBases: true,
     forTypes: ['GT', 'GAP'],

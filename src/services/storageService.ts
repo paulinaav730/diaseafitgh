@@ -647,7 +647,7 @@ export function initializeStorage(): void {
       pushBasesToSupabase(basesCache).catch(() => {});
     }
 
-    // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 63 & 70
+    // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 63 & 73
     let shiftsModified = false;
     shiftsCache = shiftsCache.map((s) => {
       const isJuevesGap =
@@ -676,9 +676,9 @@ export function initializeStorage(): void {
           s.name.toLowerCase().includes('the games') ||
           s.name.toLowerCase().includes('turno 1'));
       if (isViernesTheGames) {
-        if (!s.hasBases || s.capacity !== 70) {
+        if (!s.hasBases || s.capacity !== 73) {
           shiftsModified = true;
-          return { ...s, hasBases: true, capacity: 70 };
+          return { ...s, hasBases: true, capacity: 73 };
         }
       }
       return s;
@@ -2438,7 +2438,7 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
           ns.name.toLowerCase().includes('turno 1'));
       if (isViernesTheGames) {
         ns.hasBases = true;
-        ns.capacity = 70;
+        ns.capacity = 73;
       }
       shiftMap.set(ns.id, ns);
     }
