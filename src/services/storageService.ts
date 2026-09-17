@@ -79,12 +79,28 @@ let basesCache: ConfigurableBase[] = [];
 let isInitialized = false;
 let isInitializing = false;
 
-// Cross-tab real-time sync listener
+// Cross-tab real-time sync listener (non-reentrant)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (Object.values(STORAGE_KEYS).includes(e.key || '')) {
-      isInitialized = false;
-      initializeStorage();
+    if (isInitializing) return;
+    if (e.key && Object.values(STORAGE_KEYS).includes(e.key)) {
+      try {
+        if (e.key === STORAGE_KEYS.ASSIGNMENTS && e.newValue) {
+          assignmentCache = JSON.parse(e.newValue);
+          assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+        } else if (e.key === STORAGE_KEYS.SHIFTS && e.newValue) {
+          shiftsCache = JSON.parse(e.newValue);
+          shiftListeners.forEach((fn) => fn([...shiftsCache]));
+        } else if (e.key === STORAGE_KEYS.BASES && e.newValue) {
+          basesCache = JSON.parse(e.newValue);
+          baseListeners.forEach((fn) => fn([...basesCache]));
+        } else if (e.key === STORAGE_KEYS.PEOPLE && e.newValue) {
+          peopleCache = JSON.parse(e.newValue);
+          peopleListeners.forEach((fn) => fn([...peopleCache]));
+        }
+      } catch (err) {
+        console.warn('Error handling storage event:', err);
+      }
     }
   });
 }
@@ -593,7 +609,6 @@ export function initializeStorage(): void {
 
       basesCache = [...newCarnivalBases, ...nonCarnivalBases];
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
-      baseListeners.forEach((fn) => fn([...basesCache]));
 
       let assignmentsChanged = false;
       assignmentCache = assignmentCache.map((a) => {
@@ -615,7 +630,6 @@ export function initializeStorage(): void {
 
       if (assignmentsChanged) {
         localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
-        assignmentListeners.forEach((fn) => fn([...assignmentCache]));
       }
     }
 
@@ -643,7 +657,6 @@ export function initializeStorage(): void {
       );
       basesCache = [...nonGamesBases, ...expectedGamesBases];
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
-      baseListeners.forEach((fn) => fn([...basesCache]));
       pushBasesToSupabase(basesCache).catch(() => {});
     }
 
@@ -685,7 +698,6 @@ export function initializeStorage(): void {
     });
     if (shiftsModified) {
       localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
-      shiftListeners.forEach((fn) => fn([...shiftsCache]));
       pushShiftsToSupabase(shiftsCache).catch(() => {});
     }
     
@@ -1520,74 +1532,6 @@ export async function assignPerson(
     }
   }
 
-  // Base capacity validation (only applies to GAP assignments using bases)
-  // GT members are support/logistics staff and are NOT restricted by physical base game station capacity.
-  if (shiftHasBases && assignedType === 'GAP' && (resolvedBaseId || resolvedBaseNumber !== undefined)) {
-    const currentOccupants = assignmentCache.filter(
-      (a) =>
-        a.dayId === dayId &&
-        a.shiftId === shiftId &&
-        (
-          (resolvedBaseId && a.baseId === resolvedBaseId) ||
-          (resolvedBaseNumber !== undefined && String(a.baseNumber) === String(resolvedBaseNumber)) ||
-          (resolvedBaseName && a.baseName === resolvedBaseName)
-        ) &&
-        a.personId !== personId &&
-        a.assignedType === 'GAP'
-    );
-
-    if (currentOccupants.length >= maxCapacity) {
-      return {
-        success: false,
-        alertMessage: 'Base completa — no hay más cupos GAP disponibles.',
-      };
-    }
-  }
-
-  // Shift total capacity validation
-  // User Rule: "el cupo no se llena con la mesa, no cuentes en la mesa en el cupo solo al GT"
-  const isMesaBeingAssigned = assignedType === 'MESA' || person?.primaryType === 'MESA';
-  const isMesaShift = currentShift?.category === 'MESA' || officialShift?.category === 'MESA';
-
-  // If a MESA member is being assigned, they do NOT consume GT cupo and shouldn't be blocked by GT cupo!
-  // If a GT/GAP member is being assigned, MESA members do NOT count towards filling the shift cupo!
-  if (!isMesaBeingAssigned) {
-    const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
-    if (effectiveCapacity) {
-      const relevantOccupantsInShift = assignmentCache.filter(
-        (a) =>
-          a.dayId === dayId &&
-          a.shiftId === shiftId &&
-          a.personId !== personId &&
-          (currentShift?.category === 'GAP' ? a.assignedType === 'GAP' : a.assignedType === 'GT')
-      );
-      if (relevantOccupantsInShift.length >= effectiveCapacity) {
-        return {
-          success: false,
-          alertMessage: `CUPO COMPLETO — Este turno ya alcanzó su capacidad máxima de cupos GT (${relevantOccupantsInShift.length}/${effectiveCapacity}).`,
-        };
-      }
-    }
-  } else if (isMesaShift) {
-    // If it's a dedicated MESA shift, check MESA capacity if defined
-    const effectiveCapacity = currentShift?.capacity ?? officialShift?.capacity;
-    if (effectiveCapacity) {
-      const mesaOccupants = assignmentCache.filter(
-        (a) =>
-          a.dayId === dayId &&
-          a.shiftId === shiftId &&
-          a.personId !== personId &&
-          a.assignedType === 'MESA'
-      );
-      if (mesaOccupants.length >= effectiveCapacity) {
-        return {
-          success: false,
-          alertMessage: `CUPO COMPLETO — Este turno de MESA ya alcanzó su capacidad máxima (${mesaOccupants.length}/${effectiveCapacity}).`,
-        };
-      }
-    }
-  }
-
   const existingIndex = assignmentCache.findIndex(
     (a) => a.personId === personId && a.dayId === dayId && a.shiftId === shiftId
   );
@@ -1639,7 +1583,19 @@ export async function assignPerson(
     updatedAt: new Date().toISOString(),
   };
 
-  // 1. Immediately save locally to ensure UI and persistence are instant and 100% reliable
+  // Supabase-first: Save to Supabase and confirm before mutating authoritative state
+  if (isSupabaseConfigured()) {
+    const supaRes = await insertSingleAssignmentToSupabase(newAssignment);
+    if (!supaRes.success) {
+      console.error('Supabase assignment rejection:', supaRes.error);
+      return {
+        success: false,
+        alertMessage: `Error al guardar en Supabase: ${supaRes.error || 'Operación rechazada por la base de datos'}. No se realizó la asignación.`,
+      };
+    }
+  }
+
+  // Update local cache and state after confirmation
   if (existingIndex >= 0) {
     assignmentCache = assignmentCache.map((a, idx) =>
       idx === existingIndex ? newAssignment : a
@@ -1651,42 +1607,43 @@ export async function assignPerson(
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   assignmentListeners.forEach((fn) => fn([...assignmentCache]));
 
-  // 2. Sync to Supabase in the background
-  insertSingleAssignmentToSupabase(newAssignment).catch((err) => {
-    console.warn('Background Supabase assignment sync:', err);
-  });
-
   return { success: true, assignment: newAssignment };
 }
 
 export async function removeAssignment(assignmentId: string): Promise<void> {
   initializeStorage();
   
-  // 1. Immediately remove locally to ensure UI and persistence are instant
+  // Supabase-first: Delete from Supabase and confirm before mutating authoritative state
+  if (isSupabaseConfigured()) {
+    const res = await deleteSingleAssignmentFromSupabase(assignmentId);
+    if (!res.success) {
+      console.error('Supabase delete error:', res.error);
+      throw new Error(`Error al eliminar en Supabase: ${res.error || 'Fallo de base de datos'}`);
+    }
+  }
+
   assignmentCache = assignmentCache.filter((a) => a.id !== assignmentId);
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   assignmentListeners.forEach((fn) => fn([...assignmentCache]));
-
-  // 2. Remove in Supabase in background
-  deleteSingleAssignmentFromSupabase(assignmentId).catch((err) => {
-    console.warn('Background Supabase delete sync:', err);
-  });
 }
 
 export async function removeMultipleAssignments(assignmentIds: string[]): Promise<void> {
   if (!assignmentIds || assignmentIds.length === 0) return;
   initializeStorage();
 
-  // 1. Immediately remove locally
+  // Supabase-first: Delete from Supabase and confirm before mutating authoritative state
+  if (isSupabaseConfigured()) {
+    const res = await deleteMultipleAssignmentsFromSupabase(assignmentIds);
+    if (!res.success) {
+      console.error('Supabase batch delete error:', res.error);
+      throw new Error(`Error al eliminar asignaciones en Supabase: ${res.error || 'Fallo de base de datos'}`);
+    }
+  }
+
   const idSet = new Set(assignmentIds);
   assignmentCache = assignmentCache.filter((a) => !idSet.has(a.id));
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   assignmentListeners.forEach((fn) => fn([...assignmentCache]));
-
-  // 2. Remove in Supabase in background
-  deleteMultipleAssignmentsFromSupabase(assignmentIds).catch((err) => {
-    console.warn('Background Supabase batch delete sync:', err);
-  });
 }
 
 export async function updateAssignmentFunction(
@@ -1706,17 +1663,19 @@ export async function updateAssignmentFunction(
     updatedAt: new Date().toISOString(),
   };
 
+  if (isSupabaseConfigured()) {
+    const supaRes = await insertSingleAssignmentToSupabase(updatedAssignment);
+    if (!supaRes.success) {
+      return { success: false, error: supaRes.error || 'Error al actualizar en Supabase' };
+    }
+  }
+
   assignmentCache = assignmentCache.map((a, idx) =>
     idx === assignIdx ? updatedAssignment : a
   );
 
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   assignmentListeners.forEach((fn) => fn([...assignmentCache]));
-
-  // Sync to Supabase in the background
-  insertSingleAssignmentToSupabase(updatedAssignment).catch((err) => {
-    console.warn('Background Supabase assignment function update:', err);
-  });
 
   return { success: true };
 }
@@ -2035,9 +1994,13 @@ export async function saveShift(
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 
-  pushSingleShiftToSupabase(newShift).catch((err) =>
-    console.warn('Error syncing shift to Supabase:', err)
-  );
+  if (isSupabaseConfigured()) {
+    try {
+      await pushSingleShiftToSupabase(newShift);
+    } catch (err) {
+      console.warn('Error syncing shift to Supabase:', err);
+    }
+  }
 
   return { shift: newShift, conflicts };
 }
@@ -2444,9 +2407,22 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
     }
   });
 
-  // Always ensure all 5 official Thursday shifts exist in shiftMap
+  // Ensure all 5 official Thursday shifts exist in shiftMap without wiping user-configured hours/details
   officialJuevesShifts.forEach((js) => {
-    shiftMap.set(js.id, { ...js });
+    const existing = shiftMap.get(js.id);
+    if (!existing) {
+      shiftMap.set(js.id, { ...js });
+    } else {
+      shiftMap.set(js.id, {
+        ...js,
+        ...existing,
+        startTime: existing.startTime || js.startTime,
+        endTime: existing.endTime || js.endTime,
+        name: existing.name || js.name,
+        label: existing.label || js.label,
+        capacity: existing.capacity !== undefined ? existing.capacity : js.capacity,
+      });
+    }
   });
 
   // Delete any non-official Thursday shift that might still be in shiftMap

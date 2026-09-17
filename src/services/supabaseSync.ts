@@ -604,7 +604,7 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     }
 
     const assignments = await pullAssignmentsFromSupabase();
-    if (assignments && assignments.length > 0) {
+    if (assignments !== null) {
       const { replaceAllAssignmentsFromCloud } = await import('./storageService');
       replaceAllAssignmentsFromCloud(assignments);
     }
@@ -712,6 +712,18 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       }
     }
 
+    // 3. Prevent duplicate assignments at database level:
+    // If an assignment already exists for this person in this shift, reuse its Supabase ID
+    const { data: existingSupa } = await client
+      .from('assignments')
+      .select('id')
+      .eq('person_id', a.personId)
+      .eq('shift_id', a.shiftId)
+      .maybeSingle();
+
+    const idToUse = existingSupa?.id || a.id;
+    a.id = idToUse;
+
     const cleanBaseId =
       a.baseId && a.baseId !== 'null' && a.baseId !== 'undefined' && a.baseId.trim() !== ''
         ? a.baseId.trim()
@@ -722,7 +734,7 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
     const cleanBaseName = cleanBaseId ? (a.baseName || getBaseDisplayName(cleanBaseId) || null) : null;
 
     const payload = {
-      id: a.id,
+      id: idToUse,
       person_id: a.personId,
       day_id: a.dayId,
       shift_id: a.shiftId,
