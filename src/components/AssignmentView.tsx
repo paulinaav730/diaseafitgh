@@ -826,8 +826,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     return currentBaseOccupants.filter((a) => a.assignedType === 'GT');
   }, [currentBaseOccupants]);
 
-  // Numbers configured in shifts and bases are requirements, not maximum limits.
-  const isBaseFull = false;
+  // Calculate if the base is full based on its configured capacity
+  const isBaseFull = useMemo(() => {
+    if (!activeShift?.hasBases && !modalBase) return false;
+    if (!modalBase && selectedBaseNumber === null) return false;
+    const targetObj = modalBase || (selectedBaseNumber !== null
+      ? (physicalBases.find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES].find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)) ||
+         CARNIVAL_PHYSICAL_BASES.find((b) => String(b.id) === String(selectedBaseNumber)) ||
+         (bases || []).find((b) => String(b.id) === String(selectedBaseNumber) || String(b.baseNumber) === String(selectedBaseNumber)))
+      : null);
+    
+    // Always respect the active modalBase's capacity first, otherwise fallback to targetObj capacity
+    const maxCap = modalBase?.defaultCapacity || targetObj?.defaultCapacity || targetObj?.gapCapacity || targetObj?.capacity || 2;
+    return currentBaseGapOccupants.length >= maxCap;
+  }, [activeShift, modalBase, selectedBaseNumber, currentBaseGapOccupants, physicalBases, bases]);
 
   const getNextAvailableCarnivalGapFunction = (
     occupants: Assignment[]
