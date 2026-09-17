@@ -221,8 +221,8 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE CHALLENGE & THE GAMES',
     dayId: 'jueves',
     dayName: 'Jueves',
-    description: 'Turno 1: The Challenge (GT). Turno 2: The Games (GT).',
-    notes: '2 turnos programados para GRUPO DE TRABAJO (GT).',
+    description: 'Turno 1 GT (6:00 a. m. – 12:00 p. m.), Turno 2 GT (1:00 p. m. – 9:00 p. m.), Turno 1 MESA (5:30 a. m. – 12:00 p. m.), Turno 2 MESA (1:00 p. m. – 9:00 p. m.) y Turno 1 GAP (1:00 p. m. – 9:00 p. m.).',
+    notes: 'Turnos programados para GT, MESA y GAP en 15 bases físicas.',
     isDivided: false,
     isActive: true,
     order: 4,
@@ -516,34 +516,81 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     forTypes: ['GAP'],
   },
 
-  // JUEVES - THE CHALLENGE & THE GAMES (GT)
+  // JUEVES - THE CHALLENGE & THE GAMES
+  // 1. GT TURNO 1: 6:00 am a 12:00 pm
   {
-    id: 'jueves-t1',
-    name: 'Turno 1 — The Challenge',
+    id: 'jueves-gt-t1',
+    name: 'Turno 1 — GT',
     dayId: 'jueves',
     eventId: 'the-challenge',
     category: 'GT',
     startTime: '06:00',
-    endTime: '13:00',
-    label: '6:00 a. m. a 1:00 p. m.',
+    endTime: '12:00',
+    label: '6:00 a. m. a 12:00 p. m.',
     capacity: 50,
     isActive: true,
     hasBases: false,
     forTypes: ['GT'],
   },
+  // 2. GT TURNO 2: 1:00 pm a 9:00 pm
   {
-    id: 'jueves-t2-gt',
-    name: 'Turno 2 — The Games',
+    id: 'jueves-gt-t2',
+    name: 'Turno 2 — GT',
     dayId: 'jueves',
     eventId: 'the-challenge',
     category: 'GT',
     startTime: '13:00',
     endTime: '21:00',
     label: '1:00 p. m. a 9:00 p. m.',
+    capacity: 50,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['GT'],
+  },
+  // 3. TURNO 1 MESA: 5:30 am a 12:00 pm
+  {
+    id: 'jueves-mesa-t1',
+    name: 'Turno 1 — MESA',
+    dayId: 'jueves',
+    eventId: 'the-challenge',
+    category: 'MESA',
+    startTime: '05:30',
+    endTime: '12:00',
+    label: '5:30 a. m. a 12:00 p. m.',
+    capacity: 18,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['MESA', 'GT'],
+  },
+  // 4. TURNO 2 MESA: 1:00 pm a 9:00 pm
+  {
+    id: 'jueves-mesa-t2',
+    name: 'Turno 2 — MESA',
+    dayId: 'jueves',
+    eventId: 'the-challenge',
+    category: 'MESA',
+    startTime: '13:00',
+    endTime: '21:00',
+    label: '1:00 p. m. a 9:00 p. m.',
+    capacity: 18,
+    isActive: true,
+    hasBases: false,
+    forTypes: ['MESA', 'GT'],
+  },
+  // 5. TURNO 1 GAP: 1:00 pm a 9:00 pm
+  {
+    id: 'jueves-gap-t1',
+    name: 'Turno 1 — GAP',
+    dayId: 'jueves',
+    eventId: 'the-challenge',
+    category: 'GAP',
+    startTime: '13:00',
+    endTime: '21:00',
+    label: '1:00 p. m. a 9:00 p. m.',
     capacity: 63,
     isActive: true,
     hasBases: true,
-    forTypes: ['GT', 'GAP'],
+    forTypes: ['GAP'],
   },
 
   // VIERNES - THE GAMES
@@ -660,22 +707,24 @@ export const DEFAULT_INITIAL_REQUIREMENTS: ShiftRequirement[] = [
   { id: 'req_carnival_mesa_t1', dayId: 'miercoles', shiftId: 'shift_miercoles_mesa_mtqn2c1v_thu', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva (6:30 a. m. – 9:00 a. m.)' },
 
   // JUEVES - THE CHALLENGE + THE GAMES
-  // Turno 1 — The Challenge (6:00 - 13:00, cap 50)
-  { id: 'req_jueves_t1_gen', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_log', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_rrpp', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_mkt', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_gh', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_seg', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t1_mesa', dayId: 'jueves', shiftId: 'jueves-t1', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
-  // Turno 2 — The Games GT (13:00 - 21:00, cap 50)
-  { id: 'req_jueves_t2_gen', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_log', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_rrpp', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_mkt', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_gh', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_seg', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
-  { id: 'req_jueves_t2_mesa', dayId: 'jueves', shiftId: 'jueves-t2-gt', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva' },
+  // Turno 1 GT (6:00 - 12:00, cap 50)
+  { id: 'req_jueves_t1_gen', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_log', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_rrpp', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_mkt', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_gh', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t1_seg', dayId: 'jueves', shiftId: 'jueves-gt-t1', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 2 GT (13:00 - 21:00, cap 50)
+  { id: 'req_jueves_t2_gen', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_log', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'Logística', capacity: 10, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_rrpp', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'RRPP', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_mkt', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'Mercadeo', capacity: 8, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_gh', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'GH', capacity: 6, createdAt: new Date().toISOString() },
+  { id: 'req_jueves_t2_seg', dayId: 'jueves', shiftId: 'jueves-gt-t2', groupType: 'GT', gtSubTeam: 'Seguridad', capacity: 10, createdAt: new Date().toISOString() },
+  // Turno 1 MESA (5:30 - 12:00, cap 18)
+  { id: 'req_jueves_mesa_t1', dayId: 'jueves', shiftId: 'jueves-mesa-t1', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva (5:30 a. m. – 12:00 p. m.)' },
+  // Turno 2 MESA (13:00 - 21:00, cap 18)
+  { id: 'req_jueves_mesa_t2', dayId: 'jueves', shiftId: 'jueves-mesa-t2', groupType: 'MESA', capacity: 18, createdAt: new Date().toISOString(), notes: 'MESA Directiva (1:00 p. m. – 9:00 p. m.)' },
 
   // VIERNES - THE GAMES (Turno 1: 6:00 - 21:30, cap 58)
   { id: 'req_viernes_gen', dayId: 'viernes', shiftId: 'viernes-gt', groupType: 'GT', gtSubTeam: 'Generales', capacity: 10, createdAt: new Date().toISOString() },
@@ -740,16 +789,35 @@ export function findShiftById(
   }
   if (shiftId === 'miercoles-t5') return shifts.find((s) => s.id === 'miercoles-gt-t5');
   if (
-    shiftId === 'jueves-t2-gt' ||
-    shiftId === 'shift_jueves_mtqcifm4_nt5' ||
-    shiftId === 'jueves-t2' ||
-    shiftId === 'shift_jueves_gap_mtrxwlwl_l9j'
+    shiftId === 'jueves-gt-t1' ||
+    shiftId === 'jueves-t1' ||
+    shiftId === 'shift_jueves_gt_mtrxjh9q_r2t'
   ) {
-    const s = shifts.find((x) => x.id === 'jueves-t2-gt' || x.id === shiftId);
+    const s = shifts.find((x) => x.id === 'jueves-gt-t1' || x.id === 'jueves-t1' || x.id === shiftId);
     if (s) return s;
   }
-  if (shiftId === 'jueves-t1' || shiftId === 'shift_jueves_gt_mtrxjh9q_r2t') {
-    const s = shifts.find((x) => x.id === 'jueves-t1' || x.id === shiftId);
+  if (
+    shiftId === 'jueves-gt-t2' ||
+    shiftId === 'jueves-t2-gt' ||
+    shiftId === 'shift_jueves_mtqcifm4_nt5' ||
+    shiftId === 'jueves-t2'
+  ) {
+    const s = shifts.find((x) => x.id === 'jueves-gt-t2' || x.id === 'jueves-t2-gt' || x.id === shiftId);
+    if (s) return s;
+  }
+  if (
+    shiftId === 'jueves-gap-t1' ||
+    shiftId === 'shift_jueves_gap_mtrxwlwl_l9j'
+  ) {
+    const s = shifts.find((x) => x.id === 'jueves-gap-t1' || x.id === shiftId);
+    if (s) return s;
+  }
+  if (shiftId === 'jueves-mesa-t1') {
+    const s = shifts.find((x) => x.id === 'jueves-mesa-t1');
+    if (s) return s;
+  }
+  if (shiftId === 'jueves-mesa-t2') {
+    const s = shifts.find((x) => x.id === 'jueves-mesa-t2');
     if (s) return s;
   }
   if (shiftId === 'viernes-gap' || shiftId === 'viernes-gt') {

@@ -77,6 +77,7 @@ let eventsCache: AppEvent[] = [];
 let shiftsCache: ConfigurableShift[] = [];
 let basesCache: ConfigurableBase[] = [];
 let isInitialized = false;
+let isInitializing = false;
 
 // Cross-tab real-time sync listener
 if (typeof window !== 'undefined') {
@@ -113,7 +114,8 @@ export function derivePersonUsername(p: {
 
 // Initialize storage
 export function initializeStorage(): void {
-  if (isInitialized) return;
+  if (isInitialized || isInitializing) return;
+  isInitializing = true;
 
   try {
     const rawPeople = localStorage.getItem(STORAGE_KEYS.PEOPLE);
@@ -202,6 +204,17 @@ export function initializeStorage(): void {
       }
     }
 
+    requirementCache = Array.from(reqMap.values());
+
+    // For Thursday, eliminate all previous requirements and strictly set official requirements for the 5 new shifts
+    for (const [id, r] of Array.from(reqMap.entries())) {
+      if (r.dayId === 'jueves' || id.includes('jueves')) {
+        reqMap.delete(id);
+      }
+    }
+    DEFAULT_INITIAL_REQUIREMENTS.filter((r) => r.dayId === 'jueves').forEach((jr) => {
+      reqMap.set(jr.id, { ...jr });
+    });
     requirementCache = Array.from(reqMap.values());
 
     // Auto-heal any MESA or custom requirements referenced by existing assignments
@@ -343,10 +356,80 @@ export function initializeStorage(): void {
       shiftMap.set(defaultMesaWed.id, { ...defaultMesaWed });
     }
 
+    // Migration map for old shift IDs to their new corresponding shift
+    const SHIFT_MIGRATION_MAP: Record<string, string> = {
+      'miercoles-t1': 'miercoles-gt-t1',
+      'miercoles-t2': 'miercoles-gt-t2',
+      'miercoles-t3': 'miercoles-gt-t3',
+      'miercoles-t4': 'miercoles-gt-t4',
+      'miercoles-t5': 'miercoles-gt-t5',
+      'jueves-t1': 'jueves-gt-t1',
+      'shift_jueves_gt_mtrxjh9q_r2t': 'jueves-gt-t1',
+      'jueves-t2': 'jueves-gt-t2',
+      'jueves-t2-gt': 'jueves-gt-t2',
+      'shift_jueves_mtqcifm4_nt5': 'jueves-gt-t2',
+      'shift_jueves_gap_mtrxwlwl_l9j': 'jueves-gap-t1',
+      'viernes-gap': 'viernes-gt',
+    };
+
+    // Migrate any assignments that referenced old shifts FIRST before shift healing
+    let hasMigratedAssignments = false;
+    assignmentCache = assignmentCache.map((a) => {
+      let targetId = SHIFT_MIGRATION_MAP[a.shiftId];
+      if (a.dayId === 'jueves' || (a.shiftId && a.shiftId.includes('jueves'))) {
+        if (a.assignedType === 'GAP') {
+          targetId = 'jueves-gap-t1';
+        } else if (a.assignedType === 'MESA') {
+          if (a.shiftId === 'jueves-mesa-t1' || a.shiftId === 'jueves-t1' || a.shiftId === 'jueves-gt-t1' || a.shiftId?.includes('t1') || a.shiftId?.includes('5:30') || a.shiftId?.includes('05:30')) {
+            targetId = 'jueves-mesa-t1';
+          } else {
+            targetId = 'jueves-mesa-t2';
+          }
+        } else {
+          // GT
+          if (a.shiftId === 'jueves-gt-t1' || a.shiftId === 'jueves-t1' || a.shiftId?.includes('t1') || a.shiftId?.includes('6:00') || a.shiftId?.includes('06:00')) {
+            targetId = 'jueves-gt-t1';
+          } else {
+            targetId = 'jueves-gt-t2';
+          }
+        }
+      }
+      if (targetId && targetId !== a.shiftId) {
+        hasMigratedAssignments = true;
+        return {
+          ...a,
+          shiftId: targetId,
+          dayId: a.dayId || (targetId.includes('jueves') ? 'jueves' : 'lunes'),
+        };
+      }
+      return a;
+    });
+    if (hasMigratedAssignments) {
+      localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+    }
+
+    // FOR THURSDAY (JUEVES): Purge ALL previous shifts and strictly enforce the 5 official shifts requested by user:
+    // 1. GT Turno 1 (06:00 - 12:00)
+    // 2. GT Turno 2 (13:00 - 21:00)
+    // 3. Turno 1 MESA (05:30 - 12:00)
+    // 4. Turno 2 MESA (13:00 - 21:00)
+    // 5. Turno 1 GAP (13:00 - 21:00, hasBases: true)
+    for (const [id, s] of Array.from(shiftMap.entries())) {
+      if (s.dayId === 'jueves' || id.includes('jueves')) {
+        shiftMap.delete(id);
+      }
+    }
+    DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves').forEach((js) => {
+      shiftMap.set(js.id, { ...js });
+    });
+
     shiftsCache = Array.from(shiftMap.values());
 
-    // Heal any missing shifts referenced by assignments (such as dynamic MESA shifts)
+    // Heal any missing shifts referenced by assignments (NEVER resurrect old Thursday shifts)
     assignmentCache.forEach((a) => {
+      if (a.dayId === 'jueves' || (a.shiftId && a.shiftId.includes('jueves'))) {
+        return;
+      }
       if (a.shiftId && !shiftsCache.some((s) => s.id === a.shiftId)) {
         const sid = a.shiftId.toLowerCase();
         const isMesa = a.assignedType === 'MESA' || sid.includes('mesa');
@@ -369,12 +452,7 @@ export function initializeStorage(): void {
         let endTime = '08:00';
         let label = '6:00 a. m. a 8:00 a. m.';
 
-        if (dayId === 'jueves') {
-          name = isMesa ? 'Turno 1 — The Challenge (MESA)' : 'Turno 1 — The Challenge';
-          startTime = '06:00';
-          endTime = '13:00';
-          label = '6:00 a. m. a 1:00 p. m.';
-        } else if (dayId === 'viernes') {
+        if (dayId === 'viernes') {
           name = isMesa ? 'Turno 1 — The Games (MESA)' : 'Turno 1 — The Games';
           startTime = '06:00';
           endTime = '21:30';
@@ -422,37 +500,6 @@ export function initializeStorage(): void {
     });
 
     localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
-
-    // Migration map for old shift IDs to their new corresponding shift
-    const SHIFT_MIGRATION_MAP: Record<string, string> = {
-      'miercoles-t1': 'miercoles-gt-t1',
-      'miercoles-t2': 'miercoles-gt-t2',
-      'miercoles-t3': 'miercoles-gt-t3',
-      'miercoles-t4': 'miercoles-gt-t4',
-      'miercoles-t5': 'miercoles-gt-t5',
-      'jueves-t2': 'jueves-t2-gt',
-      'shift_jueves_mtqcifm4_nt5': 'jueves-t2-gt',
-      'shift_jueves_gap_mtrxwlwl_l9j': 'jueves-t2-gt',
-      'shift_jueves_gt_mtrxjh9q_r2t': 'jueves-t1',
-      'viernes-gap': 'viernes-gt',
-    };
-
-    // Migrate any assignments that referenced old shifts
-    let hasMigratedAssignments = false;
-    assignmentCache = assignmentCache.map((a) => {
-      const targetId = SHIFT_MIGRATION_MAP[a.shiftId];
-      if (targetId) {
-        hasMigratedAssignments = true;
-        return {
-          ...a,
-          shiftId: targetId,
-        };
-      }
-      return a;
-    });
-    if (hasMigratedAssignments) {
-      localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
-    }
 
     // Migrate any availabilities referencing old shift IDs
     let hasMigratedAvail = false;
@@ -603,19 +650,19 @@ export function initializeStorage(): void {
     // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 63 & 70
     let shiftsModified = false;
     shiftsCache = shiftsCache.map((s) => {
-      const isJuevesTheGames =
+      const isJuevesGap =
         s.dayId === 'jueves' &&
-        (s.id === 'jueves-t2-gt' ||
-          s.id === 'jueves-t2' ||
-          s.hasBases ||
-          s.name.toLowerCase().includes('the games') ||
-          s.name.toLowerCase().includes('turno 2') ||
-          s.startTime === '13:00' ||
-          s.startTime === '12:30');
-      if (isJuevesTheGames) {
+        (s.id === 'jueves-gap-t1' || s.category === 'GAP');
+      if (isJuevesGap) {
         if (!s.hasBases || s.capacity !== 63) {
           shiftsModified = true;
           return { ...s, hasBases: true, capacity: 63 };
+        }
+      }
+      if (s.dayId === 'jueves' && (s.category === 'GT' || s.category === 'MESA')) {
+        if (s.hasBases) {
+          shiftsModified = true;
+          return { ...s, hasBases: false };
         }
       }
       const isViernesTheGames =
@@ -669,6 +716,8 @@ export function initializeStorage(): void {
     eventsCache = [...DEFAULT_INITIAL_EVENTS];
     shiftsCache = [...DEFAULT_INITIAL_SHIFTS];
     basesCache = [...DEFAULT_INITIAL_BASES];
+  } finally {
+    isInitializing = false;
   }
 
   isInitialized = true;
@@ -2356,29 +2405,26 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
   const shiftMap = new Map<string, ConfigurableShift>();
   DEFAULT_INITIAL_SHIFTS.forEach((ds) => shiftMap.set(ds.id, { ...ds }));
   shiftsCache.forEach((cs) => shiftMap.set(cs.id, cs));
+
+  const officialJuevesShifts = DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves');
+  const officialJuevesIds = new Set(officialJuevesShifts.map((s) => s.id));
+
   newShifts.forEach((ns) => {
     if (ns && ns.id) {
-      if (
-        (ns.id === 'jueves-t2-gt' || ns.id === 'jueves-t2') &&
-        ns.startTime === '12:30' &&
-        ns.endTime === '18:00'
-      ) {
-        ns.startTime = '13:00';
-        ns.endTime = '21:00';
-        ns.label = '1:00 p. m. a 9:00 p. m.';
+      // Discard any obsolete or foreign Thursday shifts from cloud
+      if (ns.dayId === 'jueves' || ns.id.includes('jueves')) {
+        if (!officialJuevesIds.has(ns.id)) {
+          return;
+        }
       }
-      const isJuevesTheGames =
-        ns.dayId === 'jueves' &&
-        (ns.id === 'jueves-t2-gt' ||
-          ns.id === 'jueves-t2' ||
-          ns.hasBases ||
-          ns.name.toLowerCase().includes('the games') ||
-          ns.name.toLowerCase().includes('turno 2') ||
-          ns.startTime === '13:00' ||
-          ns.startTime === '12:30');
-      if (isJuevesTheGames) {
+      const isJuevesGap =
+        ns.dayId === 'jueves' && (ns.id === 'jueves-gap-t1' || ns.category === 'GAP');
+      if (isJuevesGap) {
         ns.hasBases = true;
         ns.capacity = 63;
+      }
+      if (ns.dayId === 'jueves' && (ns.category === 'GT' || ns.category === 'MESA')) {
+        ns.hasBases = false;
       }
       const isViernesTheGames =
         ns.dayId === 'viernes' &&
@@ -2397,9 +2443,147 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
       shiftMap.set(ns.id, ns);
     }
   });
+
+  // Always ensure all 5 official Thursday shifts exist in shiftMap
+  officialJuevesShifts.forEach((js) => {
+    shiftMap.set(js.id, { ...js });
+  });
+
+  // Delete any non-official Thursday shift that might still be in shiftMap
+  for (const [id, s] of Array.from(shiftMap.entries())) {
+    if (s.dayId === 'jueves' || id.includes('jueves')) {
+      if (!officialJuevesIds.has(id)) {
+        shiftMap.delete(id);
+      }
+    }
+  }
+
   shiftsCache = Array.from(shiftMap.values());
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
+}
+
+/**
+ * Recreates and strictly enforces the 5 official shifts for THURSDAY (Jueves):
+ * 1. GT Turno 1 (06:00 - 12:00)
+ * 2. GT Turno 2 (13:00 - 21:00)
+ * 3. MESA Turno 1 (05:30 - 12:00)
+ * 4. MESA Turno 2 (13:00 - 21:00)
+ * 5. GAP Turno 1 (13:00 - 21:00, with 15 physical bases)
+ */
+export function recreateThursdayShifts(syncToSupabase = true): { count: number; shifts: ConfigurableShift[] } {
+  if (!isInitialized && !isInitializing) {
+    initializeStorage();
+  }
+  const officialJueves = DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves');
+  const officialJuevesIds = new Set(officialJueves.map((s) => s.id));
+
+  // 1. Purge all non-official Thursday shifts from shiftsCache and insert the 5 official ones
+  shiftsCache = shiftsCache
+    .filter((s) => s.dayId !== 'jueves' && !s.id.includes('jueves'))
+    .concat(officialJueves.map((s) => ({ ...s })));
+
+  localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+  shiftListeners.forEach((fn) => fn([...shiftsCache]));
+
+  // 2. Reset requirements for Thursday to official definitions
+  const officialJuevesReqs = DEFAULT_INITIAL_REQUIREMENTS.filter((r) => r.dayId === 'jueves');
+  requirementCache = requirementCache
+    .filter((r) => r.dayId !== 'jueves')
+    .concat(officialJuevesReqs.map((r) => ({ ...r })));
+
+  localStorage.setItem(STORAGE_KEYS.REQUIREMENTS, JSON.stringify(requirementCache));
+  requirementListeners.forEach((fn) => fn([...requirementCache]));
+
+  // 3. Remap all assignments on Thursday to the official 5 shift IDs
+  let hasMigrated = false;
+  assignmentCache = assignmentCache.map((a) => {
+    if (a.dayId !== 'jueves' && !a.shiftId.includes('jueves')) return a;
+
+    let targetShiftId = a.shiftId;
+    if (a.assignedType === 'GAP') {
+      targetShiftId = 'jueves-gap-t1';
+    } else if (a.assignedType === 'MESA') {
+      if (
+        a.shiftId === 'jueves-mesa-t1' ||
+        a.shiftId === 'jueves-t1' ||
+        a.shiftId === 'jueves-gt-t1' ||
+        a.shiftId?.includes('t1') ||
+        a.shiftId?.includes('5:30') ||
+        a.shiftId?.includes('05:30')
+      ) {
+        targetShiftId = 'jueves-mesa-t1';
+      } else {
+        targetShiftId = 'jueves-mesa-t2';
+      }
+    } else {
+      // GT
+      if (
+        a.shiftId === 'jueves-gt-t1' ||
+        a.shiftId === 'jueves-t1' ||
+        a.shiftId?.includes('t1') ||
+        a.shiftId?.includes('6:00') ||
+        a.shiftId?.includes('06:00')
+      ) {
+        targetShiftId = 'jueves-gt-t1';
+      } else {
+        targetShiftId = 'jueves-gt-t2';
+      }
+    }
+
+    if (targetShiftId !== a.shiftId || a.dayId !== 'jueves') {
+      hasMigrated = true;
+      return {
+        ...a,
+        shiftId: targetShiftId,
+        dayId: 'jueves',
+      };
+    }
+    return a;
+  });
+
+  if (hasMigrated) {
+    localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+    assignmentListeners.forEach((fn) => fn([...assignmentCache]));
+  }
+
+  // 4. Remap availabilities referencing old Thursday shift IDs
+  availabilityCache = availabilityCache.map((av) => {
+    if (av.dayId !== 'jueves') return av;
+    const mapped = (av.shiftIds || []).map((sid) => {
+      if (sid === 'jueves-t1' || sid === 'shift_jueves_gt_mtrxjh9q_r2t') return 'jueves-gt-t1';
+      if (sid === 'jueves-t2' || sid === 'jueves-t2-gt' || sid === 'shift_jueves_mtqcifm4_nt5') return 'jueves-gt-t2';
+      if (sid === 'shift_jueves_gap_mtrxwlwl_l9j') return 'jueves-gap-t1';
+      return sid;
+    });
+    return { ...av, shiftIds: Array.from(new Set(mapped)) };
+  });
+  localStorage.setItem(STORAGE_KEYS.AVAILABILITIES, JSON.stringify(availabilityCache));
+  availabilityListeners.forEach((fn) => fn([...availabilityCache]));
+
+  // 5. Cloud cleanup and push to Supabase if configured
+  if (syncToSupabase && isSupabaseConfigured()) {
+    import('./supabaseSync').then(async (sync) => {
+      try {
+        const obsoleteIds = [
+          'jueves-t1',
+          'jueves-t2',
+          'jueves-t2-gt',
+          'shift_jueves_gt_mtrxjh9q_r2t',
+          'shift_jueves_mtqcifm4_nt5',
+          'shift_jueves_gap_mtrxwlwl_l9j',
+        ];
+        for (const oldId of obsoleteIds) {
+          await sync.deleteSingleShiftFromSupabase(oldId).catch(() => {});
+        }
+        await sync.pushShiftsToSupabase(officialJueves).catch(() => {});
+      } catch (err) {
+        console.warn('Error syncing recreated Thursday shifts to Supabase:', err);
+      }
+    });
+  }
+
+  return { count: officialJueves.length, shifts: officialJueves };
 }
 
 export { pullAssignmentsFromSupabase };
