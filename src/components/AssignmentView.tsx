@@ -1939,7 +1939,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       for (const s of shiftsToAssign) {
         const res = await assignPerson({
           personId: candidate.id,
-          dayId: 'miercoles',
+          dayId: selectedDayId,
           shiftId: s.id,
           assignedType: 'GAP',
           baseId: baseIdToUse,

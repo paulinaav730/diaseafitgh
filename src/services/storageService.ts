@@ -1476,12 +1476,13 @@ export async function assignPerson(
     // Always check basesCache for custom admin overrides or matches
     const targetBaseObj = basesCache.find(
       (b) =>
-        (resolvedBaseId && b.id === resolvedBaseId) ||
-        (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
-        (rawBaseNumber !== undefined &&
-          (String(b.baseNumber) === String(rawBaseNumber) ||
-            String(b.id) === String(rawBaseNumber) ||
-            b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
+        b.dayId === dayId &&
+        ((resolvedBaseId && b.id === resolvedBaseId) ||
+          (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
+          (rawBaseNumber !== undefined &&
+            (String(b.baseNumber) === String(rawBaseNumber) ||
+              String(b.id) === String(rawBaseNumber) ||
+              b.name.toLowerCase() === String(rawBaseNumber).toLowerCase())))
     );
 
     if (targetBaseObj) {
@@ -1583,37 +1584,7 @@ export async function assignPerson(
     updatedAt: new Date().toISOString(),
   };
 
-  // Validation: Check if the base is full
-  let maxCapacity = 2; // Fallback
-  
-  // Try to find the base in basesCache first (which contains user-restored capacities)
-  const targetBaseObj = basesCache.find(
-    (b) =>
-      (resolvedBaseId && b.id === resolvedBaseId) ||
-      (rawBaseId && (b.id === rawBaseId || String(b.baseNumber) === String(rawBaseId))) ||
-      (rawBaseNumber !== undefined &&
-        (String(b.baseNumber) === String(rawBaseNumber) ||
-          String(b.id) === String(rawBaseNumber) ||
-          b.name.toLowerCase() === String(rawBaseNumber).toLowerCase()))
-  );
-  
-  if (targetBaseObj) {
-    maxCapacity = targetBaseObj.defaultCapacity || targetBaseObj.gapCapacity || targetBaseObj.capacity || maxCapacity;
-  } else {
-    // Fallback to hardcoded arrays if not found in cache
-    if (dayId === 'miercoles') {
-      const carn = CARNIVAL_PHYSICAL_BASES.find(c => String(c.id) === String(rawBaseId || rawBaseNumber));
-      if (carn) maxCapacity = carn.gapCapacity || carn.defaultCapacity || 2;
-    } else if (dayId === 'jueves') {
-      const gb = THE_GAMES_JUEVES_BASES.find(b => String(b.id) === String(rawBaseId) || String(b.baseNumber) === String(rawBaseNumber || rawBaseId).replace('games_jueves_', ''));
-      if (gb) maxCapacity = gb.defaultCapacity || 2;
-    } else if (dayId === 'viernes') {
-      const gb = THE_GAMES_VIERNES_BASES.find(b => String(b.id) === String(rawBaseId) || String(b.baseNumber) === String(rawBaseNumber || rawBaseId).replace('games_viernes_', ''));
-      if (gb) maxCapacity = gb.defaultCapacity || 2;
-    }
-  }
 
-  const shiftHasBases = currentShift?.hasBases || officialShift?.hasBases;
   if (shiftHasBases && assignedType === 'GAP' && (resolvedBaseId || resolvedBaseNumber !== undefined)) {
     const currentOccupants = assignmentCache.filter(
       (a) =>
@@ -1627,10 +1598,8 @@ export async function assignPerson(
     );
 
     if (currentOccupants.length >= maxCapacity) {
-      return {
-        success: false,
-        alertMessage: `CUPO COMPLETO: ${resolvedBaseName || 'Esta base'} ya alcanzó su capacidad máxima de ${maxCapacity} personas en este turno.`,
-      };
+      console.warn(`CUPO COMPLETO: ${resolvedBaseName || 'Esta base'} superó su capacidad esperada de ${maxCapacity} personas.`);
+      // No devolvemos false porque los cupos son solo advertencias visuales, no bloqueos. (Rule 14)
     }
   }
 
@@ -1649,10 +1618,7 @@ export async function assignPerson(
           (currentShift?.category === 'GAP' ? a.assignedType === 'GAP' : a.assignedType === 'GT')
       );
       if (relevantOccupantsInShift.length >= effectiveCapacity) {
-        return {
-          success: false,
-          alertMessage: `CUPO COMPLETO — Este turno ya alcanzó su capacidad máxima de cupos GT (${relevantOccupantsInShift.length}/${effectiveCapacity}).`,
-        };
+        console.warn(`CUPO COMPLETO: Este turno superó su capacidad GT (${relevantOccupantsInShift.length}/${effectiveCapacity}).`);
       }
     }
   } else if (isMesaShift) {
@@ -1666,10 +1632,7 @@ export async function assignPerson(
           a.assignedType === 'MESA'
       );
       if (mesaOccupants.length >= effectiveCapacity) {
-        return {
-          success: false,
-          alertMessage: `CUPO COMPLETO — Este turno de MESA ya alcanzó su capacidad máxima (${mesaOccupants.length}/${effectiveCapacity}).`,
-        };
+        console.warn(`CUPO COMPLETO: Este turno de MESA superó su capacidad (${mesaOccupants.length}/${effectiveCapacity}).`);
       }
     }
   }

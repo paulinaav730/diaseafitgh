@@ -2,6 +2,38 @@ import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord, ConfigurableShift } from '../types';
 import { getBaseDisplayName, CARNIVAL_PHYSICAL_BASES, THE_GAMES_JUEVES_BASES, THE_GAMES_VIERNES_BASES } from '../data/eventStructure';
 
+// Helper for paginated fetch to bypass Supabase's default 1000-row limit
+async function fetchAllRecords(client: any, table: string): Promise<any[] | null> {
+  let allData: any[] = [];
+  let from = 0;
+  const limit = 1000;
+  let hasMore = true;
+
+  try {
+    while (hasMore) {
+      const { data, error } = await client.from(table).select('*').order('id').range(from, from + limit - 1);
+      if (error) {
+        console.warn(`Error pulling ${table} from Supabase:`, error);
+        return null;
+      }
+      if (data && data.length > 0) {
+        allData = [...allData, ...data];
+        from += limit;
+        if (data.length < limit) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+    return allData;
+  } catch (err) {
+    console.warn(`Exception pulling ${table} from Supabase:`, err);
+    return null;
+  }
+}
+
+// ----------------------------------------------------------------------
 export interface SupabaseSyncStatus {
   isConfigured: boolean;
   isConnected: boolean;
@@ -180,11 +212,8 @@ export async function pullPeopleFromSupabase(): Promise<Person[] | null> {
   if (!client) return null;
 
   try {
-    const { data, error } = await client.from('people').select('*');
-    if (error || !data) {
-      console.warn('Error pulling people from Supabase:', error);
-      return null;
-    }
+    const data = await fetchAllRecords(client, 'people');
+    if (!data) return null;
     return data.map(postgresToPerson);
   } catch (err) {
     console.warn('Exception pulling people from Supabase:', err);
@@ -306,8 +335,8 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
   const client = getSupabase();
   if (!client) return null;
   try {
-    const { data, error } = await client.from('bases').select('*');
-    if (error || !data) return null;
+    const data = await fetchAllRecords(client, 'bases');
+    if (!data) return null;
     return data.map((r: any) => {
       let meta: any = {};
       try {
@@ -468,8 +497,8 @@ export async function pullShiftsFromSupabase(): Promise<ConfigurableShift[] | nu
   const client = getSupabase();
   if (!client) return null;
   try {
-    const { data, error } = await client.from('shifts').select('*');
-    if (error || !data) return null;
+    const data = await fetchAllRecords(client, 'shifts');
+    if (!data) return null;
     return data.map(postgresToShift);
   } catch (err) {
     console.warn('Exception pulling shifts from Supabase:', err);
@@ -510,11 +539,8 @@ export async function pullAssignmentsFromSupabase(): Promise<Assignment[] | null
   if (!client) return null;
 
   try {
-    const { data, error } = await client.from('assignments').select('*');
-    if (error || !data) {
-      console.warn('Error pulling assignments from Supabase:', error);
-      return null;
-    }
+    const data = await fetchAllRecords(client, 'assignments');
+    if (!data) return null;
     return data.map((r: any) => {
       const validBaseId =
         r.base_id && r.base_id !== 'null' && r.base_id !== 'undefined' && String(r.base_id).trim() !== ''
@@ -563,13 +589,9 @@ export async function pullAssignmentsFromSupabase(): Promise<Assignment[] | null
 export async function pullAvailabilitiesFromSupabase(): Promise<AvailabilityRecord[] | null> {
   const client = getSupabase();
   if (!client) return null;
-
   try {
-    const { data, error } = await client.from('availabilities').select('*');
-    if (error || !data) {
-      console.warn('Error pulling availabilities from Supabase:', error);
-      return null;
-    }
+    const data = await fetchAllRecords(client, 'availabilities');
+    if (!data) return null;
     return data.map((r: any) => ({
       id: r.id,
       personId: r.person_id,
@@ -748,6 +770,15 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       notes: a.notes || null,
       updated_at: a.updatedAt || new Date().toISOString(),
     };
+
+    console.log('Inserting assignment to Supabase:', {
+      ...payload,
+      _debug_info: {
+        event_id: shiftRow ? 'found_in_shifts_table' : 'created_on_the_fly',
+        person_name: a.personId // Just ID is available here, but logged for tracing
+      }
+    });
+
     const { error } = await client.from('assignments').upsert(payload, { onConflict: 'id' });
     if (error) return { success: false, error: error.message };
     return { success: true };
