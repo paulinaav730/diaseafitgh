@@ -84,7 +84,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
 
   const exportToExcel = () => {
     const rows: any[] = [];
-    const headers = ['Documento', 'Nombre', 'Restriccion Alimentaria', 'Almuerzo Entregado', 'Obs. Almuerzo', 'Refrigerio Entregado', 'Obs. Refrigerio'];
+    const headers = ['Documento', 'Nombre', 'Restricción Alimentaria', 'Almuerzo Entregado', 'Obs. Almuerzo', 'Refrigerio Entregado', 'Obs. Refrigerio'];
     rows.push(headers);
 
     assignedPeople.forEach(person => {
@@ -94,9 +94,9 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         person.documentId || '',
         person.name || '',
         person.dietaryRestrictions || 'Ninguna',
-        alm?.delivered ? 'Si' : 'No',
+        alm?.delivered ? 'Sí' : 'No',
         alm?.observations || '',
-        ref?.delivered ? 'Si' : 'No',
+        ref?.delivered ? 'Sí' : 'No',
         ref?.observations || ''
       ]);
     });
@@ -104,7 +104,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Alimentacion');
-    XLSX.writeFile(workbook, 'Alimentacion_' + currentDay.dayName + '.xlsx');
+    XLSX.writeFile(workbook, `Alimentacion_${currentDay.dayName}.xlsx`);
   };
 
   const almCount = assignedPeople.filter(p => getDelivery(p.id, 'almuerzo')?.delivered).length;
@@ -116,10 +116,10 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#182535] tracking-wide font-dalek">
-              CONTROL DE ALIMENTACION
+              CONTROL DE ALIMENTACIÓN
             </h2>
             <p className="text-xs sm:text-sm text-[#64748B] mt-1 font-montserrat">
-              Marcacion interactiva de entrega de almuerzos y refrigerios.
+              Marcación interactiva de entrega de almuerzos y refrigerios.
             </p>
           </div>
           <button
@@ -127,7 +127,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
             className="flex items-center gap-2 px-4 py-2.5 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl text-sm font-bold transition-all shadow-xs shrink-0"
           >
             <Download className="w-4 h-4" />
-            Exportar Excel del Dia
+            Exportar Excel del Día
           </button>
         </div>
       </div>
@@ -138,7 +138,11 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
             <button
               key={d.dayId}
               onClick={() => setSelectedDayId(d.dayId)}
-              className={min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap }
+              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap ${
+                selectedDayId === d.dayId
+                  ? 'bg-[#B83A24] text-white shadow-xs font-dalek'
+                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat border border-[#EADDC7]'
+              }`}
             >
               {d.dayName}
             </button>
@@ -198,7 +202,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         {filteredPeople.length === 0 ? (
           <div className="p-12 text-center text-[#64748B]">
             <Users className="w-12 h-12 mx-auto text-[#CBD5E1] mb-3" />
-            <p className="text-sm font-semibold">No hay personas para este dia o busqueda.</p>
+            <p className="text-sm font-semibold">No hay personas para este día o búsqueda.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -231,7 +235,11 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                       <td className="p-4 text-center align-middle">
                         <button
                           onClick={() => handleToggle(p.id, 'almuerzo')}
-                          className={w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto }
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto ${
+                            alm?.delivered
+                              ? 'bg-[#16A34A] text-white shadow-xs scale-105'
+                              : 'bg-[#F1F5F9] text-[#CBD5E1] border-2 border-[#E2E8F0] hover:border-[#94A3B8] hover:text-[#94A3B8]'
+                          }`}
                         >
                           <Check className="w-6 h-6 stroke-[3]" />
                         </button>
@@ -248,7 +256,11 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                       <td className="p-4 text-center align-middle">
                         <button
                           onClick={() => handleToggle(p.id, 'refrigerio')}
-                          className={w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto }
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all mx-auto ${
+                            ref?.delivered
+                              ? 'bg-[#16A34A] text-white shadow-xs scale-105'
+                              : 'bg-[#F1F5F9] text-[#CBD5E1] border-2 border-[#E2E8F0] hover:border-[#94A3B8] hover:text-[#94A3B8]'
+                          }`}
                         >
                           <Check className="w-6 h-6 stroke-[3]" />
                         </button>
