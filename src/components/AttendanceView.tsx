@@ -73,7 +73,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
       {/* Selectors Bar */}
       <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-4 flex flex-col gap-4 shadow-2xs">
         {/* Days */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {EVENT_SCHEDULE.map((d) => (
             <button
               key={d.dayId}
@@ -90,7 +90,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         </div>
 
         {/* Shifts */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+        <div className="flex items-center gap-2 flex-wrap">
           {currentDay.shifts.map((s) => (
             <button
               key={s.id}
