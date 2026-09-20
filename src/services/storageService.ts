@@ -173,9 +173,10 @@ export function initializeStorage(): void {
     if (hasHealedPeople) {
       localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
     }
-    assignmentCache = rawAssignments ? JSON.parse(rawAssignments) : [];
+    const rawFood = localStorage.getItem('dias_eafit_food_deliveries'); assignmentCache = rawAssignments ? JSON.parse(rawAssignments) : [];
     availabilityCache = rawAvailabilities ? JSON.parse(rawAvailabilities) : [];
     attendanceCache = rawAttendances ? JSON.parse(rawAttendances) : [];
+    foodDeliveryCache = rawFood ? JSON.parse(rawFood) : [];
 
     // Initialize functions with default catalog if never set
     if (rawFunctions) {
@@ -2618,4 +2619,55 @@ export function recreateThursdayShifts(syncToSupabase = true): { count: number; 
 
 export { pullAssignmentsFromSupabase };
 
+
+
+export const foodDeliveryListeners = new Set<Listener<import('../types').FoodDelivery[]>>();
+export let foodDeliveryCache: import('../types').FoodDelivery[] = [];
+
+export function subscribeToFoodDeliveries(listener: Listener<import('../types').FoodDelivery[]>): () => void {
+  initializeStorage();
+  foodDeliveryListeners.add(listener);
+  listener([...foodDeliveryCache]);
+  return () => foodDeliveryListeners.delete(listener);
+}
+
+export async function recordFoodDelivery(
+  data: Omit<import('../types').FoodDelivery, 'id' | 'updatedAt'>
+): Promise<void> {
+  initializeStorage();
+  const { personId, dayId, type } = data;
+
+  const existingIndex = foodDeliveryCache.findIndex(
+    (fd) => fd.personId === personId && fd.dayId === dayId && fd.type === type
+  );
+
+  const newRecord: import('../types').FoodDelivery = {
+    id: existingIndex >= 0 ? foodDeliveryCache[existingIndex].id : 'fd_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+    ...data,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (existingIndex >= 0) {
+    foodDeliveryCache = foodDeliveryCache.map((fd, idx) => (idx === existingIndex ? newRecord : fd));
+  } else {
+    foodDeliveryCache = [...foodDeliveryCache, newRecord];
+  }
+
+  localStorage.setItem('dias_eafit_food_deliveries', JSON.stringify(foodDeliveryCache));
+  foodDeliveryListeners.forEach((fn) => fn([...foodDeliveryCache]));
+
+  if (isSupabaseConfigured()) {
+    import('./supabaseSync').then((sync) => {
+      sync.pushFoodDeliveryToSupabase(newRecord).catch((err) => {
+        console.error('Failed to sync food_delivery to Supabase:', err);
+      });
+    });
+  }
+}
+
+export function replaceAllFoodDeliveriesFromCloud(newDeliveries: import('../types').FoodDelivery[]): void {
+  foodDeliveryCache = newDeliveries;
+  localStorage.setItem('dias_eafit_food_deliveries', JSON.stringify(foodDeliveryCache));
+  foodDeliveryListeners.forEach((fn) => fn([...foodDeliveryCache]));
+}
 

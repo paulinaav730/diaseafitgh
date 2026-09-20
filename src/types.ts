@@ -266,3 +266,14 @@ export interface FoodRule {
   label: string;
   conditionDescription: string;
 }
+
+export interface FoodDelivery {
+  id: string;
+  personId: string;
+  dayId: string;
+  type: 'almuerzo' | 'refrigerio';
+  delivered: boolean;
+  observations?: string;
+  updatedAt: string;
+}
+

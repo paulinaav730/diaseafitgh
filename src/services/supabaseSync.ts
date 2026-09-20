@@ -633,6 +633,7 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
 
     const availabilities = await pullAvailabilitiesFromSupabase();
     const bases = await pullBasesFromSupabase();
+    const foodDeliveries = await pullFoodDeliveriesFromSupabase();
     if (bases && bases.length > 0) {
       const { replaceAllBasesFromCloud } = await import('./storageService');
       replaceAllBasesFromCloud(bases);
@@ -640,6 +641,10 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     if (availabilities && availabilities.length > 0) {
       const { replaceAllAvailabilitiesFromCloud } = await import('./storageService');
       replaceAllAvailabilitiesFromCloud(availabilities);
+    }
+    if (foodDeliveries && foodDeliveries.length > 0) {
+      const { replaceAllFoodDeliveriesFromCloud } = await import('./storageService');
+      replaceAllFoodDeliveriesFromCloud(foodDeliveries);
     }
 
     return {
@@ -842,5 +847,54 @@ export function setupRealtimeSubscriptions(
     .subscribe((status: string) => {
       console.log('Supabase Realtime status:', status);
     });
+}
+
+
+
+export async function pullFoodDeliveriesFromSupabase(): Promise<import('../types').FoodDelivery[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+
+  try {
+    const data = await fetchAllRecords(client, 'food_deliveries');
+    if (!data) return null;
+    return data.map((r: any) => ({
+      id: r.id,
+      personId: r.person_id,
+      dayId: r.day_id,
+      type: r.type,
+      delivered: r.delivered,
+      observations: r.observations,
+      updatedAt: r.updated_at,
+    }));
+  } catch (err) {
+    console.error('Error pulling food deliveries:', err);
+    return null;
+  }
+}
+
+export async function pushFoodDeliveryToSupabase(record: import('../types').FoodDelivery): Promise<boolean> {
+  const client = getSupabase();
+  if (!client) return false;
+
+  try {
+    const { error } = await client.from('food_deliveries').upsert({
+      id: record.id,
+      person_id: record.personId,
+      day_id: record.dayId,
+      type: record.type,
+      delivered: record.delivered,
+      observations: record.observations,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      console.error('Supabase upsert food_delivery error:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase exception pushing food_delivery:', err);
+    return false;
+  }
 }
 
