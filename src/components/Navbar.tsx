@@ -4,7 +4,7 @@ import {
   Users,
   Grid,
   Clock,
-  Utensils,
+  Utensils, ClipboardCheck,
   Settings,
   Shield,
   UserCheck,
@@ -29,12 +29,13 @@ import { DiasSpartanLogo } from './DiasSpartanLogo';
 export type TabType =
   | 'dashboard'
   | 'people'
-  | 'assignments'
   | 'config'
+  | 'assignments'
   | 'functions'
   | 'availability'
   | 'attendance'
   | 'food'
+  | 'food_control'
   | 'shirts';
 
 interface NavbarProps {
@@ -97,7 +98,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       : []),
     { id: 'availability', label: 'Disponibilidad', icon: Clock },
     { id: 'attendance', label: 'Control en Vivo', icon: Radio },
-    { id: 'food', label: 'Alimentación', icon: Utensils },
+    { id: 'food', label: 'Cálculo Alim.', icon: Utensils },
+    { id: 'food_control', label: 'Control Alim.', icon: ClipboardCheck },
     { id: 'shirts', label: 'Camisetas', icon: Shirt, badge: pendingShirtsCount },
   ];
 
@@ -298,15 +300,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="font-montserrat">Bases GAP</span>
           </button>
 
-          {/* Alimentación */}
+          {/* Control Alimentación */}
           <button
-            onClick={() => onTabChange('food')}
+            onClick={() => onTabChange('food_control')}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold ${
-              currentTab === 'food' ? 'text-[#B83A24]' : 'text-[#64748B]'
+              currentTab === 'food_control' ? 'text-[#B83A24]' : 'text-[#64748B]'
             }`}
           >
-            <Utensils className="w-5 h-5" />
-            <span className="font-montserrat">Alimentación</span>
+            <ClipboardCheck className="w-5 h-5" />
+            <span className="font-montserrat">Control Alim.</span>
           </button>
 
           {/* Menú drawer toggle */}

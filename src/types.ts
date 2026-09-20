@@ -271,7 +271,7 @@ export interface FoodDelivery {
   id: string;
   personId: string;
   dayId: string;
-  type: 'almuerzo' | 'refrigerio';
+  type: 'almuerzo' | 'refrigerio' | 'refrigerio_1' | 'refrigerio_2' | 'obs';
   delivered: boolean;
   observations?: string;
   updatedAt: string;

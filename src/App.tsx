@@ -32,6 +32,7 @@ import { ConfigurationView } from './components/ConfigurationView';
 import { AvailabilityView } from './components/AvailabilityView';
 import { AttendanceView } from './components/AttendanceView';
 import { FoodView } from './components/FoodView';
+import { FoodControlView } from './components/FoodControlView';
 import { ShirtsView } from './components/ShirtsView';
 import { SettingsModal } from './components/SettingsModal';
 import { StaffMyDiasView } from './components/StaffMyDiasView';
@@ -301,6 +302,15 @@ export default function App() {
 
             {currentTab === 'food' && (
               <FoodView
+                people={people}
+                assignments={assignments}
+                shifts={shifts}
+                events={events}
+              />
+            )}
+
+            {currentTab === 'food_control' && (
+              <FoodControlView
                 people={people}
                 assignments={assignments}
                 shifts={shifts}
