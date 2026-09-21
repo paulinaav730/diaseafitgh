@@ -192,7 +192,7 @@ export async function pushPeopleToSupabase(people: Person[]): Promise<boolean> {
 
   try {
     const payload = people.map(personToPostgres);
-    const { error } = await client.from('people').upsert(payload, { onConflict: 'document_id' });
+    const { error } = await client.from('people').upsert(payload, { onConflict: 'id' });
     if (error) {
       console.warn('Error syncing people to Supabase:', error);
       return false;
@@ -735,7 +735,7 @@ export async function insertSingleAssignmentToSupabase(a: Assignment): Promise<{
       const allPeople = getPeople();
       const matchingPerson = allPeople.find((p) => p.id === a.personId);
       if (matchingPerson) {
-        await client.from('people').upsert(personToPostgres(matchingPerson), { onConflict: 'document_id' });
+        await client.from('people').upsert(personToPostgres(matchingPerson), { onConflict: 'id' });
       }
     }
 
