@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Person, Assignment, ConfigurableShift, AppEvent, FoodDelivery } from '../types';
 import * as XLSX from 'xlsx';
 import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS } from '../data/eventStructure';
@@ -17,6 +17,7 @@ interface FoodControlViewProps {
 export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assignments, shifts, events }) => {
   const [selectedDayId, setSelectedDayId] = useState<string>(EVENT_SCHEDULE[0].dayId);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterRestrictionsOnly, setFilterRestrictionsOnly] = useState(false);
   const [foodDeliveries, setFoodDeliveries] = useState<FoodDelivery[]>([]);
 
   useEffect(() => {
@@ -95,6 +96,14 @@ export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assign
 
   const filteredEntitlements = useMemo(() => {
     let list = allMealEntitlements;
+    
+    if (filterRestrictionsOnly) {
+      list = list.filter(e => {
+        const restrictions = e.person?.dietaryRestrictions?.trim().toLowerCase() || '';
+        return restrictions !== '' && restrictions !== 'ninguna' && restrictions !== 'ninguno';
+      });
+    }
+
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       list = list.filter(e => 
@@ -103,7 +112,7 @@ export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assign
       );
     }
     return list.sort((a, b) => (a.person?.name || '').localeCompare(b.person?.name || ''));
-  }, [allMealEntitlements, searchTerm]);
+  }, [allMealEntitlements, searchTerm, filterRestrictionsOnly]);
 
   const getDelivery = (personId: string, type: 'almuerzo' | 'refrigerio_1' | 'refrigerio_2' | 'obs') => {
     return foodDeliveries.find(fd => fd.personId === personId && fd.dayId === selectedDayId && fd.type === type);
@@ -261,6 +270,17 @@ export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assign
               </button>
             )}
           </div>
+          <button
+            onClick={() => setFilterRestrictionsOnly(!filterRestrictionsOnly)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-xs border ${
+              filterRestrictionsOnly
+                ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
+                : 'bg-white text-[#64748B] border-[#EADDC7] hover:bg-[#FAF6EC] hover:text-[#182535]'
+            }`}
+          >
+            <AlertCircle className="w-4 h-4" />
+            Solo Restricciones (Vegetarianos, etc.)
+          </button>
         </div>
 
         {filteredEntitlements.length === 0 ? (
