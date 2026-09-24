@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Person, Assignment, AttendanceRecord, AttendanceStatus } from '../types';
 import { EVENT_SCHEDULE, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import { recordAttendance } from '../services/storageService';
-import { CheckCircle2, XCircle, Clock, AlertCircle, Calendar, Users, Filter } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, AlertCircle, Calendar, Users, Filter, Search, X } from 'lucide-react';
 
 interface AttendanceViewProps {
   people: Person[];
@@ -17,6 +17,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
 }) => {
   const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
   const [selectedShiftId, setSelectedShiftId] = useState<string>('miercoles-gt-t1');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
   const activeShift =
@@ -30,25 +31,33 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
     }
   };
 
-  const handleMark = async (personId: string, status: AttendanceStatus) => {
+  const handleMark = async (personId: string, shiftId: string, status: AttendanceStatus) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     await recordAttendance({
       personId,
       dayId: selectedDayId,
-      shiftId: activeShift.id,
+      shiftId,
       status,
       checkInTime: status === 'asistio' || status === 'tarde' || status === 'retiro_antes' ? timeStr : undefined,
     });
   };
 
-  // Filter assignments for this shift
-  const shiftAssignments = assignments.filter(
-    (a) => a.dayId === selectedDayId && a.shiftId === activeShift.id
-  );
+  // Filter assignments
+  const dayAssignments = assignments.filter((a) => a.dayId === selectedDayId);
+  
+  const displayedAssignments = searchTerm.trim()
+    ? dayAssignments.filter((assign) => {
+        const p = people.find((p) => p.id === assign.personId);
+        if (!p) return false;
+        const q = searchTerm.toLowerCase();
+        return p.name.toLowerCase().includes(q) || (p.documentId && p.documentId.toLowerCase().includes(q));
+      })
+    : dayAssignments.filter((a) => a.shiftId === activeShift.id);
 
-  // Stats
+  // Stats (only for active shift, not search results)
+  const shiftAssignments = dayAssignments.filter((a) => a.shiftId === activeShift.id);
   const shiftAttendances = attendances.filter(
     (at) => at.dayId === selectedDayId && at.shiftId === activeShift.id
   );
@@ -144,32 +153,71 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
 
       {/* Attendance List */}
       <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl overflow-hidden shadow-2xs">
-        <div className="p-4 sm:p-5 border-b border-[#EADDC7] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h3 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
-            LISTADO: {currentDay.eventName} — {activeShift.name} ({activeShift.label})
-          </h3>
-          <span className="text-xs text-[#64748B] font-mono bg-[#FAF6EC] px-2.5 py-1 rounded-xl border border-[#EADDC7] w-fit">
-            {shiftAttendances.length} de {shiftAssignments.length} marcados
-          </span>
+        <div className="p-4 sm:p-5 border-b border-[#EADDC7] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
+              {searchTerm.trim() ? (
+                <>RESULTADOS DE BÚSQUEDA ({displayedAssignments.length})</>
+              ) : (
+                <>LISTADO: {currentDay.eventName} — {activeShift.name} ({activeShift.label})</>
+              )}
+            </h3>
+            {!searchTerm.trim() && (
+              <p className="text-xs text-[#64748B] mt-1">
+                {shiftAttendances.length} de {shiftAssignments.length} marcados
+              </p>
+            )}
+          </div>
+
+          <div className="relative w-full sm:w-64 shrink-0">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-[#94A3B8]" />
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar persona en todo el día..."
+              className="block w-full pl-10 pr-10 py-2 text-sm border border-[#EADDC7] rounded-xl focus:ring-[#B83A24] focus:border-[#B83A24] bg-[#FAF6EC] text-[#182535] placeholder-[#94A3B8] transition-colors"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#182535] transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {shiftAssignments.length === 0 ? (
+        {displayedAssignments.length === 0 ? (
           <div className="p-12 text-center text-xs text-[#64748B]">
             <Users className="w-10 h-10 text-[#C87F17] mx-auto mb-3" />
-            <p className="font-semibold text-[#182535] text-sm font-dalek">0 personas asignadas a este turno</p>
-            <p className="text-xs text-[#94A3B8] mt-1 font-montserrat">
-              Asigne integrantes en la pestaña de Turnos y Bases para habilitar el pase de asistencia.
-            </p>
+            {searchTerm.trim() ? (
+              <p className="font-semibold text-[#182535] text-sm font-dalek">No se encontraron personas con "{searchTerm}" en este día.</p>
+            ) : (
+              <>
+                <p className="font-semibold text-[#182535] text-sm font-dalek">0 personas asignadas a este turno</p>
+                <p className="text-xs text-[#94A3B8] mt-1 font-montserrat">
+                  Asigne integrantes en la pestaña de Turnos y Bases para habilitar el pase de asistencia.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[#EADDC7]">
-            {shiftAssignments.map((assign) => {
+            {displayedAssignments.map((assign) => {
               const person = people.find((p) => p.id === assign.personId);
+              
+              // We need the actual shift of this assignment
+              const assignmentShift = currentDay.shifts.find(s => s.id === assign.shiftId);
+              
               const attendance = attendances.find(
                 (at) =>
                   at.personId === assign.personId &&
-                  at.dayId === selectedDayId &&
-                  at.shiftId === activeShift.id
+                  at.dayId === assign.dayId &&
+                  at.shiftId === assign.shiftId
               );
               const status = attendance?.status || 'pendiente';
 
@@ -214,6 +262,14 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       </span>
                     </div>
                     <div className="text-xs text-[#64748B] mt-1 flex flex-wrap items-center gap-2">
+                      {searchTerm.trim() && assignmentShift && (
+                        <>
+                          <span className="font-bold text-[#182535] bg-[#EADDC7] px-2 py-0.5 rounded-md">
+                            {assignmentShift.name}
+                          </span>
+                          <span>•</span>
+                        </>
+                      )}
                       <span>{assign.roleInBase || 'Staff'}</span>
                       <span>•</span>
                       <span>Rol: {person?.primaryType}</span>
@@ -231,7 +287,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                   {/* Actions status buttons - Touch friendly min-height 44px */}
                   <div className="flex flex-wrap items-center gap-1.5 self-start lg:self-center">
                     <button
-                      onClick={() => handleMark(assign.personId, 'asistio')}
+                      onClick={() => handleMark(assign.personId, assign.shiftId, 'asistio')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'asistio'
                           ? 'bg-[#16A34A] text-white shadow-xs'
@@ -243,7 +299,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                     </button>
 
                     <button
-                      onClick={() => handleMark(assign.personId, 'tarde')}
+                      onClick={() => handleMark(assign.personId, assign.shiftId, 'tarde')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'tarde'
                           ? 'bg-[#C87F17] text-white shadow-xs'
@@ -255,7 +311,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                     </button>
 
                     <button
-                      onClick={() => handleMark(assign.personId, 'retiro_antes')}
+                      onClick={() => handleMark(assign.personId, assign.shiftId, 'retiro_antes')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'retiro_antes'
                           ? 'bg-purple-700 text-white shadow-xs'
@@ -267,7 +323,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                     </button>
 
                     <button
-                      onClick={() => handleMark(assign.personId, 'inasistencia')}
+                      onClick={() => handleMark(assign.personId, assign.shiftId, 'inasistencia')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'inasistencia'
                           ? 'bg-[#B83A24] text-white shadow-xs'
