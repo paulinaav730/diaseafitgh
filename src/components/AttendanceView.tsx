@@ -52,14 +52,14 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         const p = people.find((p) => p.id === assign.personId);
         if (!p) return false;
         const q = searchTerm.toLowerCase();
-        return p.name.toLowerCase().includes(q) || (p.documentId && p.documentId.toLowerCase().includes(q));
+        return (p.name || '').toLowerCase().includes(q) || (p.documentId && p.documentId.toLowerCase().includes(q));
       })
-    : dayAssignments.filter((a) => a.shiftId === activeShift.id);
+    : dayAssignments.filter((a) => activeShift && a.shiftId === activeShift.id);
 
   // Stats (only for active shift, not search results)
-  const shiftAssignments = dayAssignments.filter((a) => a.shiftId === activeShift.id);
+  const shiftAssignments = dayAssignments.filter((a) => activeShift && a.shiftId === activeShift.id);
   const shiftAttendances = attendances.filter(
-    (at) => at.dayId === selectedDayId && at.shiftId === activeShift.id
+    (at) => activeShift && at.dayId === selectedDayId && at.shiftId === activeShift.id
   );
   const presentCount = shiftAttendances.filter((at) => at.status === 'asistio').length;
   const lateCount = shiftAttendances.filter((at) => at.status === 'tarde').length;
@@ -105,7 +105,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               key={s.id}
               onClick={() => setSelectedShiftId(s.id)}
               className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap ${
-                activeShift.id === s.id
+                activeShift?.id === s.id
                   ? 'bg-[#FDF2EE] text-[#B83A24] border-[#B83A24] font-bold shadow-2xs'
                   : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7] hover:text-[#182535]'
               }`}
@@ -159,7 +159,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               {searchTerm.trim() ? (
                 <>RESULTADOS DE BÚSQUEDA ({displayedAssignments.length})</>
               ) : (
-                <>LISTADO: {currentDay.eventName} — {activeShift.name} ({activeShift.label})</>
+                <>LISTADO: {currentDay.eventName} — {activeShift?.name || 'Sin turno'} ({activeShift?.label || 'N/A'})</>
               )}
             </h3>
             {!searchTerm.trim() && (
