@@ -849,8 +849,6 @@ export function setupRealtimeSubscriptions(
       console.log('Supabase Realtime status:', status);
     });
 }
-    });
-}
 
 
 
