@@ -863,6 +863,11 @@ export async function addPerson(
   peopleCache = [...peopleCache, newPerson];
   localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
   peopleListeners.forEach((fn) => fn([...peopleCache]));
+  
+  import('./supabaseSync').then((sync) => {
+    sync.pushPeopleToSupabase([newPerson]).catch(() => {});
+  });
+  
   return newPerson;
 }
 
@@ -871,6 +876,13 @@ export async function updatePerson(id: string, updates: Partial<Person>): Promis
   peopleCache = peopleCache.map((p) => (p.id === id ? { ...p, ...updates } : p));
   localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
   peopleListeners.forEach((fn) => fn([...peopleCache]));
+
+  import('./supabaseSync').then((sync) => {
+    const updatedPerson = peopleCache.find(p => p.id === id);
+    if (updatedPerson) {
+      sync.pushPeopleToSupabase([updatedPerson]).catch(() => {});
+    }
+  });
 }
 
 /**
@@ -939,6 +951,13 @@ export async function batchUpdateShirtDelivery(
 
   localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(peopleCache));
   peopleListeners.forEach((fn) => fn([...peopleCache]));
+
+  import('./supabaseSync').then((sync) => {
+    const updatedPeople = peopleCache.filter(p => idsSet.has(p.id));
+    if (updatedPeople.length > 0) {
+      sync.pushPeopleToSupabase(updatedPeople).catch(() => {});
+    }
+  });
 }
 
 export interface ImportBatchResult {
