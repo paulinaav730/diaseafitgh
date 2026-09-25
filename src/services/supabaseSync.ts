@@ -634,6 +634,8 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     const availabilities = await pullAvailabilitiesFromSupabase();
     const bases = await pullBasesFromSupabase();
     const foodDeliveries = await pullFoodDeliveriesFromSupabase();
+    // @ts-ignore
+    const attendances = await pullAttendancesFromSupabase();
     if (bases && bases.length > 0) {
       const { replaceAllBasesFromCloud } = await import('./storageService');
       replaceAllBasesFromCloud(bases);
@@ -645,6 +647,11 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     if (foodDeliveries && foodDeliveries.length > 0) {
       const { replaceAllFoodDeliveriesFromCloud } = await import('./storageService');
       replaceAllFoodDeliveriesFromCloud(foodDeliveries);
+    }
+    if (attendances && attendances.length > 0) {
+      const { replaceAllAttendancesFromCloud } = await import('./storageService');
+      // @ts-ignore
+      if (replaceAllAttendancesFromCloud) replaceAllAttendancesFromCloud(attendances);
     }
 
     return {
@@ -823,7 +830,7 @@ export async function deleteMultipleAssignmentsFromSupabase(ids: string[]): Prom
 let realtimeChannel: any = null;
 
 export function setupRealtimeSubscriptions(
-  onAssignmentChange: () => void
+  onChange: (table?: string) => void
 ) {
   const client = getSupabase();
   if (!client) return;
@@ -831,21 +838,17 @@ export function setupRealtimeSubscriptions(
   if (realtimeChannel) return; // already subscribed
 
   realtimeChannel = client
-    .channel('public:assignments_and_bases')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, (payload) => {
-      console.log('Realtime change received on assignments!', payload);
-      onAssignmentChange();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bases' }, (payload) => {
-      console.log('Realtime change received on bases!', payload);
-      onAssignmentChange();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts' }, (payload) => {
-      console.log('Realtime change received on shifts!', payload);
-      onAssignmentChange();
-    })
+    .channel('public:all_tables')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => onChange('assignments'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bases' }, () => onChange('bases'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts' }, () => onChange('shifts'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'people' }, () => onChange('people'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, () => onChange('attendances'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'food_deliveries' }, () => onChange('food_deliveries'))
     .subscribe((status: string) => {
       console.log('Supabase Realtime status:', status);
+    });
+}
     });
 }
 
@@ -898,3 +901,51 @@ export async function pushFoodDeliveryToSupabase(record: import('../types').Food
   }
 }
 
+export async function pushAttendancesToSupabase(attendances: AttendanceRecord[]): Promise<boolean> {
+  const client = getSupabase();
+  if (!client || attendances.length === 0) return false;
+
+  try {
+    const payload = attendances.map((at) => ({
+      id: at.id,
+      person_id: at.personId,
+      day_id: at.dayId,
+      shift_id: at.shiftId,
+      status: at.status,
+      observations: at.observations || null,
+      updated_at: at.updatedAt || new Date().toISOString(),
+    }));
+
+    const { error } = await client.from('attendances').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Error syncing attendances to Supabase:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Exception syncing attendances:', err);
+    return false;
+  }
+}
+
+export async function pullAttendancesFromSupabase(): Promise<AttendanceRecord[] | null> {
+  const client = getSupabase();
+  if (!client) return null;
+
+  try {
+    const data = await fetchAllRecords(client, 'attendances');
+    if (!data) return null;
+    return data.map((r: any) => ({
+      id: r.id,
+      personId: r.person_id,
+      dayId: r.day_id,
+      shiftId: r.shift_id,
+      status: r.status,
+      observations: r.observations || undefined,
+      updatedAt: r.updated_at || undefined,
+    }));
+  } catch (err) {
+    console.warn('Exception pulling attendances:', err);
+    return null;
+  }
+}

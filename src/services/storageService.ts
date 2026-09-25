@@ -1938,6 +1938,14 @@ export async function recordAttendance(
 
   localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(attendanceCache));
   attendanceListeners.forEach((fn) => fn([...attendanceCache]));
+
+  import('./supabaseSync').then((sync) => {
+    // @ts-ignore
+    if (sync.pushAttendancesToSupabase) {
+      // @ts-ignore
+      sync.pushAttendancesToSupabase([newRecord]).catch(() => {});
+    }
+  });
 }
 
 // ----------------- DYNAMIC SHIFTS (ADMIN TOTAL CONTROL) -----------------
@@ -2690,3 +2698,9 @@ export function replaceAllFoodDeliveriesFromCloud(newDeliveries: import('../type
   foodDeliveryListeners.forEach((fn) => fn([...foodDeliveryCache]));
 }
 
+export function replaceAllAttendancesFromCloud(attendances: AttendanceRecord[]): void {
+  initializeStorage();
+  attendanceCache = [...attendances];
+  localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(attendanceCache));
+  attendanceListeners.forEach((fn) => fn([...attendanceCache]));
+}
