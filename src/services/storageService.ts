@@ -704,12 +704,9 @@ export function initializeStorage(): void {
     
     // Initialize Realtime
     setupRealtimeSubscriptions(async () => {
-      const latestAssignments = await pullAssignmentsFromSupabase();
-      if (latestAssignments) {
-        assignmentCache = latestAssignments;
-        localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
-        assignmentListeners.forEach((fn) => fn([...assignmentCache]));
-      }
+      import('./supabaseSync').then((sync) => {
+        sync.syncAllFromSupabase().catch(() => {});
+      });
     });
 
     // Ensure all local shifts are synced to Supabase shifts table in the background
