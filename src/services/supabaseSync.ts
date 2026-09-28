@@ -911,7 +911,7 @@ export async function pushAttendancesToSupabase(attendances: AttendanceRecord[])
       day_id: at.dayId,
       shift_id: at.shiftId,
       status: at.status,
-      observations: at.observations || null,
+      notes: at.observations || null,
       updated_at: at.updatedAt || new Date().toISOString(),
     }));
 
@@ -940,7 +940,7 @@ export async function pullAttendancesFromSupabase(): Promise<AttendanceRecord[] 
       dayId: r.day_id,
       shiftId: r.shift_id,
       status: r.status,
-      observations: r.observations || undefined,
+      observations: r.notes || undefined,
       updatedAt: r.updated_at || undefined,
     }));
   } catch (err) {
