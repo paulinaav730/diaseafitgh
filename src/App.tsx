@@ -45,7 +45,14 @@ import { syncAllFromSupabase } from './services/supabaseSync';
 const INITIAL_USER_STORAGE_KEY = 'dias_eafit_current_user';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
+  const [currentTab, setCurrentTabState] = useState<TabType>(() => {
+    return (localStorage.getItem('dias_eafit_last_tab') as TabType) || 'dashboard';
+  });
+
+  const setCurrentTab = (tab: TabType) => {
+    setCurrentTabState(tab);
+    localStorage.setItem('dias_eafit_last_tab', tab);
+  };
   const [people, setPeople] = useState<Person[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [availabilities, setAvailabilities] = useState<AvailabilityRecord[]>([]);

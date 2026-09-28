@@ -15,7 +15,14 @@ interface FoodControlViewProps {
 }
 
 export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assignments, shifts, events }) => {
-  const [selectedDayId, setSelectedDayId] = useState<string>(EVENT_SCHEDULE[0].dayId);
+  const [selectedDayId, setSelectedDayIdState] = useState<string>(() => {
+    return localStorage.getItem('dias_eafit_food_day') || EVENT_SCHEDULE[0].dayId;
+  });
+
+  const setSelectedDayId = (dayId: string) => {
+    setSelectedDayIdState(dayId);
+    localStorage.setItem('dias_eafit_food_day', dayId);
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRestrictionsOnly, setFilterRestrictionsOnly] = useState(false);
   const [foodDeliveries, setFoodDeliveries] = useState<FoodDelivery[]>([]);

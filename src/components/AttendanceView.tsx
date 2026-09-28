@@ -15,8 +15,21 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   assignments,
   attendances,
 }) => {
-  const [selectedDayId, setSelectedDayId] = useState<string>('miercoles');
-  const [selectedShiftId, setSelectedShiftId] = useState<string>('miercoles-gt-t1');
+  const [selectedDayId, setSelectedDayIdState] = useState<string>(() => {
+    return localStorage.getItem('dias_eafit_att_day') || 'miercoles';
+  });
+  const setSelectedDayId = (dayId: string) => {
+    setSelectedDayIdState(dayId);
+    localStorage.setItem('dias_eafit_att_day', dayId);
+  };
+
+  const [selectedShiftId, setSelectedShiftIdState] = useState<string>(() => {
+    return localStorage.getItem('dias_eafit_att_shift') || 'miercoles-gt-t1';
+  });
+  const setSelectedShiftId = (shiftId: string) => {
+    setSelectedShiftIdState(shiftId);
+    localStorage.setItem('dias_eafit_att_shift', shiftId);
+  };
   const [searchTerm, setSearchTerm] = useState('');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
