@@ -606,7 +606,22 @@ export const DEFAULT_INITIAL_SHIFTS: ConfigurableShift[] = [
     capacity: 73,
     isActive: true,
     hasBases: true,
-    forTypes: ['GT', 'GAP'],
+    forTypes: ['GT'],
+  },
+  {
+    id: 'viernes-gap',
+    name: 'Turno GAP',
+    dayId: 'viernes',
+    eventId: 'the-games',
+    category: 'GAP',
+    startTime: '06:00',
+    endTime: '21:30',
+    label: '6:00 a. m. a 9:30 p. m.',
+    capacity: 73,
+    isActive: true,
+    hasBases: true,
+    baseIds: THE_GAMES_VIERNES_BASES.map(b => b.id),
+    forTypes: ['GAP'],
   },
 ];
 
