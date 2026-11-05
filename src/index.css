@@ -1,6 +1,106 @@
 @import "tailwindcss";
 
 /* =====================================================================
+   Fuentes de marca (archivos en /public/fonts)
+   ---------------------------------------------------------------------
+   Los archivos entregados no traen todos los caracteres del español:
+   - Comba (test) y Lulo One: sin tildes ni ñ → esas letras caen en
+     Unbounded / Jost, que tienen un dibujo parecido.
+   - Futura PT (Book/Light): sin tildes y sin negrita → "DIAS Sans" combina
+     Futura para el texto normal y Jost (clon libre de Futura) para tildes,
+     medium, semibold y bold.
+   Si el GT de Publicidad consigue las versiones completas, basta con
+   reemplazar los archivos.
+   ===================================================================== */
+
+@font-face {
+  font-family: 'Comba DIAS';
+  src: url('/fonts/comba-bold-ultrawide.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lulo DIAS';
+  src: url('/fonts/lulo-one-bold.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* DIAS Sans: primero Jost (todo el rango), luego Futura para ASCII en
+   300/400. Las caras declaradas al final tienen prioridad. */
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable-italic.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+/* Tildes y ñ en peso normal: Jost escalado para igualar la altura de
+   Futura (x-height 0.415 vs 0.46; mayúsculas 0.667 vs 0.70). Cada cara
+   repite el peso exacto de la Futura correspondiente (300 / 400) para que
+   el navegador las combine en la misma familia. */
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 95%;
+  unicode-range: U+00A0-00DE;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 90%;
+  unicode-range: U+00DF-00FF;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 95%;
+  unicode-range: U+00A0-00DE;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/jost-latin-variable.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 90%;
+  unicode-range: U+00DF-00FF;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/futura-pt-light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20AC;
+}
+@font-face {
+  font-family: 'DIAS Sans';
+  src: url('/fonts/futura-pt-book.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+2013-2014, U+2018-2019, U+201C-201D, U+2022, U+2026, U+20AC;
+}
+
+/* =====================================================================
    DÍAS EAFIT — Línea gráfica (Manual de marca, GT de Publicidad)
    ---------------------------------------------------------------------
    Toda la paleta de la app vive aquí. Para cambiar la identidad basta con
@@ -15,14 +115,12 @@
    ===================================================================== */
 
 @theme {
-  /* ---------- Tipografía ----------
-     Manual: Comba (principal), Lulo Bold (subtítulos), Futura (cuerpo).
-     Son fuentes comerciales: si se agregan los archivos con licencia en
-     /public/fonts y se declaran con @font-face, se usan automáticamente.
-     Mientras tanto se usan equivalentes libres de Google Fonts. */
-  --font-display: 'Comba', 'Unbounded', 'Jost', ui-sans-serif, sans-serif;
-  --font-subtitle: 'Lulo One', 'Lulo Clean', 'Jost', ui-sans-serif, sans-serif;
-  --font-sans: 'Futura PT', 'Futura', 'Jost', ui-sans-serif, system-ui, sans-serif;
+  /* ---------- Tipografía (manual de marca) ----------
+     Comba = principal (títulos) · Lulo Bold = subtítulos · Futura = cuerpo */
+  --font-display: 'Unbounded', 'DIAS Sans', ui-sans-serif, sans-serif;
+  --font-brand: 'Comba DIAS', 'Unbounded', 'DIAS Sans', ui-sans-serif, sans-serif;
+  --font-subtitle: 'Lulo DIAS', 'DIAS Sans', ui-sans-serif, sans-serif;
+  --font-sans: 'DIAS Sans', ui-sans-serif, system-ui, sans-serif;
 
   /* ---------- Marca ---------- */
   --color-crema: #FCF9F3;
@@ -225,6 +323,14 @@
   font-family: var(--font-display);
   letter-spacing: -0.005em !important;
   font-weight: 700;
+}
+
+/* Comba (fuente principal del manual) solo en los títulos de página:
+   es muy decorativa (O en flor, I ondulada) y en textos largos se lee mal. */
+h1.font-display,
+h2.font-display {
+  font-family: var(--font-brand);
+  letter-spacing: 0.01em !important;
 }
 
 /* En botones y textos pequeños la fuente display es demasiado ancha:

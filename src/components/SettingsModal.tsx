@@ -148,7 +148,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               VERIFICACIÓN Y ESTADO DEL SISTEMA
             </h3>
             <p className="text-xs text-tinta-500 font-sans">
-              Auditoría de cumplimiento de las directivas operativas de DÍAS EAFIT 2026.
+              Auditoría de cumplimiento de las directivas operativas de DÍAS EAFIT 2027.
             </p>
           </div>
         </div>

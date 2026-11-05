@@ -180,7 +180,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-tinta-900 font-display tracking-wider">
-                  IMPORTADOR EXCEL MAESTRO — DÍAS EAFIT 2026
+                  IMPORTADOR EXCEL MAESTRO — DÍAS EAFIT 2027
                 </h3>
                 <span className="px-2 py-0.5 rounded-md bg-lila-50 text-lila-600 border border-lila-200 text-[10px] font-bold">
                   17 Columnas Oficiales

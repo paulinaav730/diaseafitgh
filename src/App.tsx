@@ -337,7 +337,7 @@ export default function App() {
 
             <div className="space-y-1.5">
               <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-tinta-900 tracking-wider">
-                PORTAL DÍAS EAFIT 2026
+                PORTAL DÍAS EAFIT 2027
               </h2>
               <p className="text-tinta-500 text-xs sm:text-sm font-sans leading-relaxed">
                 Ingresa con tus credenciales como <b>Staff (Mi DÍAS)</b> o como <b>Administrador</b> para acceder al sistema.
@@ -363,7 +363,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <DiasLogo variant="light" className="h-8 w-auto" />
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-mostaza-50 text-mostaza-600 font-bold border border-mostaza-300/40">
-              EDICIÓN 2026
+              EDICIÓN 2027
             </span>
           </div>
           <span className="font-mono text-[11px] text-tinta-400">

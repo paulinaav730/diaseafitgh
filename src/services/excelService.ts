@@ -1074,7 +1074,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
   ];
   XLSX.utils.book_append_sheet(workbook, guideWorksheet, 'TURNOS OFICIALES EN SISTEMA');
 
-  XLSX.writeFile(workbook, 'EXCEL_MAESTRO_DIAS_EAFIT_2026.xlsx');
+  XLSX.writeFile(workbook, 'EXCEL_MAESTRO_DIAS_EAFIT_2027.xlsx');
 }
 
 /**
@@ -1175,7 +1175,7 @@ export function exportPeopleToExcel(people: Person[]): void {
 }
 
 /**
- * Exporta reporte oficial de control e inventario de camisetas DÍAS 2026
+ * Exporta reporte oficial de control e inventario de camisetas DÍAS 2027
  * Aplica regla: MESA SON DOS CAMISETAS, GT/GAP 1 CAMISETA
  */
 export function exportShirtDeliveryExcel(people: Person[]): void {
@@ -1294,7 +1294,7 @@ export function exportShirtDeliveryExcel(people: Person[]): void {
   const grandPct = grandTotalReq > 0 ? Math.round((grandTotalDel / grandTotalReq) * 100) : 0;
 
   groupSummaryRows.push({
-    Grupo: 'TOTAL GENERAL DÍAS 2026',
+    Grupo: 'TOTAL GENERAL DÍAS 2027',
     'Total Integrantes': activePeople.length,
     'Cuota por Integrante': 0,
     'Total Camisas Requeridas': grandTotalReq,
@@ -1315,7 +1315,7 @@ export function exportShirtDeliveryExcel(people: Person[]): void {
 
   XLSX.writeFile(
     workbook,
-    `CONTROL_CAMISETAS_DIAS_2026_${new Date().toISOString().split('T')[0]}.xlsx`
+    `CONTROL_CAMISETAS_DIAS_2027_${new Date().toISOString().split('T')[0]}.xlsx`
   );
 }
 

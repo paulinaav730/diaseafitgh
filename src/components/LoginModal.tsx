@@ -407,7 +407,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
         <div className="mt-6 pt-4 border-t border-tinta-200 text-center">
           <p className="text-[11px] text-tinta-500 font-sans">
-            Sistema Oficial de Gestión • DÍAS EAFIT 2026
+            Sistema Oficial de Gestión • DÍAS EAFIT 2027
           </p>
         </div>
       </div>

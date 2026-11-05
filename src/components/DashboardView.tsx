@@ -120,7 +120,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="bg-surface border border-tinta-200 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle geometric / Nordic markers */}
         <div className="flex items-center justify-between text-[11px] text-tinta-400 font-mono tracking-widest uppercase mb-3">
-          <span>›› DÍAS 2026 ‹‹</span>
+          <span>›› DÍAS 2027 ‹‹</span>
           <span>❖ ᛟ RX ❖</span>
         </div>
 

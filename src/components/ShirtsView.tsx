@@ -342,7 +342,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                   CONTROL Y ENTREGA DE CAMISETAS
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40">
-                  DÍAS EAFIT 2026
+                  DÍAS EAFIT 2027
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-tinta-500 mt-0.5">

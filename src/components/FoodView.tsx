@@ -331,7 +331,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
   // Copy Summary to Clipboard for Kitchen/Catering logistics
   const handleCopySummary = () => {
     const lines = [
-      `PLANILLA DE ALIMENTACIÓN — DÍAS EAFIT 2026`,
+      `PLANILLA DE ALIMENTACIÓN — DÍAS EAFIT 2027`,
       `Jornada: ${currentDay.dayName.toUpperCase()} (${currentDay.eventName})`,
       `Filtro activo: ${activeTeamFilter === 'ALL' ? 'Todos los grupos' : activeTeamFilter}`,
       `Total Personas: ${filteredMealEntitlements.length}`,

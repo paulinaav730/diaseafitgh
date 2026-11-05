@@ -372,7 +372,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   type: 'restore',
                   title: 'Restablecer Programación Oficial Inicial',
                   warning:
-                    '¿Deseas restaurar los turnos, eventos y bases predeterminados de DÍAS EAFIT 2026? Esto reiniciará la configuración a los 5 turnos de Carnival GT, 3 turnos Carnival GAP (22 bases), The Show (5 turnos), The Zone (4 turnos), The Challenge y The Games.',
+                    '¿Deseas restaurar los turnos, eventos y bases predeterminados de DÍAS EAFIT 2027? Esto reiniciará la configuración a los 5 turnos de Carnival GT, 3 turnos Carnival GAP (22 bases), The Show (5 turnos), The Zone (4 turnos), The Challenge y The Games.',
                 })
               }
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-tinta-500 hover:text-tinta-900 bg-white hover:bg-tinta-50 border border-tinta-200 shadow-2xs transition-all cursor-pointer"
