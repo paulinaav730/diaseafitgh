@@ -1,77 +1,282 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Dalek Pinpoint Bold';
-  src: url('/fonts/DalekPinpointBold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+/* =====================================================================
+   DÍAS EAFIT — Línea gráfica (Manual de marca, GT de Publicidad)
+   ---------------------------------------------------------------------
+   Toda la paleta de la app vive aquí. Para cambiar la identidad basta con
+   editar estos tokens: los componentes usan clases como `bg-lila-600`,
+   `text-tinta-900`, `border-tinta-200`, etc.
+
+   Colores oficiales del manual (tono 300 de cada escala):
+     Turquesa #7FD8D5 · Lila #C08FD7 · Coral #E29182 · Lima #DFE257
+     Mostaza  #EDB749 · Gris #D9D9D9 · Negro #242424 · Crema #FCF9F3
+   Los tonos 500–900 son versiones más oscuras para texto y botones,
+   con contraste suficiente sobre fondo claro.
+   ===================================================================== */
+
+@theme {
+  /* ---------- Tipografía ----------
+     Manual: Comba (principal), Lulo Bold (subtítulos), Futura (cuerpo).
+     Son fuentes comerciales: si se agregan los archivos con licencia en
+     /public/fonts y se declaran con @font-face, se usan automáticamente.
+     Mientras tanto se usan equivalentes libres de Google Fonts. */
+  --font-display: 'Comba', 'Unbounded', 'Jost', ui-sans-serif, sans-serif;
+  --font-subtitle: 'Lulo One', 'Lulo Clean', 'Jost', ui-sans-serif, sans-serif;
+  --font-sans: 'Futura PT', 'Futura', 'Jost', ui-sans-serif, system-ui, sans-serif;
+
+  /* ---------- Marca ---------- */
+  --color-crema: #FCF9F3;
+  --color-negro: #242424;
+  --color-surface: #FFFFFF;
+
+  --color-lila-50: #F8F1FB;
+  --color-lila-100: #F0E2F6;
+  --color-lila-200: #E2C8EE;
+  --color-lila-300: #C08FD7;
+  --color-lila-400: #A973C6;
+  --color-lila-500: #9358B3;
+  --color-lila-600: #7B4499;
+  --color-lila-700: #63367C;
+  --color-lila-800: #4B295E;
+  --color-lila-900: #321B3F;
+  --color-lila-950: #1F1027;
+
+  --color-turquesa-50: #EDFAF9;
+  --color-turquesa-100: #D6F3F2;
+  --color-turquesa-200: #B2E9E7;
+  --color-turquesa-300: #7FD8D5;
+  --color-turquesa-400: #4FC0BC;
+  --color-turquesa-500: #2FA29E;
+  --color-turquesa-600: #24827F;
+  --color-turquesa-700: #1E6866;
+  --color-turquesa-800: #18504E;
+  --color-turquesa-900: #103735;
+  --color-turquesa-950: #0A2322;
+
+  --color-coral-50: #FCF1EF;
+  --color-coral-100: #F8E0DB;
+  --color-coral-200: #F1C3BA;
+  --color-coral-300: #E29182;
+  --color-coral-400: #D6705E;
+  --color-coral-500: #C5543F;
+  --color-coral-600: #A54332;
+  --color-coral-700: #85372A;
+  --color-coral-800: #652A20;
+  --color-coral-900: #451C16;
+  --color-coral-950: #2C110D;
+
+  --color-mostaza-50: #FDF7E8;
+  --color-mostaza-100: #FBEDC9;
+  --color-mostaza-200: #F6DB97;
+  --color-mostaza-300: #EDB749;
+  --color-mostaza-400: #DDA02A;
+  --color-mostaza-500: #C2861A;
+  --color-mostaza-600: #9C6A14;
+  --color-mostaza-700: #7A5311;
+  --color-mostaza-800: #5A3D0D;
+  --color-mostaza-900: #3C2909;
+  --color-mostaza-950: #261A05;
+
+  --color-lima-50: #FBFBE6;
+  --color-lima-100: #F6F7C5;
+  --color-lima-200: #EDEF94;
+  --color-lima-300: #DFE257;
+  --color-lima-400: #C8CB33;
+  --color-lima-500: #A6A924;
+  --color-lima-600: #82851D;
+  --color-lima-700: #646619;
+  --color-lima-800: #474914;
+  --color-lima-900: #2E2F0D;
+  --color-lima-950: #1C1D07;
+
+  /* Neutros cálidos (texto, bordes y superficies) */
+  --color-tinta-50: #F7F4EE;
+  --color-tinta-100: #F0ECE4;
+  --color-tinta-200: #E6E1D7;
+  --color-tinta-300: #D4CFC5;
+  --color-tinta-400: #A39E95;
+  --color-tinta-500: #77726A;
+  --color-tinta-600: #5C5852;
+  --color-tinta-700: #45423E;
+  --color-tinta-800: #333130;
+  --color-tinta-900: #242424;
+  --color-tinta-950: #161616;
+
+  /* ---------- Paletas de Tailwind redirigidas a la marca ----------
+     Así las clases existentes (emerald, amber, purple, rose…) también
+     respetan la línea gráfica sin tener que tocar cada componente. */
+  --color-purple-50: var(--color-lila-50);
+  --color-purple-100: var(--color-lila-100);
+  --color-purple-200: var(--color-lila-200);
+  --color-purple-300: var(--color-lila-300);
+  --color-purple-400: var(--color-lila-400);
+  --color-purple-500: var(--color-lila-500);
+  --color-purple-600: var(--color-lila-600);
+  --color-purple-700: var(--color-lila-700);
+  --color-purple-800: var(--color-lila-800);
+  --color-purple-900: var(--color-lila-900);
+  --color-purple-950: var(--color-lila-950);
+
+  --color-emerald-50: var(--color-turquesa-50);
+  --color-emerald-100: var(--color-turquesa-100);
+  --color-emerald-200: var(--color-turquesa-200);
+  --color-emerald-300: var(--color-turquesa-300);
+  --color-emerald-400: var(--color-turquesa-400);
+  --color-emerald-500: var(--color-turquesa-500);
+  --color-emerald-600: var(--color-turquesa-600);
+  --color-emerald-700: var(--color-turquesa-700);
+  --color-emerald-800: var(--color-turquesa-800);
+  --color-emerald-900: var(--color-turquesa-900);
+  --color-emerald-950: var(--color-turquesa-950);
+  --color-green-50: var(--color-turquesa-50);
+  --color-green-100: var(--color-turquesa-100);
+  --color-green-200: var(--color-turquesa-200);
+  --color-green-300: var(--color-turquesa-300);
+  --color-green-400: var(--color-turquesa-400);
+  --color-green-500: var(--color-turquesa-500);
+  --color-green-600: var(--color-turquesa-600);
+  --color-green-700: var(--color-turquesa-700);
+  --color-green-800: var(--color-turquesa-800);
+  --color-green-900: var(--color-turquesa-900);
+  --color-sky-50: var(--color-turquesa-50);
+  --color-sky-100: var(--color-turquesa-100);
+  --color-sky-200: var(--color-turquesa-200);
+  --color-sky-500: var(--color-turquesa-500);
+  --color-sky-600: var(--color-turquesa-600);
+  --color-sky-700: var(--color-turquesa-700);
+  --color-sky-800: var(--color-turquesa-800);
+  --color-blue-50: var(--color-turquesa-50);
+  --color-blue-100: var(--color-turquesa-100);
+  --color-blue-200: var(--color-turquesa-200);
+  --color-blue-500: var(--color-turquesa-500);
+  --color-blue-600: var(--color-turquesa-600);
+  --color-blue-700: var(--color-turquesa-700);
+  --color-blue-800: var(--color-turquesa-800);
+
+  --color-amber-50: var(--color-mostaza-50);
+  --color-amber-100: var(--color-mostaza-100);
+  --color-amber-200: var(--color-mostaza-200);
+  --color-amber-300: var(--color-mostaza-300);
+  --color-amber-400: var(--color-mostaza-400);
+  --color-amber-500: var(--color-mostaza-500);
+  --color-amber-600: var(--color-mostaza-600);
+  --color-amber-700: var(--color-mostaza-700);
+  --color-amber-800: var(--color-mostaza-800);
+  --color-amber-900: var(--color-mostaza-900);
+  --color-amber-950: var(--color-mostaza-950);
+  --color-yellow-50: var(--color-mostaza-50);
+  --color-yellow-100: var(--color-mostaza-100);
+  --color-yellow-200: var(--color-mostaza-200);
+  --color-yellow-500: var(--color-mostaza-500);
+  --color-yellow-700: var(--color-mostaza-700);
+  --color-orange-50: var(--color-mostaza-50);
+  --color-orange-100: var(--color-mostaza-100);
+  --color-orange-500: var(--color-mostaza-500);
+  --color-orange-600: var(--color-mostaza-600);
+  --color-orange-700: var(--color-mostaza-700);
+
+  --color-rose-50: var(--color-coral-50);
+  --color-rose-100: var(--color-coral-100);
+  --color-rose-200: var(--color-coral-200);
+  --color-rose-300: var(--color-coral-300);
+  --color-rose-400: var(--color-coral-400);
+  --color-rose-500: var(--color-coral-500);
+  --color-rose-600: var(--color-coral-600);
+  --color-rose-700: var(--color-coral-700);
+  --color-rose-800: var(--color-coral-800);
+  --color-rose-900: var(--color-coral-900);
+  --color-red-50: var(--color-coral-50);
+  --color-red-100: var(--color-coral-100);
+  --color-red-200: var(--color-coral-200);
+  --color-red-500: var(--color-coral-500);
+  --color-red-600: var(--color-coral-600);
+  --color-red-700: var(--color-coral-700);
+  --color-red-800: var(--color-coral-800);
+
+  --color-slate-50: var(--color-tinta-50);
+  --color-slate-100: var(--color-tinta-100);
+  --color-slate-200: var(--color-tinta-200);
+  --color-slate-300: var(--color-tinta-300);
+  --color-slate-400: var(--color-tinta-400);
+  --color-slate-500: var(--color-tinta-500);
+  --color-slate-600: var(--color-tinta-600);
+  --color-slate-700: var(--color-tinta-700);
+  --color-slate-800: var(--color-tinta-800);
+  --color-slate-900: var(--color-tinta-900);
+  --color-gray-50: var(--color-tinta-50);
+  --color-gray-100: var(--color-tinta-100);
+  --color-gray-200: var(--color-tinta-200);
+  --color-gray-300: var(--color-tinta-300);
+  --color-gray-400: var(--color-tinta-400);
+  --color-gray-500: var(--color-tinta-500);
+  --color-gray-600: var(--color-tinta-600);
+  --color-gray-700: var(--color-tinta-700);
+  --color-gray-800: var(--color-tinta-800);
+  --color-gray-900: var(--color-tinta-900);
+  --color-neutral-100: var(--color-tinta-100);
+  --color-neutral-200: var(--color-tinta-200);
+  --color-neutral-500: var(--color-tinta-500);
+  --color-neutral-700: var(--color-tinta-700);
 }
 
-@font-face {
-  font-family: 'DalekPinpointBold';
-  src: url('/fonts/DalekPinpointBold.ttf') format('truetype');
+/* Títulos con la fuente principal (Comba / Unbounded): es muy ancha, así
+   que se neutraliza el espaciado extra que algunos títulos traían. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.005em !important;
   font-weight: 700;
-  font-style: normal;
-  font-display: swap;
 }
 
-@font-face {
-  font-family: 'Dalek Pinpoint';
-  src: url('/fonts/DalekPinpointBold.ttf') format('truetype');
+/* En botones y textos pequeños la fuente display es demasiado ancha:
+   ahí se usa la fuente de cuerpo en negrita para mantener legibilidad. */
+button.font-display,
+button .font-display,
+.font-display:is(.text-\[9px\], .text-\[10px\], .text-\[11px\], .text-xs, .text-sm) {
+  font-family: var(--font-sans);
   font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+  letter-spacing: 0.01em !important;
 }
 
-:root {
-  --font-brand: 'Dalek Pinpoint Bold', 'DalekPinpointBold', 'Dalek Pinpoint', sans-serif;
-  --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --color-paper: #FBF8EE;
-  --color-paper-card: #FFFFFF;
-  --color-navy: #182535;
-  --color-terracotta: #B83A24;
-  --color-mustard: #C87F17;
-  --color-green: #1E824C;
+/* Subtítulos / etiquetas: estilo Lulo (mayúsculas espaciadas) */
+.font-subtitle {
+  font-family: var(--font-subtitle);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: #FBF8EE;
-  background-image: radial-gradient(#D5CCA8 1px, transparent 1px);
-  background-size: 22px 22px;
-  color: #182535;
+  font-family: var(--font-sans);
+  background-color: var(--color-crema);
+  /* Fondo crema con "granito" sutil, según la sección Fondos del manual */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.14 0 0 0 0 0.14 0 0 0 0 0.14 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--color-tinta-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-.font-dalek {
-  font-family: 'Dalek Pinpoint Bold', 'DalekPinpointBold', 'Dalek Pinpoint', sans-serif;
-  letter-spacing: 0.04em;
-}
-
-.font-montserrat {
-  font-family: 'Montserrat', sans-serif;
-}
-
-/* Custom scrollbars with warm paper aesthetics */
+/* Barras de desplazamiento */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F3EEDC;
+  background: var(--color-tinta-100);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D2C6A5;
+  background: var(--color-tinta-300);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8AA85;
+  background: var(--color-tinta-400);
 }
 
+::selection {
+  background: var(--color-lila-200);
+  color: var(--color-tinta-900);
+}

@@ -250,26 +250,26 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 text-[#182535]">
+    <div className="space-y-6 text-tinta-900">
       {/* Header */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#182535] tracking-wide font-dalek">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs">
+        <h2 className="text-xl sm:text-2xl font-bold text-tinta-900 tracking-wide font-display">
           REGISTRO DE DISPONIBILIDAD
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-montserrat">
+        <p className="text-xs sm:text-sm text-tinta-500 mt-0.5 font-sans">
           Registro por turno específico exacto. En CARNIVAL se diferencian estrictamente los 5 turnos de GT y los 3 turnos de GAP.
         </p>
       </div>
 
       {/* Form Container */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs">
-        <form onSubmit={handleSave} className="space-y-6 font-montserrat">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs">
+        <form onSubmit={handleSave} className="space-y-6 font-sans">
           {/* Person & Day selector */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-[#334155] flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-[#B83A24]" />
+                <label className="text-xs font-semibold text-tinta-700 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-lila-600" />
                   <span>Buscar integrante por nombre *</span>
                 </label>
                 {selectedPerson && (
@@ -283,7 +283,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                       setIsPersonDropdownOpen(true);
                       setTimeout(() => searchInputRef.current?.focus(), 50);
                     }}
-                    className="text-[11px] text-[#B83A24] hover:underline cursor-pointer flex items-center gap-1 font-medium"
+                    className="text-[11px] text-lila-600 hover:underline cursor-pointer flex items-center gap-1 font-medium"
                   >
                     <X className="w-3 h-3" />
                     Limpiar selección
@@ -292,7 +292,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               </div>
 
               {people.length === 0 ? (
-                <div className="p-3 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] text-xs text-[#64748B]">
+                <div className="p-3 rounded-2xl bg-tinta-50 border border-tinta-200 text-xs text-tinta-500">
                   No hay personas registradas aún. Agregue personas en la pestaña de Personas o mediante Importación Excel.
                 </div>
               ) : (
@@ -300,7 +300,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   {/* Searchable input with Dropdown */}
                   <div className="relative" ref={dropdownRef}>
                     <div className="relative flex items-center">
-                      <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 pointer-events-none" />
+                      <Search className="w-4 h-4 text-tinta-400 absolute left-3.5 pointer-events-none" />
                       <input
                         ref={searchInputRef}
                         type="text"
@@ -320,7 +320,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                             setIsPersonDropdownOpen(false);
                           }
                         }}
-                        className="w-full min-h-[44px] pl-10 pr-16 py-2.5 bg-[#FAF6EC] text-[#182535] rounded-xl border border-[#E5DAC0] focus:outline-hidden focus:border-[#B83A24] text-xs font-medium placeholder:text-[#94A3B8]"
+                        className="w-full min-h-[44px] pl-10 pr-16 py-2.5 bg-tinta-50 text-tinta-900 rounded-xl border border-tinta-300 focus:outline-hidden focus:border-lila-600 text-xs font-medium placeholder:text-tinta-400"
                       />
 
                       <div className="absolute right-2.5 flex items-center gap-1">
@@ -335,7 +335,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                               setIsPersonDropdownOpen(true);
                               searchInputRef.current?.focus();
                             }}
-                            className="text-[#94A3B8] hover:text-[#182535] p-1 cursor-pointer"
+                            className="text-tinta-400 hover:text-tinta-900 p-1 cursor-pointer"
                             title="Limpiar búsqueda"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -349,7 +349,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                               setTimeout(() => searchInputRef.current?.focus(), 50);
                             }
                           }}
-                          className="text-[#94A3B8] hover:text-[#182535] p-1 cursor-pointer"
+                          className="text-tinta-400 hover:text-tinta-900 p-1 cursor-pointer"
                           title="Ver lista"
                         >
                           <ChevronDown
@@ -363,9 +363,9 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
 
                     {/* Autocomplete Dropdown List */}
                     {isPersonDropdownOpen && (
-                      <div className="absolute z-40 left-0 right-0 mt-1.5 bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl shadow-xl max-h-64 overflow-y-auto p-1.5 divide-y divide-[#FAF6EC]">
+                      <div className="absolute z-40 left-0 right-0 mt-1.5 bg-surface border border-tinta-200 rounded-2xl shadow-xl max-h-64 overflow-y-auto p-1.5 divide-y divide-tinta-50">
                         {filteredPeople.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-[#94A3B8]">
+                          <div className="p-4 text-center text-xs text-tinta-400">
                             No se encontraron integrantes con el nombre &quot;{personSearchQuery}&quot;
                           </div>
                         ) : (
@@ -385,36 +385,36 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                                 }}
                                 className={`w-full text-left p-2.5 rounded-xl transition-colors flex items-center justify-between gap-2 cursor-pointer ${
                                   isSelected
-                                    ? 'bg-[#FDF2EE] border border-[#F6C7BA]'
-                                    : 'hover:bg-[#FAF6EC]'
+                                    ? 'bg-lila-50 border border-lila-200'
+                                    : 'hover:bg-tinta-50'
                                 }`}
                               >
                                 <div className="min-w-0">
-                                  <div className="text-xs text-[#182535] font-bold truncate flex items-center gap-1.5">
+                                  <div className="text-xs text-tinta-900 font-bold truncate flex items-center gap-1.5">
                                     <span>{p.name}</span>
                                     {p.primaryType === 'MESA' && (
                                       <Crown className="w-3 h-3 text-purple-700 shrink-0" />
                                     )}
                                   </div>
-                                  <div className="text-[11px] text-[#64748B] flex items-center gap-1.5 flex-wrap mt-0.5">
+                                  <div className="text-[11px] text-tinta-500 flex items-center gap-1.5 flex-wrap mt-0.5">
                                     <span
                                       className={`px-1.5 py-0.5 rounded font-bold text-[9px] border ${
                                         p.primaryType === 'MESA'
                                           ? 'bg-purple-100 text-purple-800 border-purple-200'
                                           : p.primaryType === 'GAP'
-                                          ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                                          ? 'bg-lila-50 text-lila-600 border-lila-200'
                                           : 'bg-blue-50 text-blue-700 border-blue-200'
                                       }`}
                                     >
                                       {p.primaryType}
                                     </span>
                                     {p.gtSubTeam && (
-                                      <span className="text-[10px] text-[#475569] font-medium">
+                                      <span className="text-[10px] text-tinta-600 font-medium">
                                         • {p.gtSubTeam}
                                       </span>
                                     )}
                                     {p.documentId && (
-                                      <span className="text-[10px] text-[#64748B] font-mono">
+                                      <span className="text-[10px] text-tinta-500 font-mono">
                                         • CC: {p.documentId}
                                       </span>
                                     )}
@@ -430,11 +430,11 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                                   </div>
                                 </div>
                                 {isSelected ? (
-                                  <div className="w-5 h-5 rounded-full bg-[#B83A24] text-white flex items-center justify-center shrink-0">
+                                  <div className="w-5 h-5 rounded-full bg-lila-600 text-white flex items-center justify-center shrink-0">
                                     <Check className="w-3.5 h-3.5" />
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] text-[#94A3B8] font-medium shrink-0">
+                                  <span className="text-[10px] text-tinta-400 font-medium shrink-0">
                                     Seleccionar
                                   </span>
                                 )}
@@ -443,7 +443,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           })
                         )}
                         {filteredPeople.length > 60 && (
-                          <div className="p-2 text-center text-[11px] text-[#64748B] bg-[#FAF6EC] rounded-xl mt-1">
+                          <div className="p-2 text-center text-[11px] text-tinta-500 bg-tinta-50 rounded-xl mt-1">
                             Mostrando los primeros 60 de {filteredPeople.length} integrantes. Escribe para afinar la búsqueda.
                           </div>
                         )}
@@ -453,45 +453,45 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
 
                   {/* Selected Person Info Card */}
                   {selectedPerson ? (
-                    <div className="p-3 bg-[#FAF6EC] border border-[#E5DAC0] rounded-2xl flex items-center justify-between gap-3">
+                    <div className="p-3 bg-tinta-50 border border-tinta-300 rounded-2xl flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
                           className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
                             selectedPerson.primaryType === 'MESA'
                               ? 'bg-purple-100 text-purple-800 border-purple-200'
                               : selectedPerson.primaryType === 'GAP'
-                              ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                              ? 'bg-lila-50 text-lila-600 border-lila-200'
                               : 'bg-blue-100 text-blue-800 border-blue-200'
                           }`}
                         >
                           {selectedPerson.name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-[#182535] truncate flex items-center gap-1.5">
+                          <div className="text-xs font-bold text-tinta-900 truncate flex items-center gap-1.5">
                             <span>{selectedPerson.name}</span>
                             {selectedPerson.primaryType === 'MESA' && (
                               <Crown className="w-3.5 h-3.5 text-purple-700 shrink-0" />
                             )}
                           </div>
-                          <div className="text-[11px] text-[#64748B] flex items-center gap-1.5 flex-wrap mt-0.5">
+                          <div className="text-[11px] text-tinta-500 flex items-center gap-1.5 flex-wrap mt-0.5">
                             <span
                               className={`px-1.5 py-0.5 rounded font-bold text-[9px] border ${
                                 selectedPerson.primaryType === 'MESA'
                                   ? 'bg-purple-100 text-purple-800 border-purple-200'
                                   : selectedPerson.primaryType === 'GAP'
-                                  ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
+                                  ? 'bg-lila-50 text-lila-600 border-lila-200'
                                   : 'bg-blue-100 text-blue-800 border-blue-200'
                               }`}
                             >
                               {selectedPerson.primaryType}
                             </span>
                             {selectedPerson.gtSubTeam && (
-                              <span className="text-[10px] text-[#475569] font-medium">
+                              <span className="text-[10px] text-tinta-600 font-medium">
                                 Subequipo: {selectedPerson.gtSubTeam}
                               </span>
                             )}
                             {selectedPerson.documentId && (
-                              <span className="text-[10px] text-[#64748B] font-mono">
+                              <span className="text-[10px] text-tinta-500 font-mono">
                                 • CC: {selectedPerson.documentId}
                               </span>
                             )}
@@ -504,15 +504,15 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           setIsPersonDropdownOpen(true);
                           setTimeout(() => searchInputRef.current?.focus(), 50);
                         }}
-                        className="px-2.5 py-1.5 rounded-xl bg-white border border-[#E5DAC0] text-xs font-bold text-[#182535] hover:border-[#B83A24] hover:text-[#B83A24] transition-all cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
+                        className="px-2.5 py-1.5 rounded-xl bg-white border border-tinta-300 text-xs font-bold text-tinta-900 hover:border-lila-600 hover:text-lila-600 transition-all cursor-pointer flex items-center gap-1 shadow-2xs shrink-0"
                       >
                         <Search className="w-3 h-3" />
                         Buscar otro
                       </button>
                     </div>
                   ) : (
-                    <div className="px-3 py-2 bg-[#FAF6EC]/60 border border-dashed border-[#E5DAC0] rounded-xl text-[11px] text-[#64748B] flex items-center gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-[#C87F17] shrink-0" />
+                    <div className="px-3 py-2 bg-tinta-50/60 border border-dashed border-tinta-300 rounded-xl text-[11px] text-tinta-500 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-mostaza-600 shrink-0" />
                       <span>Escribe el nombre o cédula arriba para seleccionar al integrante.</span>
                     </div>
                   )}
@@ -521,8 +521,8 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#334155] mb-1.5 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-[#C87F17]" />
+              <label className="block text-xs font-semibold text-tinta-700 mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-mostaza-600" />
                 <span>Día del Evento</span>
               </label>
               <div className="grid grid-cols-5 gap-1.5">
@@ -533,8 +533,8 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                     onClick={() => handlePersonOrDayChange(selectedPersonId, d.dayId)}
                     className={`min-h-[44px] py-2 px-1 rounded-xl text-xs font-bold transition-all text-center ${
                       selectedDayId === d.dayId
-                        ? 'bg-[#B83A24] text-white shadow-xs font-dalek'
-                        : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] border border-[#EADDC7]'
+                        ? 'bg-lila-600 text-white shadow-xs font-display'
+                        : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 hover:bg-tinta-100 border border-tinta-200'
                     }`}
                   >
                     {d.dayName}
@@ -547,12 +547,12 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
           {/* TURNOS SECTION */}
           {isCarnival ? (
             /* CARNIVAL: SEPARATED GT AND GAP SECTIONS */
-            <div className="pt-4 border-t border-[#EADDC7] space-y-6">
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] text-xs">
-                <h4 className="font-bold text-[#182535] font-dalek tracking-wider flex items-center gap-2">
+            <div className="pt-4 border-t border-tinta-200 space-y-6">
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 text-xs">
+                <h4 className="font-bold text-tinta-900 font-display tracking-wider flex items-center gap-2">
                   <span>CARNIVAL — ESTRUCTURA DE TURNOS POR ROL</span>
                 </h4>
-                <p className="text-[#64748B] text-[11px] mt-1 leading-relaxed">
+                <p className="text-tinta-500 text-[11px] mt-1 leading-relaxed">
                   En CARNIVAL, <strong>GT</strong> tiene exactamente 5 turnos y <strong>GAP</strong> tiene únicamente 3 turnos.
                   NO se mezclan los turnos de GT con los de GAP.
                   {selectedPerson?.primaryType === 'GAP' &&
@@ -569,15 +569,15 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               {/* GAP SHIFTS (Shown if GAP, GT dual, or no person selected) */}
               {(!selectedPerson || selectedPerson.primaryType === 'GAP' || selectedPerson.alsoActsAsGap) && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                  <div className="flex items-center justify-between pb-2 border-b border-tinta-200">
                     <div className="flex items-center gap-2">
-                      <span className="p-1 rounded-md bg-[#FDF2EE] text-[#B83A24]">
+                      <span className="p-1 rounded-md bg-lila-50 text-lila-600">
                         <Grid className="w-4 h-4" />
                       </span>
-                      <h4 className="text-sm font-bold text-[#182535] font-dalek tracking-wider">
+                      <h4 className="text-sm font-bold text-tinta-900 font-display tracking-wider">
                         CARNIVAL — GAP (3 TURNOS OFICIALES)
                       </h4>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FDF2EE] text-[#B83A24] font-mono font-bold border border-[#F6C7BA]">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-lila-50 text-lila-600 font-mono font-bold border border-lila-200">
                         30 BASES FÍSICAS
                       </span>
                     </div>
@@ -590,7 +590,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           const remaining = selectedShifts.filter((id) => !gapIds.includes(id));
                           setSelectedShifts([...remaining, ...gapIds]);
                         }}
-                        className="text-[11px] font-bold text-[#B83A24] hover:underline"
+                        className="text-[11px] font-bold text-lila-600 hover:underline"
                       >
                         Marcar 3 de GAP
                       </button>
@@ -606,26 +606,26 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           onClick={() => handleToggleShift(shift.id)}
                           className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 select-none ${
                             isChecked
-                              ? 'bg-[#FDF2EE] border-[#B83A24] shadow-xs'
-                              : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-[#B83A24]/40 hover:bg-[#FFFDF8]'
+                              ? 'bg-lila-50 border-lila-600 shadow-xs'
+                              : 'bg-tinta-50 border-tinta-200 text-tinta-500 hover:border-lila-600/40 hover:bg-surface'
                           }`}
                         >
-                          <div className="mt-0.5 text-[#B83A24]">
+                          <div className="mt-0.5 text-lila-600">
                             {isChecked ? (
-                              <CheckSquare className="w-5 h-5 text-[#B83A24]" />
+                              <CheckSquare className="w-5 h-5 text-lila-600" />
                             ) : (
-                              <Square className="w-5 h-5 text-[#94A3B8]" />
+                              <Square className="w-5 h-5 text-tinta-400" />
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-[#182535]">{shift.name}</span>
-                              <span className="text-[10px] font-mono text-[#B83A24] font-bold">GAP</span>
+                              <span className="font-bold text-xs text-tinta-900">{shift.name}</span>
+                              <span className="text-[10px] font-mono text-lila-600 font-bold">GAP</span>
                             </div>
-                            <div className="text-sm font-bold text-[#182535] mt-1 font-mono">
+                            <div className="text-sm font-bold text-tinta-900 mt-1 font-mono">
                               {shift.label}
                             </div>
-                            <div className="text-[10px] text-[#64748B] mt-1">
+                            <div className="text-[10px] text-tinta-500 mt-1">
                               30 Bases físicas compartidas
                             </div>
                             {renderAssignmentStatusBadge(shift.id, isChecked)}
@@ -640,15 +640,15 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               {/* GT SHIFTS (Shown if GT or no person selected) */}
               {(!selectedPerson || selectedPerson.primaryType === 'GT') && (
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                  <div className="flex items-center justify-between pb-2 border-b border-tinta-200">
                     <div className="flex items-center gap-2">
-                      <span className="p-1 rounded-md bg-[#FAF6EC] text-[#182535]">
+                      <span className="p-1 rounded-md bg-tinta-50 text-tinta-900">
                         <Shield className="w-4 h-4" />
                       </span>
-                      <h4 className="text-sm font-bold text-[#182535] font-dalek tracking-wider">
+                      <h4 className="text-sm font-bold text-tinta-900 font-display tracking-wider">
                         CARNIVAL — GT (5 TURNOS OFICIALES)
                       </h4>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#182535] text-white font-mono font-bold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-tinta-900 text-white font-mono font-bold">
                         STAFF GENERAL
                       </span>
                     </div>
@@ -661,7 +661,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           const remaining = selectedShifts.filter((id) => !gtIds.includes(id));
                           setSelectedShifts([...remaining, ...gtIds]);
                         }}
-                        className="text-[11px] font-bold text-[#182535] hover:underline"
+                        className="text-[11px] font-bold text-tinta-900 hover:underline"
                       >
                         Marcar 5 de GT
                       </button>
@@ -677,26 +677,26 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           onClick={() => handleToggleShift(shift.id)}
                           className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 select-none ${
                             isChecked
-                              ? 'bg-[#FAF6EC] border-[#182535] shadow-xs'
-                              : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-[#182535]/40 hover:bg-[#FFFDF8]'
+                              ? 'bg-tinta-50 border-tinta-900 shadow-xs'
+                              : 'bg-tinta-50 border-tinta-200 text-tinta-500 hover:border-tinta-900/40 hover:bg-surface'
                           }`}
                         >
-                          <div className="mt-0.5 text-[#182535]">
+                          <div className="mt-0.5 text-tinta-900">
                             {isChecked ? (
-                              <CheckSquare className="w-5 h-5 text-[#182535]" />
+                              <CheckSquare className="w-5 h-5 text-tinta-900" />
                             ) : (
-                              <Square className="w-5 h-5 text-[#94A3B8]" />
+                              <Square className="w-5 h-5 text-tinta-400" />
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-[#182535]">{shift.name}</span>
-                              <span className="text-[10px] font-mono text-[#182535] font-bold">GT</span>
+                              <span className="font-bold text-xs text-tinta-900">{shift.name}</span>
+                              <span className="text-[10px] font-mono text-tinta-900 font-bold">GT</span>
                             </div>
-                            <div className="text-sm font-bold text-[#182535] mt-1 font-mono">
+                            <div className="text-sm font-bold text-tinta-900 mt-1 font-mono">
                               {shift.label}
                             </div>
-                            <div className="text-[10px] text-[#64748B] mt-1">
+                            <div className="text-[10px] text-tinta-500 mt-1">
                               Staff general campus
                             </div>
                             {renderAssignmentStatusBadge(shift.id, isChecked)}
@@ -711,12 +711,12 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               {/* MESA SHIFTS (Shown if MESA or no person selected) */}
               {(!selectedPerson || selectedPerson.primaryType === 'MESA') && (
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                  <div className="flex items-center justify-between pb-2 border-b border-tinta-200">
                     <div className="flex items-center gap-2">
                       <span className="p-1 rounded-md bg-purple-100 text-purple-700">
                         <Crown className="w-4 h-4" />
                       </span>
-                      <h4 className="text-sm font-bold text-[#182535] font-dalek tracking-wider">
+                      <h4 className="text-sm font-bold text-tinta-900 font-display tracking-wider">
                         CARNIVAL — MESA DIRECTIVA ({carnivalMesaShifts.length} TURNOS)
                       </h4>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-700 text-white font-mono font-bold">
@@ -749,27 +749,27 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                           className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-start gap-3 select-none ${
                             isChecked
                               ? 'bg-purple-50 border-purple-700 shadow-xs ring-1 ring-purple-600/30'
-                              : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-purple-400 hover:bg-[#FFFDF8]'
+                              : 'bg-tinta-50 border-tinta-200 text-tinta-500 hover:border-purple-400 hover:bg-surface'
                           }`}
                         >
                           <div className="mt-0.5 text-purple-700">
                             {isChecked ? (
                               <CheckSquare className="w-5 h-5 text-purple-700" />
                             ) : (
-                              <Square className="w-5 h-5 text-[#94A3B8]" />
+                              <Square className="w-5 h-5 text-tinta-400" />
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-[#182535]">{shift.name}</span>
+                              <span className="font-bold text-xs text-tinta-900">{shift.name}</span>
                               <span className="text-[10px] font-mono text-purple-700 font-bold bg-purple-100 px-1.5 py-0.5 rounded">
                                 MESA
                               </span>
                             </div>
-                            <div className="text-sm font-bold text-[#182535] mt-1 font-mono">
+                            <div className="text-sm font-bold text-tinta-900 mt-1 font-mono">
                               {shift.label}
                             </div>
-                            <div className="text-[10px] text-[#64748B] mt-1">
+                            <div className="text-[10px] text-tinta-500 mt-1">
                               {shift.startTime} - {shift.endTime} • Coordinación General
                             </div>
                             {renderAssignmentStatusBadge(shift.id, isChecked)}
@@ -783,18 +783,18 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
             </div>
           ) : (
             /* OTHER DAYS (Lunes, Martes, Jueves, Viernes) */
-            <div className="pt-2 border-t border-[#EADDC7]">
+            <div className="pt-2 border-t border-tinta-200">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h4 className="text-sm font-bold text-[#182535] flex items-center gap-2 font-dalek tracking-wider">
+                  <h4 className="text-sm font-bold text-tinta-900 flex items-center gap-2 font-display tracking-wider">
                     <span>TURNOS PARA {currentDay.dayName.toUpperCase()}: {currentDay.eventName}</span>
                     {selectedDayId === 'lunes' && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] font-semibold font-montserrat">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-turquesa-50 text-turquesa-600 border border-turquesa-200 font-semibold font-sans">
                         5 Turnos Definitivos
                       </span>
                     )}
                   </h4>
-                  <p className="text-xs text-[#64748B] mt-0.5">
+                  <p className="text-xs text-tinta-500 mt-0.5">
                     Seleccione los turnos en los que este integrante puede participar:
                   </p>
                 </div>
@@ -804,16 +804,16 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                     type="button"
                     onClick={() => setSelectedShifts(currentDayShifts.map((s) => s.id))}
                     className={`text-[11px] font-bold hover:underline ${
-                      selectedPerson?.primaryType === 'MESA' ? 'text-purple-700' : 'text-[#B83A24]'
+                      selectedPerson?.primaryType === 'MESA' ? 'text-purple-700' : 'text-lila-600'
                     }`}
                   >
                     Marcar todos
                   </button>
-                  <span className="text-[#CBD5E1]">•</span>
+                  <span className="text-tinta-300">•</span>
                   <button
                     type="button"
                     onClick={() => setSelectedShifts([])}
-                    className="text-[11px] font-medium text-[#64748B] hover:text-[#182535]"
+                    className="text-[11px] font-medium text-tinta-500 hover:text-tinta-900"
                   >
                     Desmarcar
                   </button>
@@ -832,28 +832,28 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                         isChecked
                           ? isMesaPerson
                             ? 'bg-purple-50 border-purple-700 shadow-xs ring-1 ring-purple-600/30'
-                            : 'bg-[#FDF2EE] border-[#B83A24] shadow-xs'
-                          : 'bg-[#FAF6EC] border-[#EADDC7] text-[#64748B] hover:border-[#B83A24]/40 hover:bg-[#FFFDF8]'
+                            : 'bg-lila-50 border-lila-600 shadow-xs'
+                          : 'bg-tinta-50 border-tinta-200 text-tinta-500 hover:border-lila-600/40 hover:bg-surface'
                       }`}
                     >
-                      <div className={`mt-0.5 ${isMesaPerson ? 'text-purple-700' : 'text-[#B83A24]'}`}>
+                      <div className={`mt-0.5 ${isMesaPerson ? 'text-purple-700' : 'text-lila-600'}`}>
                         {isChecked ? (
-                          <CheckSquare className={`w-5 h-5 ${isMesaPerson ? 'text-purple-700' : 'text-[#B83A24]'}`} />
+                          <CheckSquare className={`w-5 h-5 ${isMesaPerson ? 'text-purple-700' : 'text-lila-600'}`} />
                         ) : (
-                          <Square className="w-5 h-5 text-[#94A3B8]" />
+                          <Square className="w-5 h-5 text-tinta-400" />
                         )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-[#182535]">{shift.name}</span>
-                          <span className="text-[10px] font-mono text-[#64748B]">
+                          <span className="font-bold text-xs text-tinta-900">{shift.name}</span>
+                          <span className="text-[10px] font-mono text-tinta-500">
                             {shift.startTime} - {shift.endTime}
                           </span>
                         </div>
-                        <div className="text-sm font-semibold text-[#182535] mt-1 font-mono tracking-tight">
+                        <div className="text-sm font-semibold text-tinta-900 mt-1 font-mono tracking-tight">
                           {shift.label}
                         </div>
-                        <div className="text-[11px] text-[#64748B] mt-1">
+                        <div className="text-[11px] text-tinta-500 mt-1">
                           {isMesaPerson ? 'Apto para: MESA' : `Apto para: ${(shift.forTypes || ['GT']).join(' / ')}`}
                         </div>
                         {renderAssignmentStatusBadge(shift.id, isChecked)}
@@ -867,7 +867,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">
+            <label className="block text-xs font-semibold text-tinta-700 mb-1">
               Observaciones de Disponibilidad (Opcional)
             </label>
             <input
@@ -875,7 +875,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ej. Llega 15 minutos tarde por clase, disponible todo el bloque..."
-              className="w-full min-h-[44px] px-3.5 py-2 bg-[#FAF6EC] text-[#182535] rounded-xl border border-[#E5DAC0] focus:outline-hidden focus:border-[#B83A24] text-xs"
+              className="w-full min-h-[44px] px-3.5 py-2 bg-tinta-50 text-tinta-900 rounded-xl border border-tinta-300 focus:outline-hidden focus:border-lila-600 text-xs"
             />
           </div>
 
@@ -885,7 +885,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center gap-2">
-                  <strong className="font-bold text-amber-950 font-dalek tracking-wide text-xs">
+                  <strong className="font-bold text-amber-950 font-display tracking-wide text-xs">
                     AVISO: DESASIGNACIÓN AUTOMÁTICA AL GUARDAR
                   </strong>
                   <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[10px] font-bold font-mono">
@@ -918,11 +918,11 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
           )}
 
           {/* Submit */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#EADDC7]">
+          <div className="flex items-center justify-between pt-3 border-t border-tinta-200">
             <div>
               {saveMessage && (
-                <span className="text-xs font-bold text-[#16A34A] animate-in fade-in flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                <span className="text-xs font-bold text-turquesa-600 animate-in fade-in flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-turquesa-600" />
                   <span>{saveMessage}</span>
                 </span>
               )}
@@ -931,7 +931,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
             <button
               type="submit"
               disabled={people.length === 0}
-              className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all font-dalek tracking-wider cursor-pointer"
+              className="min-h-[44px] px-6 py-2.5 rounded-xl bg-lila-600 hover:bg-lila-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all font-display tracking-wider cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>GUARDAR DISPONIBILIDAD</span>
@@ -942,24 +942,24 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
 
       {/* Deassignment Alert Notification Modal */}
       {deassignedNotice && (
-        <div className="fixed inset-0 z-50 bg-[#182535]/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-tinta-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-tinta-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
                 <UserMinus className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm sm:text-base font-bold text-[#182535] font-dalek tracking-wider">
+                <h3 className="text-sm sm:text-base font-bold text-tinta-900 font-display tracking-wider">
                   DESASIGNACIÓN AUTOMÁTICA
                 </h3>
-                <p className="text-[11px] text-[#64748B] mt-0.5">
+                <p className="text-[11px] text-tinta-500 mt-0.5">
                   Turnos actualizados y cupos liberados con éxito.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setDeassignedNotice(null)}
-                className="text-[#94A3B8] hover:text-[#182535] p-1 rounded-xl transition-colors cursor-pointer"
+                className="text-tinta-400 hover:text-tinta-900 p-1 rounded-xl transition-colors cursor-pointer"
                 title="Cerrar"
               >
                 <X className="w-5 h-5" />
@@ -970,22 +970,22 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               Al retirar la disponibilidad de <strong>{deassignedNotice.personName}</strong>, se le retiró automáticamente de <strong>{deassignedNotice.items.length} {deassignedNotice.items.length === 1 ? 'turno asignado' : 'turnos asignados'}</strong>:
             </div>
 
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1 divide-y divide-[#FAF6EC]">
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1 divide-y divide-tinta-50">
               {deassignedNotice.items.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-white border border-[#EADDC7] rounded-xl flex items-center justify-between gap-3 text-xs"
+                  className="p-3 bg-white border border-tinta-200 rounded-xl flex items-center justify-between gap-3 text-xs"
                 >
                   <div className="min-w-0">
-                    <div className="font-bold text-[#182535] flex items-center gap-1.5 truncate">
+                    <div className="font-bold text-tinta-900 flex items-center gap-1.5 truncate">
                       <span>{item.shiftName}</span>
                       {item.shiftLabel && (
-                        <span className="text-[10px] font-mono text-[#64748B] font-normal">
+                        <span className="text-[10px] font-mono text-tinta-500 font-normal">
                           • {item.shiftLabel}
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-[#64748B] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                    <div className="text-[11px] text-tinta-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
                       <span>Día: <strong>{item.dayName}</strong></span>
                       {item.baseName && (
                         <span>• <strong>{item.baseName}</strong></span>
@@ -1002,12 +1002,12 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               ))}
             </div>
 
-            <div className="text-[11px] text-[#64748B] bg-[#FAF6EC] p-3 rounded-xl border border-[#EADDC7] flex items-center gap-2">
+            <div className="text-[11px] text-tinta-500 bg-tinta-50 p-3 rounded-xl border border-tinta-200 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Los cupos ya están disponibles de inmediato para asignar a otros integrantes.</span>
             </div>
 
-            <div className="pt-2 border-t border-[#EADDC7] flex items-center justify-end gap-2">
+            <div className="pt-2 border-t border-tinta-200 flex items-center justify-end gap-2">
               {onNavigate && (
                 <button
                   type="button"
@@ -1015,7 +1015,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                     setDeassignedNotice(null);
                     onNavigate('assignments');
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-xs font-bold text-[#182535] hover:bg-[#F3EEDC] transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-tinta-50 border border-tinta-200 text-xs font-bold text-tinta-900 hover:bg-tinta-100 transition-all cursor-pointer"
                 >
                   Ir a Asignaciones
                 </button>
@@ -1023,7 +1023,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
               <button
                 type="button"
                 onClick={() => setDeassignedNotice(null)}
-                className="px-5 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider transition-all cursor-pointer shadow-xs"
+                className="px-5 py-2.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-display tracking-wider transition-all cursor-pointer shadow-xs"
               >
                 ENTENDIDO
               </button>

@@ -345,22 +345,22 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-5 sm:p-7 shadow-xs">
+      <div className="bg-surface border border-tinta-200 rounded-2xl p-5 sm:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40 font-montserrat">
-                <Shield className="w-3.5 h-3.5 text-[#B83A24]" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40 font-sans">
+                <Shield className="w-3.5 h-3.5 text-lila-600" />
                 ADMINISTRACIÓN TOTAL
               </span>
-              <span className="text-xs px-2 py-0.5 rounded-md font-semibold bg-[#F1F5F9] text-[#475569]">
+              <span className="text-xs px-2 py-0.5 rounded-md font-semibold bg-tinta-100 text-tinta-600">
                 Sincronización en Tiempo Real
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#182535] font-dalek tracking-wide">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-tinta-900 font-display tracking-wide">
               CONFIGURACIÓN DE TURNOS Y PROGRAMACIÓN
             </h1>
-            <p className="text-sm text-[#64748B] mt-1 max-w-3xl font-montserrat">
+            <p className="text-sm text-tinta-500 mt-1 max-w-3xl font-sans">
               Control total de la programación para el Administrador: crea, edita, duplica o elimina turnos, horarios, cupos, eventos y bases físicas sin tocar código.
             </p>
           </div>
@@ -375,17 +375,17 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     '¿Deseas restaurar los turnos, eventos y bases predeterminados de DÍAS EAFIT 2026? Esto reiniciará la configuración a los 5 turnos de Carnival GT, 3 turnos Carnival GAP (22 bases), The Show (5 turnos), The Zone (4 turnos), The Challenge y The Games.',
                 })
               }
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:text-[#182535] bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-tinta-500 hover:text-tinta-900 bg-white hover:bg-tinta-50 border border-tinta-200 shadow-2xs transition-all cursor-pointer"
               title="Restablece la programación predeterminada"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-[#B83A24]" />
+              <RotateCcw className="w-3.5 h-3.5 text-lila-600" />
               Restablecer Oficial
             </button>
 
             {activeSubTab === 'shifts' && (
               <button
                 onClick={handleOpenCreateShift}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#B83A24] hover:bg-[#8F2714] shadow-xs hover:shadow-md transition-all cursor-pointer font-montserrat"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-lila-600 hover:bg-lila-800 shadow-xs hover:shadow-md transition-all cursor-pointer font-sans"
               >
                 <Plus className="w-4 h-4" />
                 AGREGAR TURNO
@@ -405,7 +405,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   });
                   setIsEventModalOpen(true);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#B83A24] hover:bg-[#8F2714] shadow-xs transition-all cursor-pointer font-montserrat"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-lila-600 hover:bg-lila-800 shadow-xs transition-all cursor-pointer font-sans"
               >
                 <Plus className="w-4 h-4" />
                 AGREGAR EVENTO
@@ -424,7 +424,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   });
                   setIsBaseModalOpen(true);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-[#B83A24] hover:bg-[#8F2714] shadow-xs transition-all cursor-pointer font-montserrat"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-lila-600 hover:bg-lila-800 shadow-xs transition-all cursor-pointer font-sans"
               >
                 <Plus className="w-4 h-4" />
                 AGREGAR BASE
@@ -434,26 +434,26 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
         </div>
 
         {/* Terminology Banner */}
-        <div className="mt-4 p-3 rounded-xl bg-[#FFF9ED] border border-[#E5A12E]/30 text-xs text-[#8A580C] flex items-center justify-between flex-wrap gap-2">
+        <div className="mt-4 p-3 rounded-xl bg-mostaza-50 border border-mostaza-300/30 text-xs text-mostaza-700 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-[#C87F17] shrink-0" />
+            <Info className="w-4 h-4 text-mostaza-600 shrink-0" />
             <span>
               <strong>Terminología Oficial:</strong> <strong>GT</strong> = GRUPO DE TRABAJO • <strong>GAP</strong> = GRUPO DE APOYO • <strong>MESA</strong> = MESA
             </span>
           </div>
-          <span className="text-[11px] text-[#A16207]">
+          <span className="text-[11px] text-mostaza-700">
             Una persona GT asignada temporalmente a GAP mantiene intacto su tipo principal.
           </span>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 mt-5 border-b border-[#EADDC7] pb-2 overflow-x-auto">
+        <div className="flex items-center gap-2 mt-5 border-b border-tinta-200 pb-2 overflow-x-auto">
           <button
             onClick={() => setActiveSubTab('shifts')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeSubTab === 'shifts'
-                ? 'bg-[#B83A24] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#182535] hover:bg-[#F8FAFC]'
+                ? 'bg-lila-600 text-white shadow-xs'
+                : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -464,8 +464,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
             onClick={() => setActiveSubTab('events')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeSubTab === 'events'
-                ? 'bg-[#B83A24] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#182535] hover:bg-[#F8FAFC]'
+                ? 'bg-lila-600 text-white shadow-xs'
+                : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50'
             }`}
           >
             <Calendar className="w-4 h-4" />
@@ -476,8 +476,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
             onClick={() => setActiveSubTab('bases')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeSubTab === 'bases'
-                ? 'bg-[#B83A24] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#182535] hover:bg-[#F8FAFC]'
+                ? 'bg-lila-600 text-white shadow-xs'
+                : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -488,8 +488,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
             onClick={() => setActiveSubTab('groups')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeSubTab === 'groups'
-                ? 'bg-[#B83A24] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#182535] hover:bg-[#F8FAFC]'
+                ? 'bg-lila-600 text-white shadow-xs'
+                : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -499,7 +499,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
           {onNavigateToFunctions && (
             <button
               onClick={onNavigateToFunctions}
-              className="ml-auto px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#B83A24] bg-[#FFF5F2] hover:bg-[#FFE8E2] border border-[#F5C2B8] transition-all cursor-pointer flex items-center gap-1.5"
+              className="ml-auto px-3.5 py-1.5 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-50 border border-lila-200 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <Tag className="w-3.5 h-3.5" />
               Ver Catálogo de Funciones
@@ -515,47 +515,47 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
         <div className="space-y-4">
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
-              <span className="text-xs font-semibold text-[#64748B] block">Total Turnos</span>
-              <span className="text-2xl font-black text-[#182535] font-dalek">{shifts.length}</span>
-              <span className="text-[11px] text-[#16A34A] block mt-0.5">
+            <div className="bg-white border border-tinta-200 p-4 rounded-xl shadow-2xs">
+              <span className="text-xs font-semibold text-tinta-500 block">Total Turnos</span>
+              <span className="text-2xl font-black text-tinta-900 font-display">{shifts.length}</span>
+              <span className="text-[11px] text-turquesa-600 block mt-0.5">
                 {shifts.filter((s) => s.isActive).length} activos
               </span>
             </div>
 
-            <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
-              <span className="text-xs font-semibold text-[#64748B] block">Cupos Totales Programados</span>
-              <span className="text-2xl font-black text-[#B83A24] font-dalek">
+            <div className="bg-white border border-tinta-200 p-4 rounded-xl shadow-2xs">
+              <span className="text-xs font-semibold text-tinta-500 block">Cupos Totales Programados</span>
+              <span className="text-2xl font-black text-lila-600 font-display">
                 {shifts.reduce((acc, s) => acc + (s.isActive ? s.capacity : 0), 0)}
               </span>
-              <span className="text-[11px] text-[#64748B] block mt-0.5">en turnos activos</span>
+              <span className="text-[11px] text-tinta-500 block mt-0.5">en turnos activos</span>
             </div>
 
-            <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
-              <span className="text-xs font-semibold text-[#64748B] block">GRUPO DE TRABAJO (GT)</span>
-              <span className="text-2xl font-black text-[#0284C7] font-dalek">
+            <div className="bg-white border border-tinta-200 p-4 rounded-xl shadow-2xs">
+              <span className="text-xs font-semibold text-tinta-500 block">GRUPO DE TRABAJO (GT)</span>
+              <span className="text-2xl font-black text-turquesa-700 font-display">
                 {shifts.filter((s) => s.category === 'GT').length}
               </span>
-              <span className="text-[11px] text-[#0284C7] block mt-0.5">turnos específicos</span>
+              <span className="text-[11px] text-turquesa-700 block mt-0.5">turnos específicos</span>
             </div>
 
-            <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
-              <span className="text-xs font-semibold text-[#64748B] block">GRUPO DE APOYO (GAP)</span>
-              <span className="text-2xl font-black text-[#D97706] font-dalek">
+            <div className="bg-white border border-tinta-200 p-4 rounded-xl shadow-2xs">
+              <span className="text-xs font-semibold text-tinta-500 block">GRUPO DE APOYO (GAP)</span>
+              <span className="text-2xl font-black text-mostaza-500 font-display">
                 {shifts.filter((s) => s.category === 'GAP').length}
               </span>
-              <span className="text-[11px] text-[#D97706] block mt-0.5">turnos en bases</span>
+              <span className="text-[11px] text-mostaza-500 block mt-0.5">turnos en bases</span>
             </div>
           </div>
 
           {/* Filters Bar */}
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white border border-tinta-200 rounded-xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Day Filter */}
               <select
                 value={dayFilter}
                 onChange={(e) => setDayFilter(e.target.value)}
-                className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none focus:ring-1 focus:ring-[#B83A24]"
+                className="text-xs font-medium border border-tinta-300 rounded-lg px-2.5 py-1.5 bg-white text-tinta-900 focus:outline-none focus:ring-1 focus:ring-lila-600"
               >
                 <option value="all">Todos los Días</option>
                 {dayOptions.map((d) => (
@@ -569,7 +569,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               <select
                 value={eventFilter}
                 onChange={(e) => setEventFilter(e.target.value)}
-                className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none focus:ring-1 focus:ring-[#B83A24]"
+                className="text-xs font-medium border border-tinta-300 rounded-lg px-2.5 py-1.5 bg-white text-tinta-900 focus:outline-none focus:ring-1 focus:ring-lila-600"
               >
                 <option value="all">Todos los Eventos</option>
                 {events.map((ev) => (
@@ -583,7 +583,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none focus:ring-1 focus:ring-[#B83A24]"
+                className="text-xs font-medium border border-tinta-300 rounded-lg px-2.5 py-1.5 bg-white text-tinta-900 focus:outline-none focus:ring-1 focus:ring-lila-600"
               >
                 <option value="all">Todas las Categorías</option>
                 <option value="GT">GRUPO DE TRABAJO (GT)</option>
@@ -595,7 +595,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               <select
                 value={subTeamFilter}
                 onChange={(e) => setSubTeamFilter(e.target.value)}
-                className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none focus:ring-1 focus:ring-[#B83A24]"
+                className="text-xs font-medium border border-tinta-300 rounded-lg px-2.5 py-1.5 bg-white text-tinta-900 focus:outline-none focus:ring-1 focus:ring-lila-600"
               >
                 <option value="all">Todos los Sub-Equipos GT</option>
                 {GT_SUBTEAMS.map((st) => (
@@ -608,23 +608,23 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
 
             {/* Search */}
             <div className="relative w-full sm:w-64">
-              <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar turno..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[#CBD5E1] focus:outline-none focus:ring-1 focus:ring-[#B83A24]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-tinta-300 focus:outline-none focus:ring-1 focus:ring-lila-600"
               />
             </div>
           </div>
 
           {/* Shifts Cards / Table */}
-          <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-2xs">
+          <div className="bg-white border border-tinta-200 rounded-xl overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569] font-bold font-montserrat">
+                  <tr className="bg-tinta-50 border-b border-tinta-200 text-tinta-600 font-bold font-sans">
                     <th className="py-3 px-4">Turno</th>
                     <th className="py-3 px-4">Día / Evento</th>
                     <th className="py-3 px-4">Categoría / Grupo</th>
@@ -635,10 +635,10 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     <th className="py-3 px-4 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E2E8F0]">
+                <tbody className="divide-y divide-tinta-200">
                   {filteredShifts.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-[#94A3B8]">
+                      <td colSpan={8} className="py-8 text-center text-tinta-400">
                         No se encontraron turnos con los filtros seleccionados.
                       </td>
                     </tr>
@@ -658,23 +658,23 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                       const durationHours = calculateDurationHours(shift.startTime, shift.endTime);
 
                       return (
-                        <tr key={shift.id} className="hover:bg-[#FFFDF8] transition-colors">
+                        <tr key={shift.id} className="hover:bg-surface transition-colors">
                           <td className="py-3 px-4">
-                            <div className="font-extrabold text-[#182535] text-sm font-dalek tracking-wide">
+                            <div className="font-extrabold text-tinta-900 text-sm font-display tracking-wide">
                               {shift.name}
                             </div>
                             {shift.notes && (
-                              <span className="text-[11px] text-[#64748B] block truncate max-w-xs" title={shift.notes}>
+                              <span className="text-[11px] text-tinta-500 block truncate max-w-xs" title={shift.notes}>
                                 {shift.notes}
                               </span>
                             )}
                           </td>
 
                           <td className="py-3 px-4">
-                            <span className="font-bold text-[#182535] capitalize block">
+                            <span className="font-bold text-tinta-900 capitalize block">
                               {shift.dayId}
                             </span>
-                            <span className="text-[11px] text-[#64748B] block">
+                            <span className="text-[11px] text-tinta-500 block">
                               {eventObj ? eventObj.name : shift.eventId}
                             </span>
                           </td>
@@ -684,10 +684,10 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               <span
                                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                   shift.category === 'GT'
-                                    ? 'bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD]'
+                                    ? 'bg-turquesa-50 text-turquesa-700 border border-turquesa-200'
                                     : shift.category === 'GAP'
-                                    ? 'bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]'
-                                    : 'bg-[#F3E8FF] text-[#7E22CE] border border-[#E9D5FF]'
+                                    ? 'bg-mostaza-100 text-mostaza-700 border border-mostaza-200'
+                                    : 'bg-lila-50 text-lila-700 border border-lila-100'
                                 }`}
                               >
                                 {shift.category === 'GT'
@@ -700,7 +700,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               {shift.category === 'GT' && (
                                 shift.gtSubTeams && shift.gtSubTeams.length > 1 ? (
                                   <span
-                                    className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF5F2] text-[#B83A24] border border-[#FADCD5]"
+                                    className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-lila-50 text-lila-600 border border-lila-100"
                                     title={shift.gtSubTeams.join(', ')}
                                   >
                                     {shift.gtSubTeams.length === GT_SUBTEAMS.length
@@ -708,14 +708,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                                       : `${shift.gtSubTeams.length} sub-equipos`}
                                   </span>
                                 ) : shift.gtSubTeam ? (
-                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0]">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-tinta-100 text-tinta-700 border border-tinta-200">
                                     {shift.gtSubTeam}
                                   </span>
                                 ) : null
                               )}
 
                               {shift.hasBases && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-turquesa-50 text-turquesa-600 border border-turquesa-200">
                                   Opera en Bases
                                 </span>
                               )}
@@ -723,22 +723,22 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           </td>
 
                           <td className="py-3 px-4">
-                            <span className="font-bold text-[#182535] block">{shift.label}</span>
-                            <span className="text-[11px] text-[#64748B]">
+                            <span className="font-bold text-tinta-900 block">{shift.label}</span>
+                            <span className="text-[11px] text-tinta-500">
                               {shift.startTime} – {shift.endTime} ({durationHours}h)
                             </span>
                           </td>
 
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-extrabold text-[#182535] text-sm font-dalek">
+                              <span className="font-extrabold text-tinta-900 text-sm font-display">
                                 {shift.capacity}
                               </span>
-                              <span className="text-[11px] text-[#64748B]">cupos</span>
+                              <span className="text-[11px] text-tinta-500">cupos</span>
                             </div>
                             <span
                               className={`text-[11px] font-semibold ${
-                                cupoCount >= shift.capacity ? 'text-[#16A34A]' : 'text-[#EA580C]'
+                                cupoCount >= shift.capacity ? 'text-turquesa-600' : 'text-mostaza-500'
                               }`}
                             >
                               {cupoCount} {isMesaShift ? 'MESA' : 'GT'} {cupoCount >= shift.capacity ? 'completos' : 'asignados'}
@@ -756,14 +756,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                                 {shift.specificFunctions.map((fnName) => (
                                   <span
                                     key={fnName}
-                                    className="px-1.5 py-0.5 rounded bg-[#F8FAFC] border border-[#CBD5E1] text-[10px] font-medium text-[#334155]"
+                                    className="px-1.5 py-0.5 rounded bg-tinta-50 border border-tinta-300 text-[10px] font-medium text-tinta-700"
                                   >
                                     {fnName}
                                   </span>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-[11px] text-[#94A3B8] italic">Todas las del grupo</span>
+                              <span className="text-[11px] text-tinta-400 italic">Todas las del grupo</span>
                             )}
                           </td>
 
@@ -772,8 +772,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               onClick={() => handleToggleShiftActive(shift)}
                               className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
                                 shift.isActive
-                                  ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#DCFCE7]'
-                                  : 'bg-[#F8FAFC] text-[#94A3B8] border-[#E2E8F0] hover:bg-[#F1F5F9]'
+                                  ? 'bg-turquesa-50 text-turquesa-600 border-turquesa-200 hover:bg-turquesa-100'
+                                  : 'bg-tinta-50 text-tinta-400 border-tinta-200 hover:bg-tinta-100'
                               }`}
                               title="Click para cambiar estado"
                             >
@@ -786,7 +786,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               {/* Edit Button */}
                               <button
                                 onClick={() => handleOpenEditShift(shift)}
-                                className="p-1.5 rounded-lg text-[#0284C7] hover:bg-[#E0F2FE] transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-turquesa-700 hover:bg-turquesa-50 transition-colors cursor-pointer"
                                 title="Editar turno"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -795,7 +795,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               {/* Duplicate Button */}
                               <button
                                 onClick={() => handleDuplicateShift(shift.id)}
-                                className="p-1.5 rounded-lg text-[#D97706] hover:bg-[#FEF3C7] transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-mostaza-500 hover:bg-mostaza-100 transition-colors cursor-pointer"
                                 title="Duplicar turno"
                               >
                                 <Copy className="w-3.5 h-3.5" />
@@ -804,7 +804,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               {/* Delete Button */}
                               <button
                                 onClick={() => handleRequestDeleteShift(shift)}
-                                className="p-1.5 rounded-lg text-[#DC2626] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-coral-600 hover:bg-coral-100 transition-colors cursor-pointer"
                                 title="Eliminar turno"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -835,30 +835,30 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               return (
                 <div
                   key={ev.id}
-                  className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                  className="bg-white border border-tinta-200 rounded-xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40 font-montserrat">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40 font-sans">
                         {ev.dayName}
                       </span>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          ev.isActive ? 'bg-[#F0FDF4] text-[#16A34A]' : 'bg-[#F1F5F9] text-[#94A3B8]'
+                          ev.isActive ? 'bg-turquesa-50 text-turquesa-600' : 'bg-tinta-100 text-tinta-400'
                         }`}
                       >
                         {ev.isActive ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-black text-[#182535] font-dalek tracking-wide">
+                    <h3 className="text-lg font-black text-tinta-900 font-display tracking-wide">
                       {ev.name}
                     </h3>
-                    <p className="text-xs text-[#64748B] mt-1 line-clamp-2">
+                    <p className="text-xs text-tinta-500 mt-1 line-clamp-2">
                       {ev.description || 'Sin descripción'}
                     </p>
 
-                    <div className="mt-3 pt-3 border-t border-[#F1F5F9] flex items-center justify-between text-xs text-[#475569]">
+                    <div className="mt-3 pt-3 border-t border-tinta-100 flex items-center justify-between text-xs text-tinta-600">
                       <span>
                         <strong>{eventShifts.length}</strong> turnos
                       </span>
@@ -868,13 +868,13 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2">
+                  <div className="mt-4 pt-3 border-t border-tinta-200 flex items-center justify-end gap-2">
                     <button
                       onClick={() => {
                         setEditingEvent({ ...ev });
                         setIsEventModalOpen(true);
                       }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#0284C7] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors cursor-pointer flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-turquesa-700 bg-turquesa-50 hover:bg-turquesa-200 transition-colors cursor-pointer flex items-center gap-1"
                     >
                       <Edit2 className="w-3 h-3" /> Editar
                     </button>
@@ -893,7 +893,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           impactCount: shiftCount,
                         });
                       }}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#DC2626] bg-[#FEE2E2] hover:bg-[#FECACA] transition-colors cursor-pointer flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold text-coral-600 bg-coral-100 hover:bg-coral-200 transition-colors cursor-pointer flex items-center gap-1"
                     >
                       <Trash2 className="w-3 h-3" /> Eliminar
                     </button>
@@ -910,13 +910,13 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {activeSubTab === 'bases' && (
         <div className="space-y-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-2xs flex items-center justify-between flex-wrap gap-3">
+          <div className="bg-white border border-tinta-200 rounded-xl p-4 shadow-2xs flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#475569]">Filtrar por Evento:</span>
+              <span className="text-xs font-bold text-tinta-600">Filtrar por Evento:</span>
               <select
                 value={baseEventFilter}
                 onChange={(e) => setBaseEventFilter(e.target.value)}
-                className="text-xs font-medium border border-[#CBD5E1] rounded-lg px-2.5 py-1.5 bg-white text-[#182535] focus:outline-none"
+                className="text-xs font-medium border border-tinta-300 rounded-lg px-2.5 py-1.5 bg-white text-tinta-900 focus:outline-none"
               >
                 <option value="all">Todas las Bases ({bases.length})</option>
                 <option value="carnival">Carnival ({bases.filter(b => b.eventId === 'carnival').length || 22} bases)</option>
@@ -924,7 +924,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               </select>
             </div>
 
-            <span className="text-xs text-[#64748B]">
+            <span className="text-xs text-tinta-500">
               Para el <strong>GRUPO DE APOYO (GAP)</strong>, el Admin puede modificar cupos, nombres y estados de cada base.
             </span>
           </div>
@@ -940,41 +940,41 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   key={String(b.id)}
                   className={`bg-white border rounded-xl p-3.5 shadow-2xs transition-all flex flex-col justify-between ${
                     b.isSpecial
-                      ? 'border-[#F59E0B] bg-[#FFFBEB]/30'
-                      : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+                      ? 'border-mostaza-300 bg-mostaza-50/30'
+                      : 'border-tinta-200 hover:border-tinta-300'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#F1F5F9] text-[#64748B]">
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-tinta-100 text-tinta-500">
                         {b.eventId || 'Base'}
                       </span>
                       {b.isSpecial && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#FEF3C7] text-[#B45309]">
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-mostaza-100 text-mostaza-700">
                           Especial
                         </span>
                       )}
                     </div>
 
-                    <h4 className="font-extrabold text-[#182535] text-sm truncate font-dalek tracking-wide">
+                    <h4 className="font-extrabold text-tinta-900 text-sm truncate font-display tracking-wide">
                       {displayName}
                     </h4>
 
-                    <div className="mt-2 text-[11px] text-[#64748B]">
+                    <div className="mt-2 text-[11px] text-tinta-500">
                       Capacidad: <strong>{b.defaultCapacity}</strong> pers.
                     </div>
-                    <div className="text-[11px] font-medium text-[#16A34A]">
+                    <div className="text-[11px] font-medium text-turquesa-600">
                       {assignmentsOnBase.length} asignados
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-[#F1F5F9] flex items-center justify-end gap-1">
+                  <div className="mt-3 pt-2 border-t border-tinta-100 flex items-center justify-end gap-1">
                     <button
                       onClick={() => {
                         setEditingBase({ ...b, name: displayName });
                         setIsBaseModalOpen(true);
                       }}
-                      className="p-1 text-[#0284C7] hover:bg-[#E0F2FE] rounded transition-colors"
+                      className="p-1 text-turquesa-700 hover:bg-turquesa-50 rounded transition-colors"
                       title="Editar base"
                     >
                       <Edit2 className="w-3 h-3" />
@@ -993,7 +993,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           impactCount: impact.count,
                         });
                       }}
-                      className="p-1 text-[#DC2626] hover:bg-[#FEE2E2] rounded transition-colors"
+                      className="p-1 text-coral-600 hover:bg-coral-100 rounded transition-colors"
                       title="Eliminar base"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -1032,34 +1032,34 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               return (
                 <div
                   key={subTeam}
-                  className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                  className="bg-white border border-tinta-200 rounded-xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0369A1] font-montserrat">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-turquesa-50 text-turquesa-700 font-sans">
                         GRUPO DE TRABAJO
                       </span>
-                      <span className="text-xs font-bold text-[#182535]">
+                      <span className="text-xs font-bold text-tinta-900">
                         {membersCount} integrantes
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-black text-[#182535] font-dalek tracking-wide">
+                    <h3 className="text-lg font-black text-tinta-900 font-display tracking-wide">
                       {subTeam}
                     </h3>
 
                     <div className="mt-3 space-y-1.5">
-                      <span className="text-xs font-semibold text-[#475569] block">
+                      <span className="text-xs font-semibold text-tinta-600 block">
                         Funciones Creadas ({relatedFunctions.length}):
                       </span>
                       <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
                         {relatedFunctions.length === 0 ? (
-                          <span className="text-[11px] text-[#94A3B8] italic">Sin funciones</span>
+                          <span className="text-[11px] text-tinta-400 italic">Sin funciones</span>
                         ) : (
                           relatedFunctions.map((f) => (
                             <span
                               key={f.id}
-                              className="px-1.5 py-0.5 rounded text-[10px] bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155]"
+                              className="px-1.5 py-0.5 rounded text-[10px] bg-tinta-50 border border-tinta-200 text-tinta-700"
                             >
                               {f.name}
                             </span>
@@ -1069,9 +1069,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#F1F5F9] text-xs text-[#64748B] flex items-center justify-between">
+                  <div className="mt-4 pt-3 border-t border-tinta-100 text-xs text-tinta-500 flex items-center justify-between">
                     <span>Turnos configurados:</span>
-                    <strong className="text-[#182535]">{subTeamShifts.length}</strong>
+                    <strong className="text-tinta-900">{subTeamShifts.length}</strong>
                   </div>
                 </div>
               );
@@ -1085,17 +1085,17 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {isShiftModalOpen && editingShift && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-[#E2E8F0] my-8 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-tinta-200 my-8 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-tinta-200">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-[#FFF5F2] text-[#B83A24]">
+                <div className="p-2 rounded-xl bg-lila-50 text-lila-600">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-[#182535] font-dalek tracking-wide">
+                  <h3 className="text-lg font-black text-tinta-900 font-display tracking-wide">
                     {editingShift.id ? 'EDITAR TURNO' : 'CREAR NUEVO TURNO'}
                   </h3>
-                  <p className="text-xs text-[#64748B] font-montserrat">
+                  <p className="text-xs text-tinta-500 font-sans">
                     Configure el horario, cupos, categoría y funciones asociadas
                   </p>
                 </div>
@@ -1105,7 +1105,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   setIsShiftModalOpen(false);
                   setEditingShift(null);
                 }}
-                className="p-1 rounded-lg text-[#94A3B8] hover:text-[#182535] hover:bg-[#F1F5F9]"
+                className="p-1 rounded-lg text-tinta-400 hover:text-tinta-900 hover:bg-tinta-100"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1115,7 +1115,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Day and Event Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     DÍA *
                   </label>
                   <select
@@ -1129,7 +1129,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                         eventId: matchedEvent ? matchedEvent.id : editingShift.eventId,
                       });
                     }}
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white text-[#182535] focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 bg-white text-tinta-900 focus:ring-1 focus:ring-lila-600"
                     required
                   >
                     {dayOptions.map((d) => (
@@ -1141,7 +1141,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     EVENTO *
                   </label>
                   <select
@@ -1154,7 +1154,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                         dayId: selEvent ? selEvent.dayId : editingShift.dayId,
                       });
                     }}
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white text-[#182535] focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 bg-white text-tinta-900 focus:ring-1 focus:ring-lila-600"
                     required
                   >
                     {events.map((ev) => (
@@ -1169,7 +1169,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Category and SubTeam Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     CATEGORÍA *
                   </label>
                   <select
@@ -1192,7 +1192,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                         specificFunctions: [], // reset when category changes
                       });
                     }}
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white text-[#182535] focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 bg-white text-tinta-900 focus:ring-1 focus:ring-lila-600"
                     required
                   >
                     <option value="GT">GRUPO DE TRABAJO (GT)</option>
@@ -1203,7 +1203,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
 
                 {editingShift.category === 'GAP' ? (
                   <div>
-                    <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                    <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                       ¿OPERA EN BASES FÍSICAS?
                     </label>
                     <select
@@ -1214,7 +1214,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           hasBases: e.target.value === 'yes',
                         })
                       }
-                      className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white text-[#182535] focus:ring-1 focus:ring-[#B83A24]"
+                      className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 bg-white text-tinta-900 focus:ring-1 focus:ring-lila-600"
                     >
                       <option value="yes">Sí (Asociado a bases físicas)</option>
                       <option value="no">No (Turno general)</option>
@@ -1226,13 +1226,13 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
 
                 {/* Sub-equipos GT con selección múltiple interactiva */}
                 {editingShift.category === 'GT' && (
-                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2.5">
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="block text-xs font-bold text-[#182535] font-montserrat">
+                        <label className="block text-xs font-bold text-tinta-900 font-sans">
                           GRUPOS DE TRABAJO (SUB-EQUIPOS) *
                         </label>
-                        <span className="text-[11px] text-[#64748B]">
+                        <span className="text-[11px] text-tinta-500">
                           Seleccione uno o varios sub-equipos de GT para este turno
                         </span>
                       </div>
@@ -1254,7 +1254,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                             gtSubTeam: newTeams[0],
                           });
                         }}
-                        className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer transition-colors"
+                        className="text-[11px] font-bold text-lila-600 hover:underline cursor-pointer transition-colors"
                       >
                         {(editingShift.gtSubTeams || []).length === GT_SUBTEAMS.length
                           ? 'Solo Logística'
@@ -1290,18 +1290,18 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                                 gtSubTeam: updated[0],
                               });
                             }}
-                            className={`px-3 py-2 rounded-xl text-xs font-montserrat flex items-center justify-between border transition-all text-left cursor-pointer ${
+                            className={`px-3 py-2 rounded-xl text-xs font-sans flex items-center justify-between border transition-all text-left cursor-pointer ${
                               isSelected
-                                ? 'bg-white border-[#B83A24] text-[#B83A24] font-bold shadow-2xs ring-1 ring-[#B83A24]/20'
-                                : 'bg-[#FAF6EC]/70 border-[#D8C7A5] text-[#475569] hover:bg-white'
+                                ? 'bg-white border-lila-600 text-lila-600 font-bold shadow-2xs ring-1 ring-lila-600/20'
+                                : 'bg-tinta-50/70 border-tinta-300 text-tinta-600 hover:bg-white'
                             }`}
                           >
                             <span>{st}</span>
                             <div
                               className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors ${
                                 isSelected
-                                  ? 'bg-[#B83A24] border-[#B83A24] text-white'
-                                  : 'border-[#CBD5E1] bg-white text-transparent'
+                                  ? 'bg-lila-600 border-lila-600 text-white'
+                                  : 'border-tinta-300 bg-white text-transparent'
                               }`}
                             >
                               ✓
@@ -1311,10 +1311,10 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                       })}
                     </div>
 
-                    <div className="pt-2 border-t border-[#EADDC7]/70 flex items-center justify-between text-[11px] text-[#64748B]">
+                    <div className="pt-2 border-t border-tinta-200/70 flex items-center justify-between text-[11px] text-tinta-500">
                       <span>
                         Seleccionados:{' '}
-                        <strong className="text-[#182535]">
+                        <strong className="text-tinta-900">
                           {(editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
                             ? editingShift.gtSubTeams
                             : [editingShift.gtSubTeam || 'Logística']
@@ -1326,7 +1326,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                               ).join(', ')}
                         </strong>
                       </span>
-                      <span className="font-semibold text-[#B83A24]">
+                      <span className="font-semibold text-lila-600">
                         {(editingShift.gtSubTeams && editingShift.gtSubTeams.length > 0
                           ? editingShift.gtSubTeams
                           : [editingShift.gtSubTeam || 'Logística']
@@ -1341,7 +1341,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Name and Capacity */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     NOMBRE DEL TURNO *
                   </label>
                   <input
@@ -1349,13 +1349,13 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     value={editingShift.name || ''}
                     onChange={(e) => setEditingShift({ ...editingShift, name: e.target.value })}
                     placeholder="Ej. T1, T2, GT General"
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-lila-600"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     CUPOS (PERSONAS REQUERIDAS) *
                   </label>
                   <input
@@ -1366,17 +1366,17 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     onChange={(e) =>
                       setEditingShift({ ...editingShift, capacity: parseInt(e.target.value, 10) || 1 })
                     }
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 focus:ring-1 focus:ring-lila-600"
                     required
                   />
                 </div>
               </div>
 
               {/* Hours (Start and End) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-tinta-50 border border-tinta-200">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-[#475569] font-montserrat">
+                    <label className="block text-xs font-bold text-tinta-600 font-sans">
                       HORA DE INICIO (24H) *
                     </label>
                     <div className="flex items-center gap-1">
@@ -1387,8 +1387,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           onClick={() => setEditingShift({ ...editingShift, startTime: timePreset })}
                           className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors cursor-pointer ${
                             editingShift.startTime === timePreset
-                              ? 'bg-[#B83A24] text-white font-bold'
-                              : 'bg-white text-[#64748B] hover:bg-[#E2E8F0] border border-[#CBD5E1]'
+                              ? 'bg-lila-600 text-white font-bold'
+                              : 'bg-white text-tinta-500 hover:bg-tinta-200 border border-tinta-300'
                           }`}
                           title={`Fijar a las ${timePreset}`}
                         >
@@ -1401,14 +1401,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     type="time"
                     value={editingShift.startTime || '06:00'}
                     onChange={(e) => setEditingShift({ ...editingShift, startTime: e.target.value })}
-                    className="w-full text-xs font-semibold border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-semibold border border-tinta-300 rounded-xl px-3 py-2 bg-white focus:ring-1 focus:ring-lila-600"
                     required
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-[#475569] font-montserrat">
+                    <label className="block text-xs font-bold text-tinta-600 font-sans">
                       HORA DE FINALIZACIÓN (24H) *
                     </label>
                     <div className="flex items-center gap-1">
@@ -1419,8 +1419,8 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                           onClick={() => setEditingShift({ ...editingShift, endTime: timePreset })}
                           className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono transition-colors cursor-pointer ${
                             editingShift.endTime === timePreset
-                              ? 'bg-[#B83A24] text-white font-bold'
-                              : 'bg-white text-[#64748B] hover:bg-[#E2E8F0] border border-[#CBD5E1]'
+                              ? 'bg-lila-600 text-white font-bold'
+                              : 'bg-white text-tinta-500 hover:bg-tinta-200 border border-tinta-300'
                           }`}
                           title={`Fijar a las ${timePreset}`}
                         >
@@ -1433,12 +1433,12 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     type="time"
                     value={editingShift.endTime || '08:00'}
                     onChange={(e) => setEditingShift({ ...editingShift, endTime: e.target.value })}
-                    className="w-full text-xs font-semibold border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white focus:ring-1 focus:ring-[#B83A24]"
+                    className="w-full text-xs font-semibold border border-tinta-300 rounded-xl px-3 py-2 bg-white focus:ring-1 focus:ring-lila-600"
                     required
                   />
                 </div>
 
-                <div className="sm:col-span-2 text-xs text-[#64748B] flex items-center justify-between pt-1">
+                <div className="sm:col-span-2 text-xs text-tinta-500 flex items-center justify-between pt-1">
                   <span>
                     Etiqueta visible: <strong>{formatTimeRangeLabel(editingShift.startTime || '06:00', editingShift.endTime || '08:00')}</strong>
                   </span>
@@ -1451,10 +1451,10 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Specific Functions (Dynamic Filter by Selected Group) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-[#475569] font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 font-sans">
                     FUNCIONES ESPECÍFICAS (OPCIONAL)
                   </label>
-                  <span className="text-[11px] text-[#64748B]">
+                  <span className="text-[11px] text-tinta-500">
                     Filtrado para:{' '}
                     <strong>
                       {editingShift.category === 'GT'
@@ -1476,9 +1476,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] max-h-36 overflow-y-auto space-y-1.5">
+                <div className="p-3 rounded-xl border border-tinta-200 bg-tinta-50 max-h-36 overflow-y-auto space-y-1.5">
                   {shiftModalAvailableFunctions.length === 0 ? (
-                    <span className="text-xs text-[#94A3B8] italic">
+                    <span className="text-xs text-tinta-400 italic">
                       No hay funciones creadas para este grupo. Puedes crearlas en la pestaña "Funciones".
                     </span>
                   ) : (
@@ -1490,15 +1490,15 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                             key={fn.id}
                             className={`flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer border transition-colors ${
                               isChecked
-                                ? 'bg-[#FFF5F2] border-[#F5C2B8] text-[#B83A24] font-bold'
-                                : 'bg-white border-[#E2E8F0] text-[#334155] hover:bg-[#F1F5F9]'
+                                ? 'bg-lila-50 border-lila-200 text-lila-600 font-bold'
+                                : 'bg-white border-tinta-200 text-tinta-700 hover:bg-tinta-100'
                             }`}
                           >
                             <input
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => handleToggleSpecificFunction(fn.name)}
-                              className="w-3.5 h-3.5 text-[#B83A24] rounded border-gray-300 focus:ring-[#B83A24]"
+                              className="w-3.5 h-3.5 text-lila-600 rounded border-gray-300 focus:ring-lila-600"
                             />
                             <span className="truncate">{fn.name}</span>
                           </label>
@@ -1512,7 +1512,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Status and Notes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     ESTADO
                   </label>
                   <select
@@ -1523,7 +1523,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                         isActive: e.target.value === 'active',
                       })
                     }
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2 bg-white"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2 bg-white"
                   >
                     <option value="active">Activo (Habilitado para asignaciones)</option>
                     <option value="inactive">Inactivo (Oculto)</option>
@@ -1531,7 +1531,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1 font-sans">
                     NOTAS O INSTRUCCIONES
                   </label>
                   <input
@@ -1539,26 +1539,26 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     value={editingShift.notes || ''}
                     onChange={(e) => setEditingShift({ ...editingShift, notes: e.target.value })}
                     placeholder="Ej. Llevar chaleco y radio..."
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
+              <div className="pt-4 border-t border-tinta-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     setIsShiftModalOpen(false);
                     setEditingShift(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-[#F1F5F9] cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-tinta-500 hover:bg-tinta-100 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#B83A24] hover:bg-[#8F2714] shadow-xs cursor-pointer font-montserrat"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-lila-600 hover:bg-lila-800 shadow-xs cursor-pointer font-sans"
                 >
                   {editingShift.id ? 'Guardar Cambios' : 'Crear Turno'}
                 </button>
@@ -1573,15 +1573,15 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {conflictPrompt && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#F59E0B]">
-            <div className="flex items-center gap-3 text-[#B45309] mb-3">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-mostaza-300">
+            <div className="flex items-center gap-3 text-mostaza-700 mb-3">
               <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-extrabold text-base font-dalek tracking-wide text-[#182535]">
+              <h3 className="font-extrabold text-base font-display tracking-wide text-tinta-900">
                 ¡POSIBLES CONFLICTOS DE HORARIO DETECTADOS!
               </h3>
             </div>
 
-            <p className="text-xs text-[#475569] mb-3 font-montserrat">
+            <p className="text-xs text-tinta-600 mb-3 font-sans">
               Al modificar el horario de este turno a{' '}
               <strong>
                 {conflictPrompt.pendingShiftData.startTime} – {conflictPrompt.pendingShiftData.endTime}
@@ -1589,31 +1589,31 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               , las siguientes personas asignadas entrarán en solapamiento con otros de sus turnos programados para ese mismo día:
             </p>
 
-            <div className="p-3 rounded-xl bg-[#FEF3C7]/40 border border-[#FDE68A] max-h-48 overflow-y-auto space-y-2 mb-4">
+            <div className="p-3 rounded-xl bg-mostaza-100/40 border border-mostaza-200 max-h-48 overflow-y-auto space-y-2 mb-4">
               {conflictPrompt.conflicts.map((c, idx) => (
                 <div key={idx} className="text-xs">
-                  <span className="font-bold text-[#182535]">{c.personName}:</span>{' '}
-                  <span className="text-[#B45309]">
+                  <span className="font-bold text-tinta-900">{c.personName}:</span>{' '}
+                  <span className="text-mostaza-700">
                     se solapa con turno "{c.conflictingShiftName}" ({c.conflictingHours})
                   </span>
                 </div>
               ))}
             </div>
 
-            <p className="text-[11px] text-[#64748B] mb-4">
+            <p className="text-[11px] text-tinta-500 mb-4">
               ¿Deseas guardar el nuevo horario de todos modos y revisar las asignaciones manualmente?
             </p>
 
             <div className="flex items-center justify-end gap-2">
               <button
                 onClick={() => setConflictPrompt(null)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-[#F1F5F9]"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-tinta-500 hover:bg-tinta-100"
               >
                 Cancelar y Ajustar Horario
               </button>
               <button
                 onClick={handleConfirmShiftWithConflicts}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#B45309] hover:bg-[#92400E]"
+                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-mostaza-700 hover:bg-mostaza-800"
               >
                 Guardar de Todas Formas
               </button>
@@ -1627,9 +1627,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {isEventModalOpen && editingEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#E2E8F0]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <h3 className="text-lg font-black text-[#182535] font-dalek tracking-wide">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-tinta-200">
+            <div className="flex items-center justify-between pb-3 border-b border-tinta-200">
+              <h3 className="text-lg font-black text-tinta-900 font-display tracking-wide">
                 {editingEvent.id ? 'EDITAR EVENTO' : 'CREAR NUEVO EVENTO'}
               </h3>
               <button
@@ -1637,7 +1637,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   setIsEventModalOpen(false);
                   setEditingEvent(null);
                 }}
-                className="p-1 text-[#94A3B8] hover:text-[#182535]"
+                className="p-1 text-tinta-400 hover:text-tinta-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1654,7 +1654,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               className="space-y-3.5 mt-4"
             >
               <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1">
+                <label className="block text-xs font-bold text-tinta-600 mb-1">
                   NOMBRE DEL EVENTO *
                 </label>
                 <input
@@ -1662,14 +1662,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   value={editingEvent.name || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, name: e.target.value })}
                   placeholder="Ej. THE SHOW, THE FESTIVAL"
-                  className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                  className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1">
                     ID DEL DÍA *
                   </label>
                   <input
@@ -1677,13 +1677,13 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     value={editingEvent.dayId || ''}
                     onChange={(e) => setEditingEvent({ ...editingEvent, dayId: e.target.value })}
                     placeholder="lunes, martes..."
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1">
                     NOMBRE VISIBLE DEL DÍA *
                   </label>
                   <input
@@ -1691,14 +1691,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     value={editingEvent.dayName || ''}
                     onChange={(e) => setEditingEvent({ ...editingEvent, dayName: e.target.value })}
                     placeholder="Lunes, Martes..."
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1">
+                <label className="block text-xs font-bold text-tinta-600 mb-1">
                   DESCRIPCIÓN
                 </label>
                 <textarea
@@ -1706,43 +1706,43 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   value={editingEvent.description || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
                   placeholder="Detalles sobre el evento y actividades..."
-                  className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                  className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                 />
               </div>
 
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs font-bold text-[#475569]">
+                <label className="flex items-center gap-2 text-xs font-bold text-tinta-600">
                   <input
                     type="checkbox"
                     checked={editingEvent.isCarnival || false}
                     onChange={(e) => setEditingEvent({ ...editingEvent, isCarnival: e.target.checked })}
-                    className="w-4 h-4 text-[#B83A24] rounded"
+                    className="w-4 h-4 text-lila-600 rounded"
                   />
                   Es Día Carnival (22 bases físicas)
                 </label>
 
-                <label className="flex items-center gap-2 text-xs font-bold text-[#475569]">
+                <label className="flex items-center gap-2 text-xs font-bold text-tinta-600">
                   <input
                     type="checkbox"
                     checked={editingEvent.isActive !== false}
                     onChange={(e) => setEditingEvent({ ...editingEvent, isActive: e.target.checked })}
-                    className="w-4 h-4 text-[#B83A24] rounded"
+                    className="w-4 h-4 text-lila-600 rounded"
                   />
                   Activo
                 </label>
               </div>
 
-              <div className="pt-3 border-t border-[#E2E8F0] flex justify-end gap-2">
+              <div className="pt-3 border-t border-tinta-200 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsEventModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[#64748B]"
+                  className="px-4 py-2 text-xs font-semibold text-tinta-500"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#B83A24] hover:bg-[#8F2714]"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-lila-600 hover:bg-lila-800"
                 >
                   Guardar Evento
                 </button>
@@ -1757,9 +1757,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {isBaseModalOpen && editingBase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <h3 className="text-lg font-black text-[#182535] font-dalek tracking-wide">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-tinta-200">
+            <div className="flex items-center justify-between pb-3 border-b border-tinta-200">
+              <h3 className="text-lg font-black text-tinta-900 font-display tracking-wide">
                 {editingBase.id !== undefined ? 'EDITAR BASE FÍSICA' : 'CREAR NUEVA BASE'}
               </h3>
               <button
@@ -1767,7 +1767,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   setIsBaseModalOpen(false);
                   setEditingBase(null);
                 }}
-                className="p-1 text-[#94A3B8] hover:text-[#182535]"
+                className="p-1 text-tinta-400 hover:text-tinta-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1784,7 +1784,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               className="space-y-3.5 mt-4"
             >
               <div>
-                <label className="block text-xs font-bold text-[#475569] mb-1">
+                <label className="block text-xs font-bold text-tinta-600 mb-1">
                   NOMBRE DE LA BASE *
                 </label>
                 <input
@@ -1792,14 +1792,14 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   value={editingBase.name || ''}
                   onChange={(e) => setEditingBase({ ...editingBase, name: e.target.value })}
                   placeholder="Ej. Base 1, Base Toro, Base Speedway..."
-                  className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                  className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1">
                     CAPACIDAD POR TURNO *
                   </label>
                   <input
@@ -1810,19 +1810,19 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                     onChange={(e) =>
                       setEditingBase({ ...editingBase, defaultCapacity: parseInt(e.target.value, 10) || 2 })
                     }
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#475569] mb-1">
+                  <label className="block text-xs font-bold text-tinta-600 mb-1">
                     EVENTO ASOCIADO
                   </label>
                   <select
                     value={editingBase.eventId || 'carnival'}
                     onChange={(e) => setEditingBase({ ...editingBase, eventId: e.target.value })}
-                    className="w-full text-xs font-medium border border-[#CBD5E1] rounded-xl px-3 py-2"
+                    className="w-full text-xs font-medium border border-tinta-300 rounded-xl px-3 py-2"
                   >
                     <option value="carnival">Carnival</option>
                     <option value="the-games">The Games</option>
@@ -1831,28 +1831,28 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               </div>
 
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs font-bold text-[#475569]">
+                <label className="flex items-center gap-2 text-xs font-bold text-tinta-600">
                   <input
                     type="checkbox"
                     checked={editingBase.isSpecial || false}
                     onChange={(e) => setEditingBase({ ...editingBase, isSpecial: e.target.checked })}
-                    className="w-4 h-4 text-[#B83A24] rounded"
+                    className="w-4 h-4 text-lila-600 rounded"
                   />
                   Base Especial (ej. Toro, Speedway, Arcade)
                 </label>
               </div>
 
-              <div className="pt-3 border-t border-[#E2E8F0] flex justify-end gap-2">
+              <div className="pt-3 border-t border-tinta-200 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsBaseModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[#64748B]"
+                  className="px-4 py-2 text-xs font-semibold text-tinta-500"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#B83A24] hover:bg-[#8F2714]"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-lila-600 hover:bg-lila-800"
                 >
                   Guardar Base
                 </button>
@@ -1867,39 +1867,39 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#DC2626]">
-            <div className="flex items-center gap-3 text-[#DC2626] mb-3">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-coral-600">
+            <div className="flex items-center gap-3 text-coral-600 mb-3">
               <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-extrabold text-base font-dalek tracking-wide text-[#182535]">
+              <h3 className="font-extrabold text-base font-display tracking-wide text-tinta-900">
                 {deleteConfirm.title}
               </h3>
             </div>
 
-            <p className="text-xs text-[#475569] mb-3 font-montserrat">
+            <p className="text-xs text-tinta-600 mb-3 font-sans">
               {deleteConfirm.warning}
             </p>
 
             {deleteConfirm.peopleNames && deleteConfirm.peopleNames.length > 0 && (
-              <div className="p-3 rounded-xl bg-[#FEE2E2]/60 border border-[#FECACA] max-h-32 overflow-y-auto mb-4">
-                <span className="text-[11px] font-bold text-[#991B1B] block mb-1">
+              <div className="p-3 rounded-xl bg-coral-100/60 border border-coral-200 max-h-32 overflow-y-auto mb-4">
+                <span className="text-[11px] font-bold text-coral-700 block mb-1">
                   Personas afectadas ({deleteConfirm.impactCount}):
                 </span>
-                <span className="text-xs text-[#7F1D1D]">
+                <span className="text-xs text-coral-700">
                   {deleteConfirm.peopleNames.join(', ')}
                 </span>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-tinta-200">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-[#F1F5F9]"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-tinta-500 hover:bg-tinta-100"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleExecuteDelete}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#DC2626] hover:bg-[#B91C1C] shadow-xs"
+                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-coral-600 hover:bg-coral-600 shadow-xs"
               >
                 Confirmar Eliminación
               </button>

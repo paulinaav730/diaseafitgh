@@ -500,14 +500,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
   };
 
   return (
-    <div className="space-y-6 text-[#182535]">
+    <div className="space-y-6 text-tinta-900">
       {/* Header */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#182535] tracking-wide font-dalek">
+          <h2 className="text-xl sm:text-2xl font-bold text-tinta-900 tracking-wide font-display">
             GESTIÓN DE ALIMENTACIÓN
           </h2>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1 font-montserrat">
+          <p className="text-xs sm:text-sm text-tinta-500 mt-1 font-sans">
             Cálculo según horas totales asignadas: &lt;3h (ninguno), 3h-5h (1 refrigerio), 6h-8h (1 almuerzo + 1 refrigerio), ≥9h (1 almuerzo + 2 refrigerios).
           </p>
         </div>
@@ -515,7 +515,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
           <button
             onClick={handleCopySummary}
-            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-[#182535] bg-[#FAF6EC] hover:bg-[#F3EEDC] border border-[#EADDC7] transition-all flex items-center gap-1.5 shadow-2xs font-montserrat cursor-pointer"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-tinta-900 bg-tinta-50 hover:bg-tinta-100 border border-tinta-200 transition-all flex items-center gap-1.5 shadow-2xs font-sans cursor-pointer"
             title="Copiar lista resumida al portapapeles para cocina o proveedores"
           >
             {copiedSummary ? (
@@ -525,7 +525,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-[#64748B]" />
+                <Copy className="w-3.5 h-3.5 text-tinta-500" />
                 <span>Copiar Resumen</span>
               </>
             )}
@@ -533,7 +533,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
 
           <button
             onClick={handleExportWeeklyExcel}
-            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-[#16A34A] bg-[#F0FDF4] hover:bg-[#DCFCE7] border border-[#BBF7D0] transition-all flex items-center gap-1.5 shadow-2xs font-montserrat cursor-pointer"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-turquesa-600 bg-turquesa-50 hover:bg-turquesa-100 border border-turquesa-200 transition-all flex items-center gap-1.5 shadow-2xs font-sans cursor-pointer"
             title="Descargar Excel semanal de alimentación"
           >
             <Download className="w-3.5 h-3.5" />
@@ -541,7 +541,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
           </button>
           <button
             onClick={handleExportCsv}
-            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-[#B83A24] bg-[#FDF2EE] hover:bg-[#FBE4DD] border border-[#F6C7BA] transition-all flex items-center gap-1.5 shadow-2xs font-montserrat cursor-pointer"
+            className="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 border border-lila-200 transition-all flex items-center gap-1.5 shadow-2xs font-sans cursor-pointer"
             title="Descargar CSV del día seleccionado"
           >
             <Download className="w-3.5 h-3.5" />
@@ -551,15 +551,15 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
       </div>
 
       {/* Day Selector */}
-      <div className="flex items-center gap-2 overflow-x-auto bg-[#FFFDF8] border border-[#EADDC7] p-2 rounded-2xl pb-2 scrollbar-none shadow-2xs">
+      <div className="flex items-center gap-2 overflow-x-auto bg-surface border border-tinta-200 p-2 rounded-2xl pb-2 scrollbar-none shadow-2xs">
         {eventDays.map((d) => (
           <button
             key={d.dayId}
             onClick={() => setSelectedDayId(d.dayId)}
             className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wider whitespace-nowrap transition-all cursor-pointer ${
               selectedDayId === d.dayId
-                ? 'bg-[#B83A24] text-white shadow-xs font-dalek'
-                : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC] font-montserrat'
+                ? 'bg-lila-600 text-white shadow-xs font-display'
+                : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50 font-sans'
             }`}
           >
             {d.dayName} ({d.eventName})
@@ -570,19 +570,19 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
       {/* Meal Totals Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Almuerzo */}
-        <div className="bg-[#FFFDF8] border border-[#BBF7D0] rounded-3xl p-5 shadow-2xs">
+        <div className="bg-surface border border-turquesa-200 rounded-3xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#16A34A] uppercase tracking-wider font-montserrat">
+            <span className="text-xs font-bold text-turquesa-600 uppercase tracking-wider font-sans">
               Total Almuerzos
             </span>
-            <span className="p-2.5 rounded-2xl bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+            <span className="p-2.5 rounded-2xl bg-turquesa-50 text-turquesa-600 border border-turquesa-200">
               <Sun className="w-5 h-5" />
             </span>
           </div>
-          <div className="text-3xl font-bold text-[#182535] mt-2 font-mono">
+          <div className="text-3xl font-bold text-tinta-900 mt-2 font-mono">
             {isFilteringActive ? filteredLunches : totalDayLunches}
           </div>
-          <p className="text-[11px] text-[#64748B] mt-1 font-montserrat">
+          <p className="text-[11px] text-tinta-500 mt-1 font-sans">
             {isFilteringActive
               ? `Filtrados (${filteredLunches} de ${totalDayLunches} en la jornada)`
               : 'Personas con 6 o más horas acumuladas en el día'}
@@ -590,19 +590,19 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         </div>
 
         {/* Refrigerios */}
-        <div className="bg-[#FFFDF8] border border-[#FDE68A] rounded-3xl p-5 shadow-2xs">
+        <div className="bg-surface border border-mostaza-200 rounded-3xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#C87F17] uppercase tracking-wider font-montserrat">
+            <span className="text-xs font-bold text-mostaza-600 uppercase tracking-wider font-sans">
               Total Refrigerios
             </span>
-            <span className="p-2.5 rounded-2xl bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+            <span className="p-2.5 rounded-2xl bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
               <Coffee className="w-5 h-5" />
             </span>
           </div>
-          <div className="text-3xl font-bold text-[#182535] mt-2 font-mono">
+          <div className="text-3xl font-bold text-tinta-900 mt-2 font-mono">
             {isFilteringActive ? filteredSnacks : totalDaySnacks}
           </div>
-          <p className="text-[11px] text-[#64748B] mt-1 font-montserrat">
+          <p className="text-[11px] text-tinta-500 mt-1 font-sans">
             {isFilteringActive
               ? `Filtrados (${filteredSnacks} de ${totalDaySnacks} en la jornada)`
               : 'Raciones de refrigerio asignadas (1 o 2 por integrante)'}
@@ -610,19 +610,19 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         </div>
 
         {/* Sin alimentación */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 shadow-2xs">
+        <div className="bg-surface border border-tinta-200 rounded-3xl p-5 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider font-montserrat">
+            <span className="text-xs font-bold text-tinta-500 uppercase tracking-wider font-sans">
               Sin Alimentación
             </span>
-            <span className="p-2.5 rounded-2xl bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]">
+            <span className="p-2.5 rounded-2xl bg-tinta-50 text-tinta-500 border border-tinta-200">
               <AlertCircle className="w-5 h-5" />
             </span>
           </div>
-          <div className="text-3xl font-bold text-[#64748B] mt-2 font-mono">
+          <div className="text-3xl font-bold text-tinta-500 mt-2 font-mono">
             {isFilteringActive ? filteredNoFood : totalDayNoFood}
           </div>
-          <p className="text-[11px] text-[#64748B] mt-1 font-montserrat">
+          <p className="text-[11px] text-tinta-500 mt-1 font-sans">
             {isFilteringActive
               ? `Filtrados (${filteredNoFood} de ${totalDayNoFood} en la jornada)`
               : 'Integrantes con menos de 3 horas acumuladas'}
@@ -631,22 +631,22 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
       </div>
 
       {/* FILTER PANEL: GT SUB-TEAM SELECTOR + SEARCH + MEAL FILTER */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 shadow-2xs space-y-4">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 shadow-2xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-tinta-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por nombre, documento (C.C.), usuario, turno o restricción..."
-              className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs sm:text-sm text-[#182535] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#B83A24] transition-all"
+              className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-tinta-50 border border-tinta-300 text-xs sm:text-sm text-tinta-900 placeholder:text-tinta-400 focus:outline-none focus:border-lila-600 transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#182535] p-1 rounded-full transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-tinta-400 hover:text-tinta-900 p-1 rounded-full transition-colors cursor-pointer"
                 title="Limpiar búsqueda"
               >
                 <X className="w-3.5 h-3.5" />
@@ -657,14 +657,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
           {/* Direct Select Dropdown: GT / Subteam / Grupo */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="relative min-w-[240px] sm:min-w-[280px]">
-              <label className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block mb-1">
+              <label className="text-[10px] font-bold text-tinta-500 uppercase tracking-wider block mb-1">
                 Filtrar por GT / Sub-Equipo / Grupo:
               </label>
               <div className="relative">
                 <select
                   value={activeTeamFilter}
                   onChange={(e) => setActiveTeamFilter(e.target.value)}
-                  className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-2xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-none focus:border-[#B83A24] cursor-pointer shadow-2xs transition-all"
+                  className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-2xl bg-tinta-50 border border-tinta-300 text-xs font-bold text-tinta-900 focus:outline-none focus:border-lila-600 cursor-pointer shadow-2xs transition-all"
                 >
                   <option value="ALL">TODOS LOS GRUPOS ({gtSubTeamStats.totalAll})</option>
                   <option value="GT">TODO GT — Todos los subequipos ({gtSubTeamStats.totalGt})</option>
@@ -680,20 +680,20 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                     <option value="GAP">GAP — GRUPO DE APOYO ({gtSubTeamStats.totalGap})</option>
                   </optgroup>
                 </select>
-                <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-tinta-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
             {/* Meal Filter Dropdown */}
             <div className="relative min-w-[170px]">
-              <label className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block mb-1">
+              <label className="text-[10px] font-bold text-tinta-500 uppercase tracking-wider block mb-1">
                 Estado Alimentación:
               </label>
               <div className="relative">
                 <select
                   value={mealFilter}
                   onChange={(e) => setMealFilter(e.target.value as MealFilter)}
-                  className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-2xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-none focus:border-[#B83A24] cursor-pointer shadow-2xs transition-all"
+                  className="w-full appearance-none px-3.5 py-2.5 pr-10 rounded-2xl bg-tinta-50 border border-tinta-300 text-xs font-bold text-tinta-900 focus:outline-none focus:border-lila-600 cursor-pointer shadow-2xs transition-all"
                 >
                   <option value="ALL">TODOS</option>
                   <option value="ALMUERZO">CON ALMUERZO ({allMealEntitlements.filter((m) => m.lunches > 0).length})</option>
@@ -706,17 +706,17 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                     }).length})
                   </option>
                 </select>
-                <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-tinta-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick-Access Pills for GT Sub-Teams */}
-        <div className="pt-2 border-t border-[#EADDC7]/70">
+        <div className="pt-2 border-t border-tinta-200/70">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none">
-            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-[#B83A24]" />
+            <span className="text-[10px] font-bold text-tinta-500 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-lila-600" />
               Acceso Rápido:
             </span>
 
@@ -725,14 +725,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               onClick={() => setActiveTeamFilter('ALL')}
               className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeTeamFilter === 'ALL'
-                  ? 'bg-[#182535] text-white shadow-xs'
-                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] border border-[#EADDC7]'
+                  ? 'bg-tinta-900 text-white shadow-xs'
+                  : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 hover:bg-tinta-100 border border-tinta-200'
               }`}
             >
               <span>TODOS</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  activeTeamFilter === 'ALL' ? 'bg-white/20 text-white' : 'bg-[#EADDC7] text-[#182535]'
+                  activeTeamFilter === 'ALL' ? 'bg-white/20 text-white' : 'bg-tinta-200 text-tinta-900'
                 }`}
               >
                 {gtSubTeamStats.totalAll}
@@ -744,14 +744,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               onClick={() => setActiveTeamFilter('GT')}
               className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeTeamFilter === 'GT'
-                  ? 'bg-[#B83A24] text-white shadow-xs'
-                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] border border-[#EADDC7]'
+                  ? 'bg-lila-600 text-white shadow-xs'
+                  : 'bg-tinta-50 text-tinta-500 hover:text-lila-600 hover:bg-lila-50 border border-tinta-200'
               }`}
             >
               <span>TODO GT</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  activeTeamFilter === 'GT' ? 'bg-white/20 text-white' : 'bg-[#F6C7BA] text-[#B83A24]'
+                  activeTeamFilter === 'GT' ? 'bg-white/20 text-white' : 'bg-lila-200 text-lila-600'
                 }`}
               >
                 {gtSubTeamStats.totalGt}
@@ -767,14 +767,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                   onClick={() => setActiveTeamFilter(sub.filterId)}
                   className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isActive
-                      ? 'bg-[#B83A24] text-white shadow-xs'
-                      : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] border border-[#EADDC7]'
+                      ? 'bg-lila-600 text-white shadow-xs'
+                      : 'bg-tinta-50 text-tinta-500 hover:text-lila-600 hover:bg-lila-50 border border-tinta-200'
                   }`}
                 >
                   <span>{sub.label}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-[#EADDC7] text-[#182535]'
+                      isActive ? 'bg-white/20 text-white' : 'bg-tinta-200 text-tinta-900'
                     }`}
                   >
                     {sub.count}
@@ -789,7 +789,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeTeamFilter === 'MESA'
                   ? 'bg-purple-700 text-white shadow-xs'
-                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-purple-700 hover:bg-purple-50 border border-[#EADDC7]'
+                  : 'bg-tinta-50 text-tinta-500 hover:text-purple-700 hover:bg-purple-50 border border-tinta-200'
               }`}
             >
               <span>MESA</span>
@@ -807,14 +807,14 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               onClick={() => setActiveTeamFilter('GAP')}
               className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeTeamFilter === 'GAP'
-                  ? 'bg-[#C87F17] text-white shadow-xs'
-                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#C87F17] hover:bg-[#FEF8EC] border border-[#EADDC7]'
+                  ? 'bg-mostaza-600 text-white shadow-xs'
+                  : 'bg-tinta-50 text-tinta-500 hover:text-mostaza-600 hover:bg-mostaza-50 border border-tinta-200'
               }`}
             >
               <span>GAP</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  activeTeamFilter === 'GAP' ? 'bg-white/20 text-white' : 'bg-[#FDE68A] text-[#C87F17]'
+                  activeTeamFilter === 'GAP' ? 'bg-white/20 text-white' : 'bg-mostaza-200 text-mostaza-600'
                 }`}
               >
                 {gtSubTeamStats.totalGap}
@@ -825,7 +825,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
             {isFilteringActive && (
               <button
                 onClick={handleResetFilters}
-                className="min-h-[32px] px-2.5 py-1 rounded-xl text-xs font-bold text-[#B83A24] hover:bg-[#FDF2EE] border border-[#F6C7BA] transition-all flex items-center gap-1 shrink-0 ml-auto cursor-pointer"
+                className="min-h-[32px] px-2.5 py-1 rounded-xl text-xs font-bold text-lila-600 hover:bg-lila-50 border border-lila-200 transition-all flex items-center gap-1 shrink-0 ml-auto cursor-pointer"
                 title="Restablecer todos los filtros"
               >
                 <X className="w-3 h-3" />
@@ -837,35 +837,35 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
       </div>
 
       {/* Roster Table Container */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl overflow-hidden shadow-2xs">
-        <div className="p-5 border-b border-[#EADDC7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-surface border border-tinta-200 rounded-3xl overflow-hidden shadow-2xs">
+        <div className="p-5 border-b border-tinta-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
+              <h3 className="text-base sm:text-lg font-bold text-tinta-900 font-display tracking-wide">
                 PLANILLA DE ALIMENTACIÓN: {currentDay.dayName.toUpperCase()} ({currentDay.eventName})
               </h3>
               {activeTeamFilter !== 'ALL' && (
-                <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]">
+                <span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-lila-50 text-lila-600 border border-lila-200">
                   {activeTeamFilter.startsWith('GT:')
                     ? `Filtro: ${activeTeamFilter.replace('GT:', 'GT ')}`
                     : `Filtro: ${activeTeamFilter}`}
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#64748B] font-montserrat mt-0.5">
+            <p className="text-xs text-tinta-500 font-sans mt-0.5">
               Mostrando <b>{sortedMealEntitlements.length}</b> de{' '}
               <b>{allMealEntitlements.length}</b> integrantes asignados para esta jornada
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-center">
-            <span className="text-[11px] text-[#64748B] font-bold">Ordenar por:</span>
+            <span className="text-[11px] text-tinta-500 font-bold">Ordenar por:</span>
             <button
               onClick={() => handleSortToggle('name')}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-all ${
                 sortField === 'name'
-                  ? 'bg-[#182535] text-white border-[#182535]'
-                  : 'bg-[#FAF6EC] text-[#475569] border-[#EADDC7]'
+                  ? 'bg-tinta-900 text-white border-tinta-900'
+                  : 'bg-tinta-50 text-tinta-600 border-tinta-200'
               }`}
             >
               <span>Nombre</span>
@@ -875,8 +875,8 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               onClick={() => handleSortToggle('hours')}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-all ${
                 sortField === 'hours'
-                  ? 'bg-[#182535] text-white border-[#182535]'
-                  : 'bg-[#FAF6EC] text-[#475569] border-[#EADDC7]'
+                  ? 'bg-tinta-900 text-white border-tinta-900'
+                  : 'bg-tinta-50 text-tinta-600 border-tinta-200'
               }`}
             >
               <span>Horas</span>
@@ -886,8 +886,8 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
               onClick={() => handleSortToggle('team')}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-all ${
                 sortField === 'team'
-                  ? 'bg-[#182535] text-white border-[#182535]'
-                  : 'bg-[#FAF6EC] text-[#475569] border-[#EADDC7]'
+                  ? 'bg-tinta-900 text-white border-tinta-900'
+                  : 'bg-tinta-50 text-tinta-600 border-tinta-200'
               }`}
             >
               <span>Grupo</span>
@@ -897,30 +897,30 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         </div>
 
         {allMealEntitlements.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
-            <Utensils className="w-10 h-10 text-[#C87F17] mx-auto mb-3" />
-            <p className="font-semibold text-[#182535] text-sm font-dalek">
+          <div className="p-12 text-center text-xs text-tinta-500">
+            <Utensils className="w-10 h-10 text-mostaza-600 mx-auto mb-3" />
+            <p className="font-semibold text-tinta-900 text-sm font-display">
               0 personas asignadas a {currentDay.dayName}
             </p>
-            <p className="text-xs text-[#94A3B8] mt-1 font-montserrat">
+            <p className="text-xs text-tinta-400 mt-1 font-sans">
               Las raciones de comida se calculan automáticamente cuando se asigna personal a los turnos en la pestaña <b>TURNOS Y BASES</b>.
             </p>
           </div>
         ) : sortedMealEntitlements.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#64748B] space-y-3">
-            <Search className="w-9 h-9 text-[#94A3B8] mx-auto opacity-70" />
+          <div className="p-12 text-center text-xs text-tinta-500 space-y-3">
+            <Search className="w-9 h-9 text-tinta-400 mx-auto opacity-70" />
             <div>
-              <p className="font-semibold text-[#182535] text-sm font-dalek">
+              <p className="font-semibold text-tinta-900 text-sm font-display">
                 No se encontraron resultados
               </p>
-              <p className="text-xs text-[#94A3B8] mt-1 font-montserrat max-w-md mx-auto">
+              <p className="text-xs text-tinta-400 mt-1 font-sans max-w-md mx-auto">
                 No hay integrantes que coincidan con la búsqueda &quot;{searchQuery}&quot; o con el filtro{' '}
                 <b>{activeTeamFilter}</b>.
               </p>
             </div>
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 rounded-xl bg-[#182535] hover:bg-[#2A3F55] text-white text-xs font-bold font-montserrat transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="px-4 py-2 rounded-xl bg-tinta-900 hover:bg-tinta-800 text-white text-xs font-bold font-sans transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <X className="w-3.5 h-3.5" />
               <span>Limpiar filtros de búsqueda</span>
@@ -928,8 +928,8 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-montserrat">
-              <thead className="bg-[#FAF6EC] text-[#64748B] text-[11px] uppercase border-b border-[#EADDC7] font-semibold">
+            <table className="w-full text-left text-xs font-sans">
+              <thead className="bg-tinta-50 text-tinta-500 text-[11px] uppercase border-b border-tinta-200 font-semibold">
                 <tr>
                   <th className="py-3.5 px-4">Persona</th>
                   <th className="py-3.5 px-4">Grupo / Sub-Equipo</th>
@@ -940,7 +940,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                   <th className="py-3.5 px-4">Restricción Alimentaria</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#EADDC7] text-[#334155]">
+              <tbody className="divide-y divide-tinta-200 text-tinta-700">
                 {sortedMealEntitlements.map((entry) => {
                   const shiftLabels = entry.shifts
                     .map((s) => {
@@ -960,18 +960,18 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                   );
 
                   return (
-                    <tr key={entry.person?.id} className="hover:bg-[#FAF6EC]/60 transition-colors">
+                    <tr key={entry.person?.id} className="hover:bg-tinta-50/60 transition-colors">
                       {/* Persona */}
-                      <td className="py-3.5 px-4 font-semibold text-[#182535]">
+                      <td className="py-3.5 px-4 font-semibold text-tinta-900">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-sm text-[#182535]">{entry.person?.name}</span>
+                          <span className="font-bold text-sm text-tinta-900">{entry.person?.name}</span>
                           {entry.person?.username && (
-                            <span className="text-[10px] text-[#64748B] font-mono">
+                            <span className="text-[10px] text-tinta-500 font-mono">
                               @{entry.person.username}
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#64748B] font-normal font-mono block mt-0.5">
+                        <span className="text-[11px] text-tinta-500 font-normal font-mono block mt-0.5">
                           C.C: {entry.person?.documentId || 'S/N'}
                         </span>
                       </td>
@@ -984,12 +984,12 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                             <span>MESA</span>
                           </span>
                         ) : entry.effectiveGroup === 'GAP' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
                             <Users className="w-3 h-3" />
                             <span>GAP</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-lila-50 text-lila-600 border border-lila-200">
                             <span>GT: {entry.effectiveGtSubTeam || 'Generales'}</span>
                           </span>
                         )}
@@ -1001,13 +1001,13 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                       </td>
 
                       {/* Turnos */}
-                      <td className="py-3.5 px-4 font-mono text-[#334155] text-[11px] max-w-xs">
+                      <td className="py-3.5 px-4 font-mono text-tinta-700 text-[11px] max-w-xs">
                         {shiftLabels}
                       </td>
 
                       {/* Horas Totales */}
-                      <td className="py-3.5 px-4 text-center font-mono font-bold text-[#182535] text-sm">
-                        <span className="px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7]">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-tinta-900 text-sm">
+                        <span className="px-2 py-0.5 rounded-md bg-tinta-50 border border-tinta-200">
                           {entry.totalHours}h
                         </span>
                       </td>
@@ -1015,24 +1015,24 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                       {/* Almuerzo */}
                       <td className="py-3.5 px-4 text-center">
                         {entry.lunches > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] text-xs font-bold font-mono shadow-2xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-turquesa-50 text-turquesa-600 border border-turquesa-200 text-xs font-bold font-mono shadow-2xs">
                             <Sun className="w-3.5 h-3.5" />
                             <span>{entry.lunches} ALMUERZO</span>
                           </span>
                         ) : (
-                          <span className="text-[#94A3B8] text-xs">—</span>
+                          <span className="text-tinta-400 text-xs">—</span>
                         )}
                       </td>
 
                       {/* Refrigerios */}
                       <td className="py-3.5 px-4 text-center">
                         {entry.snacks > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A] text-xs font-bold font-mono shadow-2xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-mostaza-50 text-mostaza-600 border border-mostaza-200 text-xs font-bold font-mono shadow-2xs">
                             <Coffee className="w-3.5 h-3.5" />
                             <span>{entry.snacks} REFRIGERIO{entry.snacks > 1 ? 'S' : ''}</span>
                           </span>
                         ) : (
-                          <span className="text-[#94A3B8] text-xs">—</span>
+                          <span className="text-tinta-400 text-xs">—</span>
                         )}
                       </td>
 
@@ -1058,7 +1058,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                               ['ninguna', 'no', 'ninguno', 'n/a', ''].includes(
                                 entry.person.foodAllergies.trim().toLowerCase()
                               )) && (
-                              <span className="text-[#94A3B8] text-xs">
+                              <span className="text-tinta-400 text-xs">
                                 {entry.person?.dietaryRestrictions || 'Ninguna'}
                               </span>
                             )

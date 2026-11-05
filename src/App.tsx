@@ -24,6 +24,7 @@ import {
   subscribeToBases,
 } from './services/storageService';
 import { Navbar, TabType } from './components/Navbar';
+import { DiasLogo } from './components/DiasLogo';
 import { DashboardView } from './components/DashboardView';
 import { PeopleView } from './components/PeopleView';
 import { AssignmentView } from './components/AssignmentView';
@@ -38,7 +39,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { StaffMyDiasView } from './components/StaffMyDiasView';
 import { LoginModal } from './components/LoginModal';
 import { ExcelImportModal } from './components/ExcelImportModal';
-import { ShieldCheck, UserCheck } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { syncAllFromSupabase } from './services/supabaseSync';
 
@@ -196,7 +197,7 @@ export default function App() {
   }, [people]);
 
   return (
-    <div className="min-h-screen bg-[#FBF8EE] text-[#182535] flex flex-col selection:bg-[#B83A24] selection:text-white font-montserrat">
+    <div className="min-h-screen bg-tinta-50 text-tinta-900 flex flex-col selection:bg-lila-600 selection:text-white font-sans">
       {/* Top Navigation */}
       <Navbar
         currentTab={currentTab}
@@ -331,16 +332,14 @@ export default function App() {
           </>
         ) : (
           /* If not logged in */
-          <div className="max-w-md mx-auto my-12 p-8 sm:p-10 bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl text-center space-y-5 shadow-sm">
-            <div className="w-16 h-16 rounded-2xl bg-[#FEF8EC] border-2 border-[#E5A12E]/40 text-[#B83A24] flex items-center justify-center mx-auto shadow-2xs">
-              <ShieldCheck className="w-8 h-8" />
-            </div>
+          <div className="max-w-md mx-auto my-12 p-8 sm:p-10 bg-surface border-2 border-tinta-200 rounded-3xl text-center space-y-5 shadow-sm">
+            <DiasLogo variant="light" className="h-20 w-auto mx-auto" />
 
             <div className="space-y-1.5">
-              <h2 className="text-2xl sm:text-3xl font-extrabold font-dalek text-[#182535] tracking-wider">
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-tinta-900 tracking-wider">
                 PORTAL DÍAS EAFIT 2026
               </h2>
-              <p className="text-[#64748B] text-xs sm:text-sm font-montserrat leading-relaxed">
+              <p className="text-tinta-500 text-xs sm:text-sm font-sans leading-relaxed">
                 Ingresa con tus credenciales como <b>Staff (Mi DÍAS)</b> o como <b>Administrador</b> para acceder al sistema.
               </p>
             </div>
@@ -348,7 +347,7 @@ export default function App() {
             <div className="pt-2">
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="w-full px-8 py-3.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] font-dalek text-white font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 mx-auto text-sm cursor-pointer"
+                className="w-full px-8 py-3.5 rounded-2xl bg-lila-600 hover:bg-lila-700 font-display text-white font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 mx-auto text-sm cursor-pointer"
               >
                 <UserCheck className="w-4 h-4" />
                 <span>INGRESAR AHORA</span>
@@ -359,15 +358,15 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#EADDC7] bg-[#FFFDF8] py-4 text-center text-xs text-[#64748B]">
+      <footer className="border-t border-tinta-200 bg-surface py-4 text-center text-xs text-tinta-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-dalek tracking-wider text-[#182535] text-sm">DÍAS EAFIT</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FEF8EC] text-[#C87F17] font-bold border border-[#E5A12E]/40">
+            <DiasLogo variant="light" className="h-8 w-auto" />
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-mostaza-50 text-mostaza-600 font-bold border border-mostaza-300/40">
               EDICIÓN 2026
             </span>
           </div>
-          <span className="font-mono text-[11px] text-[#94A3B8]">
+          <span className="font-mono text-[11px] text-tinta-400">
             {currentUser?.role === 'staff'
               ? `Sesión Staff: ${currentUser.staffData?.name}`
               : currentUser?.role === 'admin'

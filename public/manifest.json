@@ -4,8 +4,8 @@
   "description": "Sistema oficial de gestión, turnos, bases, asignaciones y disponibilidad para DÍAS EAFIT.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FBF8EE",
-  "theme_color": "#B83A24",
+  "background_color": "#FCF9F3",
+  "theme_color": "#242424",
   "icons": [
     {
       "src": "/favicon.svg",

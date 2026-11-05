@@ -170,23 +170,23 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-      <div className="relative w-full max-w-6xl max-h-[92vh] bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl shadow-2xl flex flex-col overflow-hidden font-montserrat">
+      <div className="relative w-full max-w-6xl max-h-[92vh] bg-surface border-2 border-tinta-200 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans">
         {/* MODAL HEADER */}
-        <div className="px-6 py-4 border-b border-[#EADDC7] bg-[#FAF6EC] flex items-center justify-between gap-4">
+        <div className="px-6 py-4 border-b border-tinta-200 bg-tinta-50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#B83A24] text-white flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-2xl bg-lila-600 text-white flex items-center justify-center shadow-md">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-[#182535] font-dalek tracking-wider">
+                <h3 className="text-base font-bold text-tinta-900 font-display tracking-wider">
                   IMPORTADOR EXCEL MAESTRO — DÍAS EAFIT 2026
                 </h3>
-                <span className="px-2 py-0.5 rounded-md bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA] text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-md bg-lila-50 text-lila-600 border border-lila-200 text-[10px] font-bold">
                   17 Columnas Oficiales
                 </span>
               </div>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-tinta-500">
                 Importa <b>Personas</b>, su <b>GT</b> y mapea automáticamente su{' '}
                 <b>Disponibilidad</b> a los turnos oficiales de Supabase.
               </p>
@@ -196,17 +196,17 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => downloadOfficialExcelMaestroTemplate(configuredShifts)}
-              className="px-3 py-1.5 rounded-xl border border-[#EADDC7] bg-white hover:bg-[#FAF6EC] text-[#182535] text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="px-3 py-1.5 rounded-xl border border-tinta-200 bg-white hover:bg-tinta-50 text-tinta-900 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
               title="Descargar la plantilla oficial con las 17 columnas y turnos del sistema"
             >
-              <Download className="w-3.5 h-3.5 text-[#B83A24]" />
+              <Download className="w-3.5 h-3.5 text-lila-600" />
               <span className="hidden sm:inline">Descargar Plantilla Oficial</span>
               <span className="sm:hidden">Plantilla</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#EADDC7]/40 transition-colors"
+              className="p-1.5 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-200/40 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -223,39 +223,39 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-2xl font-bold text-[#182535] font-dalek tracking-wider">
+                <h4 className="text-2xl font-bold text-tinta-900 font-display tracking-wider">
                   ¡IMPORTACIÓN COMPLETADA CON ÉXITO!
                 </h4>
-                <p className="text-xs text-[#64748B]">
+                <p className="text-xs text-tinta-500">
                   Los datos del Excel Maestro han sido procesados y sincronizados con el almacén
                   oficial.
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-center shadow-2xs">
+                <div className="p-4 rounded-2xl bg-surface border border-tinta-200 text-center shadow-2xs">
                   <div className="text-2xl font-black text-emerald-600 font-mono">
                     {importResult.addedPeople}
                   </div>
-                  <div className="text-[11px] font-bold text-[#64748B] uppercase mt-1">
+                  <div className="text-[11px] font-bold text-tinta-500 uppercase mt-1">
                     Personas Nuevas
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-center shadow-2xs">
+                <div className="p-4 rounded-2xl bg-surface border border-tinta-200 text-center shadow-2xs">
                   <div className="text-2xl font-black text-blue-600 font-mono">
                     {importResult.updatedPeople}
                   </div>
-                  <div className="text-[11px] font-bold text-[#64748B] uppercase mt-1">
+                  <div className="text-[11px] font-bold text-tinta-500 uppercase mt-1">
                     Actualizadas
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-center shadow-2xs">
-                  <div className="text-2xl font-black text-[#B83A24] font-mono">
+                <div className="p-4 rounded-2xl bg-surface border border-tinta-200 text-center shadow-2xs">
+                  <div className="text-2xl font-black text-lila-600 font-mono">
                     {importResult.totalAvailabilitiesAdded}
                   </div>
-                  <div className="text-[11px] font-bold text-[#64748B] uppercase mt-1">
+                  <div className="text-[11px] font-bold text-tinta-500 uppercase mt-1">
                     Disponibilidades
                   </div>
                 </div>
@@ -269,11 +269,11 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                       ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
                       : cloudSyncResult && !cloudSyncResult.synced
                       ? 'bg-amber-50/80 border-amber-200 text-amber-900'
-                      : 'bg-[#FAF6EC] border-[#EADDC7] text-[#182535]'
+                      : 'bg-tinta-50 border-tinta-200 text-tinta-900'
                   }`}
                 >
                   <div className="flex items-center gap-2 font-bold">
-                    <Cloud className={`w-4 h-4 ${cloudSyncResult?.synced ? 'text-emerald-600' : 'text-[#C87F17]'}`} />
+                    <Cloud className={`w-4 h-4 ${cloudSyncResult?.synced ? 'text-emerald-600' : 'text-mostaza-600'}`} />
                     <span>Sincronización con Supabase (Nube PostgreSQL):</span>
                   </div>
                   <p className="text-[11px] leading-relaxed">
@@ -291,9 +291,9 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                 </div>
               )}
 
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] text-left text-xs text-[#64748B] space-y-2">
-                <div className="flex items-center gap-2 text-[#182535] font-bold">
-                  <ShieldCheck className="w-4 h-4 text-[#B83A24]" />
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 text-left text-xs text-tinta-500 space-y-2">
+                <div className="flex items-center gap-2 text-tinta-900 font-bold">
+                  <ShieldCheck className="w-4 h-4 text-lila-600" />
                   <span>Principio de Integridad Aplicado:</span>
                 </div>
                 <p>
@@ -310,13 +310,13 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
                   onClick={handleReset}
-                  className="px-4 py-2.5 rounded-xl border border-[#EADDC7] bg-white hover:bg-[#FAF6EC] text-[#182535] text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl border border-tinta-200 bg-white hover:bg-tinta-50 text-tinta-900 text-xs font-bold"
                 >
                   Importar otro archivo
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-display tracking-wider shadow-md"
                 >
                   CERRAR Y CONTINUAR
                 </button>
@@ -327,36 +327,36 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
             <div className="space-y-6">
               {/* Information Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#182535]">
-                    <Clock className="w-4 h-4 text-[#B83A24]" />
+                <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-tinta-900">
+                    <Clock className="w-4 h-4 text-lila-600" />
                     <span>Normalización de Horarios</span>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                  <p className="text-[11px] text-tinta-500 leading-relaxed">
                     Reconoce formatos como <b>&quot;4pm - 7:30pm&quot;</b>, <b>&quot;8:50 AM - 12:10 PM&quot;</b> y
                     múltiples rangos por celda (separados por punto y coma), vinculándolos con su{' '}
                     <b>turn_id</b> oficial.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#182535]">
-                    <ShieldCheck className="w-4 h-4 text-[#B83A24]" />
+                <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-tinta-900">
+                    <ShieldCheck className="w-4 h-4 text-lila-600" />
                     <span>Detección de Duplicados</span>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                  <p className="text-[11px] text-tinta-500 leading-relaxed">
                     Compara <b>Cédula</b>, <b>Usuario</b>, <b>Correo institucional</b>, <b>EPIK ID</b> y Correo. Si
                     la persona ya existe, actualiza su información <b>sin eliminar</b> asignaciones ni
                     asistencias.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#182535]">
-                    <Calendar className="w-4 h-4 text-[#B83A24]" />
+                <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-tinta-900">
+                    <Calendar className="w-4 h-4 text-lila-600" />
                     <span>Excel = Personas + Disponibilidad</span>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                  <p className="text-[11px] text-tinta-500 leading-relaxed">
                     1 fila = 1 persona. El Excel <b>NO genera asignaciones de turno</b>; solamente
                     alimenta el catálogo de personal y sus franjas disponibles para asignación.
                   </p>
@@ -368,7 +368,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#EADDC7] hover:border-[#B83A24] bg-[#FFFDF8] hover:bg-[#FAF6EC]/50 rounded-3xl p-10 text-center cursor-pointer transition-all space-y-4 group shadow-2xs"
+                className="border-2 border-dashed border-tinta-200 hover:border-lila-600 bg-surface hover:bg-tinta-50/50 rounded-3xl p-10 text-center cursor-pointer transition-all space-y-4 group shadow-2xs"
               >
                 <input
                   type="file"
@@ -378,7 +378,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   className="hidden"
                 />
 
-                <div className="w-16 h-16 rounded-3xl bg-[#FAF6EC] group-hover:bg-[#FDF2EE] border border-[#EADDC7] group-hover:border-[#F6C7BA] text-[#B83A24] flex items-center justify-center mx-auto transition-all shadow-xs">
+                <div className="w-16 h-16 rounded-3xl bg-tinta-50 group-hover:bg-lila-50 border border-tinta-200 group-hover:border-lila-200 text-lila-600 flex items-center justify-center mx-auto transition-all shadow-xs">
                   {isLoading ? (
                     <RefreshCw className="w-7 h-7 animate-spin" />
                   ) : (
@@ -387,12 +387,12 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-sm font-bold text-[#182535]">
+                  <div className="text-sm font-bold text-tinta-900">
                     {isLoading
                       ? 'Analizando columnas y disponibilidad horaria...'
                       : 'Haga clic o arrastre el archivo Excel Maestro aquí'}
                   </div>
-                  <p className="text-xs text-[#64748B]">
+                  <p className="text-xs text-tinta-500">
                     Formatos soportados: <b>.XLSX, .XLS o .CSV</b> (Estructura oficial DÍAS EAFIT)
                   </p>
                 </div>
@@ -414,7 +414,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   ].map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7] text-[10px] font-bold text-[#64748B]"
+                      className="px-2 py-0.5 rounded-md bg-tinta-50 border border-tinta-200 text-[10px] font-bold text-tinta-500"
                     >
                       {tag}
                     </span>
@@ -423,14 +423,14 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               </div>
 
               {/* Template Download Prompt */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7]">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-tinta-200">
                 <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="w-5 h-5 text-[#B83A24]" />
+                  <FileSpreadsheet className="w-5 h-5 text-lila-600" />
                   <div>
-                    <div className="text-xs font-bold text-[#182535]">
+                    <div className="text-xs font-bold text-tinta-900">
                       ¿No tienes el formato oficial o deseas verificar los turnos configurados?
                     </div>
-                    <div className="text-[11px] text-[#64748B]">
+                    <div className="text-[11px] text-tinta-500">
                       Descarga la plantilla oficial con las 17 columnas y la hoja anexa con los turnos
                       activos en el sistema.
                     </div>
@@ -439,7 +439,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
                 <button
                   onClick={() => downloadOfficialExcelMaestroTemplate(configuredShifts)}
-                  className="px-4 py-2 rounded-xl bg-[#182535] hover:bg-[#2A3F55] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                  className="px-4 py-2 rounded-xl bg-tinta-900 hover:bg-tinta-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Descargar Plantilla</span>
@@ -452,48 +452,48 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               {/* TOP METRICS CARDS */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* 1. Total Rows */}
-                <div className="p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-1">
-                  <div className="text-[10px] font-bold uppercase text-[#64748B]">Total Filas</div>
-                  <div className="text-xl font-black text-[#182535] font-mono">
+                <div className="p-3.5 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-1">
+                  <div className="text-[10px] font-bold uppercase text-tinta-500">Total Filas</div>
+                  <div className="text-xl font-black text-tinta-900 font-mono">
                     {preview.totalRows}
                   </div>
-                  <div className="text-[10px] text-[#64748B]">Registros leídos</div>
+                  <div className="text-[10px] text-tinta-500">Registros leídos</div>
                 </div>
 
                 {/* 2. New Persons */}
-                <div className="p-3.5 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] space-y-1">
-                  <div className="text-[10px] font-bold uppercase text-[#16A34A]">Personas Nuevas</div>
-                  <div className="text-xl font-black text-[#16A34A] font-mono">
+                <div className="p-3.5 rounded-2xl bg-turquesa-50 border border-turquesa-200 space-y-1">
+                  <div className="text-[10px] font-bold uppercase text-turquesa-600">Personas Nuevas</div>
+                  <div className="text-xl font-black text-turquesa-600 font-mono">
                     {preview.newPersonsCount}
                   </div>
-                  <div className="text-[10px] text-[#16A34A]">Se crearán en BD</div>
+                  <div className="text-[10px] text-turquesa-600">Se crearán en BD</div>
                 </div>
 
                 {/* 3. Existing Persons */}
-                <div className="p-3.5 rounded-2xl bg-[#EFF6FF] border border-[#BFDBFE] space-y-1">
-                  <div className="text-[10px] font-bold uppercase text-[#2563EB]">Existentes</div>
-                  <div className="text-xl font-black text-[#2563EB] font-mono">
+                <div className="p-3.5 rounded-2xl bg-turquesa-50 border border-turquesa-200 space-y-1">
+                  <div className="text-[10px] font-bold uppercase text-turquesa-700">Existentes</div>
+                  <div className="text-xl font-black text-turquesa-700 font-mono">
                     {preview.existingPersonsCount}
                   </div>
-                  <div className="text-[10px] text-[#2563EB]">Se actualizarán</div>
+                  <div className="text-[10px] text-turquesa-700">Se actualizarán</div>
                 </div>
 
                 {/* 4. Duplicates / Matches */}
-                <div className="p-3.5 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] space-y-1">
-                  <div className="text-[10px] font-bold uppercase text-[#D97706]">Coincidencias</div>
-                  <div className="text-xl font-black text-[#D97706] font-mono">
+                <div className="p-3.5 rounded-2xl bg-mostaza-50 border border-mostaza-200 space-y-1">
+                  <div className="text-[10px] font-bold uppercase text-mostaza-500">Coincidencias</div>
+                  <div className="text-xl font-black text-mostaza-500 font-mono">
                     {preview.duplicateAlertsCount}
                   </div>
-                  <div className="text-[10px] text-[#D97706]">Por Cédula / EPIK</div>
+                  <div className="text-[10px] text-mostaza-500">Por Cédula / EPIK</div>
                 </div>
 
                 {/* 5. Recognized Schedules */}
-                <div className="p-3.5 rounded-2xl bg-[#FDF2EE] border border-[#F6C7BA] space-y-1">
-                  <div className="text-[10px] font-bold uppercase text-[#B83A24]">Horarios Válidos</div>
-                  <div className="text-xl font-black text-[#B83A24] font-mono">
+                <div className="p-3.5 rounded-2xl bg-lila-50 border border-lila-200 space-y-1">
+                  <div className="text-[10px] font-bold uppercase text-lila-600">Horarios Válidos</div>
+                  <div className="text-xl font-black text-lila-600 font-mono">
                     {preview.recognizedAvailabilitiesCount}
                   </div>
-                  <div className="text-[10px] text-[#B83A24]">Mapeados a turn_id</div>
+                  <div className="text-[10px] text-lila-600">Mapeados a turn_id</div>
                 </div>
 
                 {/* 6. Unrecognized Schedules */}
@@ -501,26 +501,26 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   className={`p-3.5 rounded-2xl border space-y-1 ${
                     preview.unrecognizedSchedulesCount > 0
                       ? 'bg-rose-50 border-rose-200'
-                      : 'bg-[#FAF6EC] border-[#EADDC7]'
+                      : 'bg-tinta-50 border-tinta-200'
                   }`}
                 >
                   <div
                     className={`text-[10px] font-bold uppercase ${
-                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-[#64748B]'
+                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-tinta-500'
                     }`}
                   >
                     No Reconocidos
                   </div>
                   <div
                     className={`text-xl font-black font-mono ${
-                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-[#64748B]'
+                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-tinta-500'
                     }`}
                   >
                     {preview.unrecognizedSchedulesCount}
                   </div>
                   <div
                     className={`text-[10px] ${
-                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-[#64748B]'
+                      preview.unrecognizedSchedulesCount > 0 ? 'text-rose-600' : 'text-tinta-500'
                     }`}
                   >
                     {preview.unrecognizedSchedulesCount > 0 ? 'Requiere revisión' : 'Sin alertas'}
@@ -566,8 +566,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                           className="py-1.5 px-2 text-xs flex items-center justify-between gap-3"
                         >
                           <div>
-                            <span className="font-bold text-[#182535]">{item.personName}</span>{' '}
-                            <span className="text-[#64748B]">(Fila {item.rowNumber})</span>
+                            <span className="font-bold text-tinta-900">{item.personName}</span>{' '}
+                            <span className="text-tinta-500">(Fila {item.rowNumber})</span>
                             <div className="text-[11px] text-amber-800">
                               <b>{item.eventName} ({item.dayName}):</b> Texto original:{' '}
                               <code className="bg-amber-50 px-1 rounded">&quot;{item.rawText}&quot;</code>
@@ -585,9 +585,9 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               )}
 
               {/* SUMMARY BY DAY */}
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-3">
-                <div className="text-xs font-bold text-[#182535] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#B83A24]" />
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-3">
+                <div className="text-xs font-bold text-tinta-900 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-lila-600" />
                   <span>Resumen de Disponibilidad Reconocida por Evento</span>
                 </div>
 
@@ -600,12 +600,12 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     return (
                       <div
                         key={def.dayId}
-                        className="p-2.5 rounded-xl bg-white border border-[#EADDC7] text-center space-y-1"
+                        className="p-2.5 rounded-xl bg-white border border-tinta-200 text-center space-y-1"
                       >
-                        <div className="text-[11px] font-bold text-[#182535] truncate">
+                        <div className="text-[11px] font-bold text-tinta-900 truncate">
                           {def.dayName}
                         </div>
-                        <div className="text-[10px] text-[#64748B] truncate">{def.eventName}</div>
+                        <div className="text-[10px] text-tinta-500 truncate">{def.eventName}</div>
                         <div className="flex items-center justify-center gap-2 pt-1 font-mono text-xs">
                           <span
                             className="text-emerald-600 font-bold"
@@ -630,7 +630,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
               {/* TABLE FILTER TABS & SEARCH */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 overflow-x-auto p-1 rounded-xl bg-[#FAF6EC] border border-[#EADDC7]">
+                <div className="flex items-center gap-1.5 overflow-x-auto p-1 rounded-xl bg-tinta-50 border border-tinta-200">
                   {[
                     { id: 'ALL', label: `Todos (${preview.totalRows})` },
                     { id: 'NEW', label: `Nuevos (${preview.newPersonsCount})` },
@@ -646,8 +646,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                       onClick={() => setFilterTab(tab.id as any)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                         filterTab === tab.id
-                          ? 'bg-[#B83A24] text-white shadow-2xs'
-                          : 'text-[#64748B] hover:text-[#182535]'
+                          ? 'bg-lila-600 text-white shadow-2xs'
+                          : 'text-tinta-500 hover:text-tinta-900'
                       }`}
                     >
                       {tab.label}
@@ -661,13 +661,13 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     placeholder="Filtrar por nombre, cédula, GT..."
                     value={tableSearch}
                     onChange={(e) => setTableSearch(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-white border border-[#EADDC7] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-white border border-tinta-200 text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600"
                   />
-                  <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2.5 top-3" />
+                  <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2.5 top-3" />
                   {tableSearch && (
                     <button
                       onClick={() => setTableSearch('')}
-                      className="absolute right-2.5 top-2.5 text-[#94A3B8] hover:text-[#182535]"
+                      className="absolute right-2.5 top-2.5 text-tinta-400 hover:text-tinta-900"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -676,9 +676,9 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               </div>
 
               {/* PREVIEW TABLE */}
-              <div className="border border-[#EADDC7] rounded-2xl overflow-hidden bg-white shadow-2xs max-h-96 overflow-y-auto">
+              <div className="border border-tinta-200 rounded-2xl overflow-hidden bg-white shadow-2xs max-h-96 overflow-y-auto">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#FAF6EC] text-[#64748B] text-[10px] font-bold uppercase sticky top-0 border-b border-[#EADDC7] z-10">
+                  <thead className="bg-tinta-50 text-tinta-500 text-[10px] font-bold uppercase sticky top-0 border-b border-tinta-200 z-10">
                     <tr>
                       <th className="py-2.5 px-3">Fila</th>
                       <th className="py-2.5 px-3">Persona</th>
@@ -690,10 +690,10 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-[#EADDC7]/60">
+                  <tbody className="divide-y divide-tinta-200/60">
                     {filteredRows.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-8 text-center text-xs text-[#94A3B8]">
+                        <td colSpan={6} className="py-8 text-center text-xs text-tinta-400">
                           No se encontraron registros con los filtros seleccionados.
                         </td>
                       </tr>
@@ -702,7 +702,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                         return (
                           <tr
                             key={row.rowNumber}
-                            className={`hover:bg-[#FAF6EC]/40 transition-colors ${
+                            className={`hover:bg-tinta-50/40 transition-colors ${
                               !row.isValid
                                 ? 'bg-rose-50/50'
                                 : row.isExistingPerson
@@ -711,14 +711,14 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                             }`}
                           >
                             {/* Row Number */}
-                            <td className="py-2.5 px-3 font-mono text-[11px] text-[#64748B]">
+                            <td className="py-2.5 px-3 font-mono text-[11px] text-tinta-500">
                               #{row.rowNumber}
                             </td>
 
                             {/* Person Info */}
                             <td className="py-2.5 px-3">
-                              <div className="font-bold text-[#182535]">{row.name}</div>
-                              <div className="text-[10px] text-[#64748B] truncate max-w-[180px]">
+                              <div className="font-bold text-tinta-900">{row.name}</div>
+                              <div className="text-[10px] text-tinta-500 truncate max-w-[180px]">
                                 {row.institutionalEmail || row.email}
                               </div>
                               {((row.foodAllergies &&
@@ -764,12 +764,12 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
                             {/* Document & Username */}
                             <td className="py-2.5 px-3 font-mono">
-                              <div className="font-bold text-[#182535]">{row.documentId}</div>
-                              <div className="text-[10px] text-[#B83A24] font-semibold flex items-center gap-1">
+                              <div className="font-bold text-tinta-900">{row.documentId}</div>
+                              <div className="text-[10px] text-lila-600 font-semibold flex items-center gap-1">
                                 <span>@{row.username}</span>
                               </div>
                               {row.epikId && row.epikId.toLowerCase() !== row.username.toLowerCase() && (
-                                <div className="text-[9px] text-[#64748B]">EPIK: {row.epikId}</div>
+                                <div className="text-[9px] text-tinta-500">EPIK: {row.epikId}</div>
                               )}
                             </td>
 
@@ -779,9 +779,9 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                                 <span
                                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                                     row.primaryType === 'GT'
-                                      ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
+                                      ? 'bg-lila-50 text-lila-600 border border-lila-200'
                                       : row.primaryType === 'GAP'
-                                      ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                      ? 'bg-mostaza-50 text-mostaza-600 border border-mostaza-200'
                                       : 'bg-purple-50 text-purple-700 border border-purple-200'
                                   }`}
                                 >
@@ -790,7 +790,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                                     : row.primaryType}
                                 </span>
                                 {row.primaryType === 'GT' && row.alsoActsAsGap && (
-                                  <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                                  <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
                                     + GAP Generales
                                   </span>
                                 )}
@@ -835,7 +835,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                                   (arr) => !arr || arr.length === 0
                                 ) &&
                                   row.unrecognizedInRow.length === 0 && (
-                                    <span className="text-[11px] text-[#94A3B8] italic">
+                                    <span className="text-[11px] text-tinta-400 italic">
                                       Sin turnos registrados
                                     </span>
                                   )}
@@ -870,20 +870,20 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               </div>
 
               {/* INTEGRITY SAFEGUARDS & OPTIONS */}
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#182535]">
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-3">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-tinta-900">
                   <input
                     type="checkbox"
                     checked={updateExisting}
                     onChange={(e) => setUpdateExisting(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#B83A24] focus:ring-[#B83A24]"
+                    className="w-4 h-4 rounded text-lila-600 focus:ring-lila-600"
                   />
                   <span>
                     Actualizar información de personas existentes que coincidan en el sistema
                   </span>
                 </label>
 
-                <div className="flex items-center gap-2 text-[11px] text-[#64748B]">
+                <div className="flex items-center gap-2 text-[11px] text-tinta-500">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>
                     <b>Garantía de No Destrucción:</b> Esta importación jamás eliminará asignaciones
@@ -897,7 +897,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#EADDC7] bg-white hover:bg-[#FAF6EC] text-[#182535] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-tinta-200 bg-white hover:bg-tinta-50 text-tinta-900 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Cargar otro archivo</span>
@@ -907,7 +907,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold text-[#64748B] hover:bg-[#FAF6EC]"
+                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold text-tinta-500 hover:bg-tinta-50"
                   >
                     Cancelar
                   </button>
@@ -916,7 +916,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                     type="button"
                     onClick={handleConfirmImport}
                     disabled={isConfirming || preview.validRows === 0}
-                    className="flex-1 sm:flex-initial px-6 py-2.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs font-dalek tracking-wider shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-initial px-6 py-2.5 rounded-2xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs font-display tracking-wider shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isConfirming ? (
                       <>

@@ -131,94 +131,94 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-150 text-[#182535]">
+      <div className="bg-surface border-2 border-tinta-200 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 duration-150 text-tinta-900">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-[#64748B] hover:text-[#182535] p-2 rounded-2xl hover:bg-[#FAF6EC] transition-colors"
+          className="absolute top-5 right-5 text-tinta-500 hover:text-tinta-900 p-2 rounded-2xl hover:bg-tinta-50 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3 mb-1">
-          <div className="p-2 rounded-2xl bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+          <div className="p-2 rounded-2xl bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek tracking-wider">
+            <h3 className="text-lg sm:text-xl font-bold text-tinta-900 font-display tracking-wider">
               VERIFICACIÓN Y ESTADO DEL SISTEMA
             </h3>
-            <p className="text-xs text-[#64748B] font-montserrat">
+            <p className="text-xs text-tinta-500 font-sans">
               Auditoría de cumplimiento de las directivas operativas de DÍAS EAFIT 2026.
             </p>
           </div>
         </div>
 
         {/* Verification Checklist */}
-        <div className="bg-[#FAF6EC] border border-[#EADDC7] rounded-2xl p-4 my-5 space-y-3 font-montserrat">
-          <h4 className="text-xs font-bold text-[#182535] uppercase tracking-wider flex items-center gap-2 font-dalek">
-            <FileCheck className="w-4 h-4 text-[#B83A24]" />
+        <div className="bg-tinta-50 border border-tinta-200 rounded-2xl p-4 my-5 space-y-3 font-sans">
+          <h4 className="text-xs font-bold text-tinta-900 uppercase tracking-wider flex items-center gap-2 font-display">
+            <FileCheck className="w-4 h-4 text-lila-600" />
             <span>Checklist de Verificación Oficial</span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-[#334155]">
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7]">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-tinta-700">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
-                Personas registradas: <strong className="text-[#182535]">{people.length}</strong> (GT: {gtCount}, GAP: {gapCount}, MESA: {mesaCount})
+                Personas registradas: <strong className="text-tinta-900">{people.length}</strong> (GT: {gtCount}, GAP: {gapCount}, MESA: {mesaCount})
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7]">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
-                Asignaciones activas: <strong className="text-[#182535]">{assignments.length}</strong>
+                Asignaciones activas: <strong className="text-tinta-900">{assignments.length}</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7]">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
-                Disponibilidades: <strong className="text-[#182535]">{availabilities.length}</strong>
+                Disponibilidades: <strong className="text-tinta-900">{availabilities.length}</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7]">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
-                Asistencias registradas: <strong className="text-[#182535]">{attendances.length}</strong>
+                Asistencias registradas: <strong className="text-tinta-900">{attendances.length}</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200 sm:col-span-2">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
                 Sin datos mock / Sin seed automático: Colección vacía permanece en 0.
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200 sm:col-span-2">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
                 THE SHOW (Lunes): T1 6:00-8:00, T2 8:00-12:30, T3 12:30-4:00, T4 4:00-7:30, T5 7:30-10:30.
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200 sm:col-span-2">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
                 Carnival: Exactamente 22 bases físicas únicas (1..19 + Toro, Speedway, Arcade) en turnos GAP.
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200 sm:col-span-2">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
                 Carnival GT: Exactamente 5 turnos independientes (T1..T5).
               </span>
             </div>
 
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] sm:col-span-2">
-              <CheckCircle className="w-4 h-4 text-[#16A34A] shrink-0" />
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-surface border border-tinta-200 sm:col-span-2">
+              <CheckCircle className="w-4 h-4 text-turquesa-600 shrink-0" />
               <span>
                 Regla de Continuidad en Carnival: la persona se mantiene en la misma base en todos sus turnos.
               </span>
@@ -227,10 +227,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Supabase Cloud Sync */}
-        <div className="border-t border-[#EADDC7] pt-5 space-y-3 font-montserrat">
+        <div className="border-t border-tinta-200 pt-5 space-y-3 font-sans">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-[#182535] uppercase tracking-wider font-dalek flex items-center gap-1.5">
-              <Cloud className="w-4 h-4 text-[#C87F17]" />
+            <h4 className="text-xs font-bold text-tinta-900 uppercase tracking-wider font-display flex items-center gap-1.5">
+              <Cloud className="w-4 h-4 text-mostaza-600" />
               <span>Sincronización en la Nube (Multi-Dispositivo)</span>
             </h4>
             <span
@@ -244,7 +244,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </span>
           </div>
 
-          <p className="text-xs text-[#64748B] leading-relaxed">
+          <p className="text-xs text-tinta-500 leading-relaxed">
             Permite que los integrantes del Staff ingresen desde sus teléfonos móviles (como WhatsApp o navegadores externos) compartiendo la misma base de datos centralizada.
           </p>
 
@@ -252,16 +252,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               onClick={handleTestCloud}
               disabled={cloudLoading}
-              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] flex items-center gap-2 border border-[#EADDC7] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-tinta-50 hover:bg-tinta-100 text-tinta-900 flex items-center gap-2 border border-tinta-200 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 text-[#B83A24] ${cloudLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-lila-600 ${cloudLoading ? 'animate-spin' : ''}`} />
               <span>Probar Conexión Nube</span>
             </button>
 
             <button
               onClick={handlePushCloud}
               disabled={cloudLoading || people.length === 0}
-              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] text-white flex items-center gap-2 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold bg-lila-600 hover:bg-lila-700 text-white flex items-center gap-2 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
             >
               <CloudUpload className="w-4 h-4" />
               <span>Subir Base de Datos a la Nube ({people.length} pers.)</span>
@@ -270,9 +270,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               onClick={handlePullCloud}
               disabled={cloudLoading}
-              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] flex items-center gap-2 border border-[#EADDC7] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-tinta-50 hover:bg-tinta-100 text-tinta-900 flex items-center gap-2 border border-tinta-200 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
             >
-              <CloudDownload className="w-4 h-4 text-[#C87F17]" />
+              <CloudDownload className="w-4 h-4 text-mostaza-600" />
               <span>Descargar de la Nube</span>
             </button>
           </div>
@@ -281,12 +281,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div
               className={`p-3 rounded-xl text-xs font-medium flex items-start gap-2 ${
                 cloudMessage.isError
-                  ? 'bg-[#FDF2EE] border border-[#F6C7BA] text-[#B83A24]'
+                  ? 'bg-lila-50 border border-lila-200 text-lila-600'
                   : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
               }`}
             >
               {cloudMessage.isError ? (
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#B83A24]" />
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-lila-600" />
               ) : (
                 <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
               )}
@@ -296,31 +296,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Export & Import */}
-        <div className="border-t border-[#EADDC7] pt-5 space-y-4 font-montserrat">
-          <h4 className="text-xs font-bold text-[#182535] uppercase tracking-wider font-dalek">
+        <div className="border-t border-tinta-200 pt-5 space-y-4 font-sans">
+          <h4 className="text-xs font-bold text-tinta-900 uppercase tracking-wider font-display">
             Copia de Seguridad y Migración
           </h4>
 
           <div className="flex flex-wrap gap-2">
             <button
               onClick={handleExport}
-              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] flex items-center gap-2 border border-[#EADDC7] transition-all shadow-2xs"
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-tinta-50 hover:bg-tinta-100 text-tinta-900 flex items-center gap-2 border border-tinta-200 transition-all shadow-2xs"
             >
-              <Download className="w-4 h-4 text-[#B83A24]" />
+              <Download className="w-4 h-4 text-lila-600" />
               <span>Descargar Respaldo JSON</span>
             </button>
 
             <button
               onClick={handleFullReset}
-              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-[#FDF2EE] hover:bg-[#FBE4DD] text-[#B83A24] border border-[#F6C7BA] flex items-center gap-2 transition-all shadow-2xs"
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-lila-50 hover:bg-lila-100 text-lila-600 border border-lila-200 flex items-center gap-2 transition-all shadow-2xs"
             >
-              <Trash2 className="w-4 h-4 text-[#B83A24]" />
+              <Trash2 className="w-4 h-4 text-lila-600" />
               <span>Vaciar Toda la Base de Datos (Volver a 0)</span>
             </button>
           </div>
 
           <div className="pt-2">
-            <label className="block text-[11px] font-medium text-[#64748B] mb-1">
+            <label className="block text-[11px] font-medium text-tinta-500 mb-1">
               Restaurar / Importar Respaldo JSON
             </label>
             <div className="flex gap-2">
@@ -329,29 +329,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 placeholder='Pegar contenido JSON {"app":"DIAS_EAFIT",...}'
                 value={importJson}
                 onChange={(e) => setImportJson(e.target.value)}
-                className="flex-1 px-3.5 py-2 text-xs bg-[#FAF6EC] text-[#182535] rounded-xl border border-[#E5DAC0] font-mono focus:outline-hidden focus:border-[#B83A24]"
+                className="flex-1 px-3.5 py-2 text-xs bg-tinta-50 text-tinta-900 rounded-xl border border-tinta-300 font-mono focus:outline-hidden focus:border-lila-600"
               />
               <button
                 onClick={handleImport}
                 disabled={!importJson.trim()}
-                className="min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] disabled:opacity-40 text-white flex items-center gap-1.5 shadow-2xs transition-all"
+                className="min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold bg-lila-600 hover:bg-lila-700 disabled:opacity-40 text-white flex items-center gap-1.5 shadow-2xs transition-all"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span>Importar</span>
               </button>
             </div>
             {importStatus && (
-              <span className="text-[11px] font-bold text-[#16A34A] mt-1 block">
+              <span className="text-[11px] font-bold text-turquesa-600 mt-1 block">
                 {importStatus}
               </span>
             )}
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[#EADDC7] flex justify-end">
+        <div className="mt-6 pt-4 border-t border-tinta-200 flex justify-end">
           <button
             onClick={onClose}
-            className="min-h-[44px] px-6 py-2 rounded-xl bg-[#182535] hover:bg-[#2A3F5A] text-white text-xs font-bold font-dalek tracking-wider shadow-2xs transition-all"
+            className="min-h-[44px] px-6 py-2 rounded-xl bg-tinta-900 hover:bg-tinta-800 text-white text-xs font-bold font-display tracking-wider shadow-2xs transition-all"
           >
             ENTENDIDO
           </button>

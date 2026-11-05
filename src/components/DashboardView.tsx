@@ -117,9 +117,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner exactly matching image.png */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
         {/* Subtle geometric / Nordic markers */}
-        <div className="flex items-center justify-between text-[11px] text-[#A89878] font-mono tracking-widest uppercase mb-3">
+        <div className="flex items-center justify-between text-[11px] text-tinta-400 font-mono tracking-widest uppercase mb-3">
           <span>›› DÍAS 2026 ‹‹</span>
           <span>❖ ᛟ RX ❖</span>
         </div>
@@ -127,19 +127,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-3 py-1 rounded-full bg-[#B83A24] text-white text-xs font-bold font-montserrat tracking-wide">
+              <span className="px-3 py-1 rounded-full bg-lila-600 text-white text-xs font-bold font-sans tracking-wide">
                 PANEL DE LA DIRECTORA
               </span>
-              <span className="text-xs font-bold text-[#C87F17] font-montserrat">
+              <span className="text-xs font-bold text-mostaza-600 font-sans">
                 Cerebro de Distribución DÍAS EAFIT
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-[#182535] font-dalek tracking-wider">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-tinta-900 font-display tracking-wider">
               CENTRO DE MANDO GENERAL
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed font-montserrat">
+            <p className="text-xs sm:text-sm text-tinta-600 leading-relaxed font-sans">
               Cruce automático de disponibilidades, asignación inteligente, cálculo de horas y alimentación según el Artículo 36.
             </p>
           </div>
@@ -147,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => exportPeopleToExcel(people)}
-              className="px-5 py-3 rounded-2xl bg-[#C87F17] hover:bg-[#B37012] text-white font-bold text-xs sm:text-sm font-dalek tracking-wider flex items-center gap-2 shadow-sm transition-all"
+              className="px-5 py-3 rounded-2xl bg-mostaza-600 hover:bg-mostaza-700 text-white font-bold text-xs sm:text-sm font-display tracking-wider flex items-center gap-2 shadow-sm transition-all"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Exportar Excel Oficial</span>
@@ -161,18 +161,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 1. PERSONAS */}
         <div
           onClick={() => onNavigate('people')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#B83A24] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-lila-600 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Personas
             </span>
-            <Users className="w-4 h-4 text-[#B83A24] group-hover:scale-110 transition-transform" />
+            <Users className="w-4 h-4 text-lila-600 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#182535] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
             {people.length}
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             GT: {gtCount} • GAP: {gapCount} • Mesa: {mesaCount}
           </div>
         </div>
@@ -180,18 +180,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 2. TURNOS */}
         <div
           onClick={() => onNavigate('assignments')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#C87F17] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-mostaza-600 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Turnos
             </span>
-            <Calendar className="w-4 h-4 text-[#C87F17] group-hover:scale-110 transition-transform" />
+            <Calendar className="w-4 h-4 text-mostaza-600 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#182535] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
             17
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             {gtAssignedCount} / 188 cupos GT
           </div>
         </div>
@@ -199,18 +199,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 3. BASES GAP */}
         <div
           onClick={() => onNavigate('assignments')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#B83A24] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-lila-600 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Bases GAP
             </span>
-            <MapPin className="w-4 h-4 text-[#B83A24] group-hover:scale-110 transition-transform" />
+            <MapPin className="w-4 h-4 text-lila-600 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#182535] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
             45
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             30 Carnival + 15 Games
           </div>
         </div>
@@ -218,18 +218,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 4. COBERTURA */}
         <div
           onClick={() => onNavigate('assignments')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#16A34A] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-turquesa-600 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Cobertura
             </span>
-            <Clock className="w-4 h-4 text-[#16A34A] group-hover:scale-110 transition-transform" />
+            <Clock className="w-4 h-4 text-turquesa-600 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#16A34A] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-turquesa-600 font-sans">
             {coveragePct}%
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             {totalAssigned} de {totalSlotsNeeded} cupos
           </div>
         </div>
@@ -237,18 +237,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 5. FALTANTES */}
         <div
           onClick={() => onNavigate('assignments')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#D97706] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-mostaza-500 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Faltantes
             </span>
-            <AlertTriangle className="w-4 h-4 text-[#D97706] group-hover:scale-110 transition-transform" />
+            <AlertTriangle className="w-4 h-4 text-mostaza-500 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#D97706] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-mostaza-500 font-sans">
             {missingSlots}
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             Por asignar en la semana
           </div>
         </div>
@@ -256,18 +256,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* 6. RACIONES */}
         <div
           onClick={() => onNavigate('food')}
-          className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-[#B83A24] transition-all cursor-pointer group"
+          className="bg-surface border border-tinta-200 rounded-2xl p-4 sm:p-5 shadow-2xs hover:border-lila-600 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] font-montserrat uppercase tracking-wider">
+            <span className="text-xs font-bold text-tinta-500 font-sans uppercase tracking-wider">
               Raciones
             </span>
-            <Utensils className="w-4 h-4 text-[#B83A24] group-hover:scale-110 transition-transform" />
+            <Utensils className="w-4 h-4 text-lila-600 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#182535] font-montserrat">
+          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
             {totalMeals}
           </div>
-          <div className="mt-2 text-[11px] text-[#64748B] font-montserrat truncate">
+          <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
             {totalLunches} Alm. • {totalSnacks} Refr.
           </div>
         </div>
@@ -277,19 +277,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#C87F17]" />
-            <h2 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wider">
+            <Sparkles className="w-4 h-4 text-mostaza-600" />
+            <h2 className="text-base sm:text-lg font-bold text-tinta-900 font-display tracking-wider">
               ACCIONES RÁPIDAS
             </h2>
           </div>
-          <span className="text-xs text-[#94A3B8] font-montserrat">Gestión directa</span>
+          <span className="text-xs text-tinta-400 font-sans">Gestión directa</span>
         </div>
 
         <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none flex-wrap sm:flex-nowrap">
           {/* Control en Vivo */}
           <button
             onClick={() => onNavigate('attendance')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#116B51] hover:bg-[#0E5843] text-white text-xs font-bold flex items-center gap-2 shadow-xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-turquesa-700 hover:bg-turquesa-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs shrink-0 transition-all font-sans"
           >
             <Radio className="w-4 h-4" />
             <span>Control en Vivo</span>
@@ -298,9 +298,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* + Persona */}
           <button
             onClick={onOpenAddPerson}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <Plus className="w-4 h-4 text-[#B83A24]" />
+            <Plus className="w-4 h-4 text-lila-600" />
             <span>+ Persona</span>
           </button>
 
@@ -312,54 +312,54 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onNavigate('people');
               }
             }}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FEF8EC] hover:bg-[#FDF0D5] text-[#C87F17] border border-[#E5A12E]/40 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-mostaza-50 hover:bg-mostaza-100 text-mostaza-600 border border-mostaza-300/40 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <FileSpreadsheet className="w-4 h-4 text-[#C87F17]" />
+            <FileSpreadsheet className="w-4 h-4 text-mostaza-600" />
             <span>Cargar Excel</span>
           </button>
 
           {/* Turnos GT */}
           <button
             onClick={() => onNavigate('assignments')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <Calendar className="w-4 h-4 text-[#64748B]" />
+            <Calendar className="w-4 h-4 text-tinta-500" />
             <span>Turnos GT</span>
           </button>
 
           {/* Bases GAP */}
           <button
             onClick={() => onNavigate('assignments')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <MapPin className="w-4 h-4 text-[#64748B]" />
+            <MapPin className="w-4 h-4 text-tinta-500" />
             <span>Bases GAP</span>
           </button>
 
           {/* Alimentación */}
           <button
             onClick={() => onNavigate('food')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <Utensils className="w-4 h-4 text-[#64748B]" />
+            <Utensils className="w-4 h-4 text-tinta-500" />
             <span>Alimentación</span>
           </button>
 
           {/* Camisetas */}
           <button
             onClick={() => onNavigate('shirts')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FEF8EC] hover:bg-[#FDF0D5] text-[#B83A24] border border-[#E5A12E]/40 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-mostaza-50 hover:bg-mostaza-100 text-lila-600 border border-mostaza-300/40 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <Shirt className="w-4 h-4 text-[#B83A24]" />
+            <Shirt className="w-4 h-4 text-lila-600" />
             <span>Camisetas (MESA x2)</span>
           </button>
 
           {/* Cobertura */}
           <button
             onClick={() => onNavigate('availability')}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold flex items-center gap-2 shadow-2xs shrink-0 transition-all font-sans"
           >
-            <Clock className="w-4 h-4 text-[#64748B]" />
+            <Clock className="w-4 h-4 text-tinta-500" />
             <span>Cobertura</span>
           </button>
         </div>
@@ -367,16 +367,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* Alert Banner for Unassigned People matching image.png */}
       {unassignedCount > 0 && (
-        <div className="bg-[#FFF8EC] border border-[#F5DCB0] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+        <div className="bg-mostaza-50 border border-mostaza-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FDE9C8] flex items-center justify-center text-[#C87F17] shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-mostaza-100 flex items-center justify-center text-mostaza-600 shrink-0">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#182535] font-montserrat">
+              <h3 className="text-sm font-bold text-tinta-900 font-sans">
                 {unassignedCount} Personas sin Asignación
               </h3>
-              <p className="text-xs text-[#785420] font-montserrat">
+              <p className="text-xs text-mostaza-800 font-sans">
                 Miembros disponibles que aún no tienen turnos o bases asignadas.
               </p>
             </div>
@@ -384,7 +384,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <button
             onClick={() => onNavigate('people')}
-            className="px-4 py-2 rounded-xl bg-[#D9822B] hover:bg-[#C27322] text-white text-xs font-bold font-montserrat shrink-0 shadow-xs transition-colors self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-mostaza-300 hover:bg-mostaza-700 text-white text-xs font-bold font-sans shrink-0 shadow-xs transition-colors self-start sm:self-auto"
           >
             Ver Lista
           </button>
@@ -395,10 +395,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-base sm:text-xl font-bold text-[#182535] font-dalek tracking-wider">
+            <h2 className="text-base sm:text-xl font-bold text-tinta-900 font-display tracking-wider">
               PROGRAMACIÓN POR DÍA – DÍAS EAFIT
             </h2>
-            <p className="text-xs text-[#64748B] font-montserrat">
+            <p className="text-xs text-tinta-500 font-sans">
               Selecciona el día para ver y gestionar la operación en tiempo real
             </p>
           </div>
@@ -417,10 +417,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   key={day.id}
                   onClick={() => setSelectedDayId(day.id as any)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold font-montserrat transition-all shrink-0 ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold font-sans transition-all shrink-0 ${
                     isActive
-                      ? 'bg-[#B83A24] text-white shadow-xs'
-                      : 'bg-[#FFFDF8] text-[#334155] hover:bg-[#F3EEDC] border border-[#EADDC7]'
+                      ? 'bg-lila-600 text-white shadow-xs'
+                      : 'bg-surface text-tinta-700 hover:bg-tinta-100 border border-tinta-200'
                   }`}
                 >
                   {day.label}
@@ -431,25 +431,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Selected Day Overview Card */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EADDC7]/70 pb-4">
+        <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tinta-200/70 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#C87F17] font-montserrat">
+                <span className="text-xs font-bold uppercase tracking-wider text-mostaza-600 font-sans">
                   {currentDay.dayName}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-md bg-[#FDF2EE] text-[#B83A24] font-bold border border-[#F6C7BA]">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-lila-50 text-lila-600 font-bold border border-lila-200">
                   {currentDay.eventName}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek tracking-wide mt-1">
+              <h3 className="text-lg sm:text-xl font-bold text-tinta-900 font-display tracking-wide mt-1">
                 {currentDay.description}
               </h3>
             </div>
 
             <button
               onClick={() => onNavigate('assignments')}
-              className="px-4 py-2 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+              className="px-4 py-2 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-display tracking-wider flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
             >
               <span>Gestionar {currentDay.dayName}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -471,23 +471,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <div
                   key={shift.id}
-                  className="bg-[#FAF6EC] border border-[#E5DAC0] rounded-2xl p-3.5 space-y-2 hover:border-[#B83A24] transition-all"
+                  className="bg-tinta-50 border border-tinta-300 rounded-2xl p-3.5 space-y-2 hover:border-lila-600 transition-all"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-[#182535] font-dalek tracking-wide">
+                    <span className="text-xs font-extrabold text-tinta-900 font-display tracking-wide">
                       {shift.name} • {shift.label}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#FFFDF8] font-bold text-[#64748B] border border-[#EADDC7]">
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-surface font-bold text-tinta-500 border border-tinta-200">
                       {shift.category || 'GT'}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-[#64748B] pt-1 border-t border-[#E5DAC0]/60">
+                  <div className="flex items-center justify-between text-xs text-tinta-500 pt-1 border-t border-tinta-300/60">
                     <span>
                       {relevantCount} cupos {isMesaShift ? 'MESA' : 'GT'}
                       {!isMesaShift && mesaCount > 0 ? ` (+${mesaCount} M)` : ''}
                     </span>
-                    <span className="font-semibold text-[#182535]">
+                    <span className="font-semibold text-tinta-900">
                       {shift.hasBases ? 'Con Bases Físicas' : 'Turno Operativo'}
                     </span>
                   </div>
