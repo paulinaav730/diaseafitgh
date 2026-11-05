@@ -39,6 +39,10 @@ import { SettingsModal } from './components/SettingsModal';
 import { StaffMyDiasView } from './components/StaffMyDiasView';
 import { LoginModal } from './components/LoginModal';
 import { ExcelImportModal } from './components/ExcelImportModal';
+import { CalendarView } from './components/CalendarView';
+import { LeagueView } from './components/LeagueView';
+import { StaffShell } from './components/StaffShell';
+import { registerServiceWorker } from './services/pushService';
 import { UserCheck } from 'lucide-react';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { syncAllFromSupabase } from './services/supabaseSync';
@@ -101,6 +105,12 @@ export default function App() {
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [focusConectadosId, setFocusConectadosId] = useState<string | null>(null);
+
+  // Service worker para notificaciones push del calendario
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     const unsubPeople = subscribeToPeople(setPeople);
@@ -216,15 +226,17 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 lg:pb-10">
         {/* If user is Staff: Strict Isolation: Only render MI DÍAS */}
         {currentUser?.role === 'staff' && currentUser.staffData ? (
-          <StaffMyDiasView
-            person={currentUser.staffData}
-            assignments={assignments}
-            attendances={attendances}
-            shifts={shifts}
-            events={events}
-            bases={bases}
-            onLogout={handleLogout}
-          />
+          <StaffShell person={currentUser.staffData} people={people}>
+            <StaffMyDiasView
+              person={currentUser.staffData}
+              assignments={assignments}
+              attendances={attendances}
+              shifts={shifts}
+              events={events}
+              bases={bases}
+              onLogout={handleLogout}
+            />
+          </StaffShell>
         ) : currentUser?.role === 'admin' ? (
           <>
             {currentTab === 'dashboard' && (
@@ -240,6 +252,28 @@ export default function App() {
                   setIsAddPersonModalOpen(true);
                 }}
                 onOpenExcelImport={() => setIsExcelModalOpen(true)}
+              />
+            )}
+
+            {currentTab === 'calendar' && (
+              <CalendarView
+                mode="admin"
+                people={people}
+                author={currentUser.adminData?.name || 'Administrador'}
+                onOpenConectados={(id) => {
+                  setFocusConectadosId(id);
+                  setCurrentTab('league');
+                }}
+              />
+            )}
+
+            {currentTab === 'league' && (
+              <LeagueView
+                mode="admin"
+                people={people}
+                author={currentUser.adminData?.name || 'Administrador'}
+                focusConectadosId={focusConectadosId}
+                onFocusHandled={() => setFocusConectadosId(null)}
               />
             )}
 

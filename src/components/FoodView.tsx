@@ -32,6 +32,7 @@ const PRIMARY_GT_SUBTEAMS: GtSubTeam[] = [
   'Mercadeo',
   'RRPP',
   'Generales',
+  'Finanzas',
   'GH',
   'Seguridad',
   'Carnival',

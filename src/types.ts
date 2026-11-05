@@ -17,6 +17,7 @@ export const PERSON_TYPE_SHORT_LABELS: Record<PersonType, string> = {
 
 export type GtSubTeam =
   | 'Generales'
+  | 'Finanzas'
   | 'Logística'
   | 'RRPP'
   | 'GH'
@@ -277,3 +278,224 @@ export interface FoodDelivery {
   updatedAt: string;
 }
 
+
+// =====================================================================
+// CALENDARIO DÍAS
+// =====================================================================
+
+export type CalendarEventType =
+  | 'conectados'
+  | 'reunion_gt'
+  | 'reunion_general'
+  | 'reto'
+  | 'capacitacion'
+  | 'institucional'
+  | 'otro';
+
+export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
+  conectados: 'Conectados',
+  reunion_gt: 'Reunión de GT',
+  reunion_general: 'Reunión general',
+  reto: 'Reto',
+  capacitacion: 'Capacitación',
+  institucional: 'Actividad institucional',
+  otro: 'Otro',
+};
+
+/** A quién va dirigido un evento. Se pueden combinar varios grupos. */
+export interface CalendarAudience {
+  all: boolean; // Todos los integrantes
+  gtTeams: string[]; // Uno o varios GT
+  includeGap: boolean;
+  includeMesa: boolean;
+  personIds: string[]; // Personas específicas
+}
+
+/** Reglas de puntuación de un CONECTADOS (se congelan al cerrar la asistencia). */
+export interface ConectadosScoring {
+  maxGtPoints: number; // Puntos máximos que vale el CONECTADOS para cada GT
+  individualPoints: {
+    asistio: number;
+    tarde: number;
+    excusa: number;
+  };
+  /** Cómo cuenta una llegada tarde en el % del GT (1 = igual que asistir, 0.5 = media asistencia, 0 = no cuenta). */
+  lateWeight: number;
+  /** Criterio para excusas válidas en el % del GT. */
+  excuseMode: 'excluir' | 'asistencia' | 'ausencia';
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: string; // YYYY-MM-DD (hora de Colombia)
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  location?: string;
+  type: CalendarEventType;
+  audience: CalendarAudience;
+  status: 'activo' | 'cancelado';
+  scoring?: ConectadosScoring; // Solo CONECTADOS
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Minutos de anticipación permitidos para recordatorios */
+export const REMINDER_OFFSETS = [1440, 60, 15] as const;
+export type ReminderOffset = (typeof REMINDER_OFFSETS)[number];
+export const REMINDER_OFFSET_LABELS: Record<ReminderOffset, string> = {
+  1440: '1 día antes',
+  60: '1 hora antes',
+  15: '15 minutos antes',
+};
+
+export interface EventReminderPreference {
+  id: string; // `${eventId}__${personId}`
+  eventId: string;
+  personId: string;
+  enabled: boolean;
+  offsets: ReminderOffset[];
+  updatedAt: string;
+}
+
+// =====================================================================
+// DÍAS LEAGUE — DÍAS POINTS
+// =====================================================================
+
+export const LEAGUE_GTS: GtSubTeam[] = [
+  'Generales',
+  'Finanzas',
+  'GH',
+  'Mercadeo',
+  'RRPP',
+  'Logística',
+  'Seguridad',
+  'Carnival',
+  'The Games',
+];
+
+export type ConectadosStatus = 'asistio' | 'tarde' | 'excusa' | 'ausente' | 'no_aplica';
+
+export const CONECTADOS_STATUS_LABELS: Record<ConectadosStatus, string> = {
+  asistio: 'Asistió',
+  tarde: 'Llegó tarde',
+  excusa: 'Excusa válida',
+  ausente: 'No asistió',
+  no_aplica: 'No habilitado',
+};
+
+/** Asistencia de una persona a un CONECTADOS (o cualquier evento del calendario) */
+export interface EventAttendance {
+  id: string; // `${eventId}__${personId}`
+  eventId: string;
+  personId: string;
+  status: ConectadosStatus;
+  excuseReason?: string;
+  registeredBy?: string;
+  updatedAt: string;
+}
+
+/** Resultado congelado por GT al cerrar un CONECTADOS (no cambia aunque cambie el GT después). */
+export interface ConectadosGtResult {
+  gt: string;
+  enabled: number; // Integrantes habilitados (denominador original)
+  attended: number;
+  late: number;
+  excused: number;
+  absent: number;
+  denominator: number; // Denominador realmente usado tras aplicar el criterio de excusas
+  effectiveAttendance: number; // Numerador (asistencias + tardes ponderadas + excusas si cuentan)
+  percentage: number; // 0..100
+  points: number;
+}
+
+export interface ConectadosClosure {
+  id: string; // = eventId
+  eventId: string;
+  scoring: ConectadosScoring;
+  results: ConectadosGtResult[];
+  status: 'cerrado' | 'reabierto';
+  closedAt: string;
+  closedBy: string;
+  reopenedAt?: string;
+  reopenedBy?: string;
+  reopenReason?: string;
+  updatedAt: string;
+}
+
+export type ChallengeStatus = 'pendiente' | 'activo' | 'finalizado' | 'cancelado';
+
+export interface ChallengeEvidence {
+  name: string;
+  url: string;
+}
+
+export interface ChallengeResult {
+  gt: string;
+  position?: number;
+  points: number;
+}
+
+export interface IndividualAward {
+  personId: string;
+  points: number;
+  reason?: string;
+}
+
+export interface Challenge {
+  id: string;
+  name: string;
+  description?: string;
+  rules?: string;
+  startDate: string;
+  endDate: string;
+  gtTeams: string[]; // GT participantes
+  placements: { position: number; points: number }[]; // Puntos por puesto (opcional)
+  status: ChallengeStatus;
+  evidences: ChallengeEvidence[];
+  results: ChallengeResult[];
+  individualAwards: IndividualAward[];
+  resultsRegisteredAt?: string;
+  resultsRegisteredBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PointCategory = 'reto' | 'conectados' | 'manual' | 'correccion';
+
+export const POINT_CATEGORY_LABELS: Record<PointCategory, string> = {
+  reto: 'Reto',
+  conectados: 'Conectados',
+  manual: 'Manual',
+  correccion: 'Corrección',
+};
+
+/** Movimiento del libro de DÍAS POINTS. Nunca se borra: se anula dejando trazabilidad. */
+export interface PointMovement {
+  id: string;
+  date: string; // Fecha de la actividad (YYYY-MM-DD)
+  target: 'gt' | 'person';
+  gt?: string; // GT que recibe (target gt) o GT de la persona al momento del registro
+  personId?: string;
+  points: number; // Puede ser negativo en correcciones
+  category: PointCategory;
+  sourceType?: 'conectados' | 'reto' | 'manual';
+  sourceId?: string;
+  activityName: string;
+  reason?: string;
+  evidenceUrl?: string;
+  registeredBy: string;
+  createdAt: string;
+  voided?: boolean;
+  voidedAt?: string;
+  voidedBy?: string;
+  voidReason?: string;
+}
+
+export interface LeagueSettings {
+  id: 'default';
+  defaultConectadosScoring: ConectadosScoring;
+  updatedAt: string;
+}
