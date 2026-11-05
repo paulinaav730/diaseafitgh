@@ -283,23 +283,28 @@ export interface FoodDelivery {
 // CALENDARIO DÍAS
 // =====================================================================
 
-export type CalendarEventType =
-  | 'conectados'
-  | 'reunion_gt'
-  | 'reunion_general'
-  | 'reto'
-  | 'capacitacion'
-  | 'institucional'
-  | 'otro';
+export type CalendarEventType = 'conectados' | 'capacitacion' | 'reto' | 'semana_dias' | 'otro';
+
+export const CALENDAR_EVENT_TYPES: CalendarEventType[] = ['conectados', 'capacitacion', 'reto', 'semana_dias', 'otro'];
 
 export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
   conectados: 'Conectados',
-  reunion_gt: 'Reunión de GT',
-  reunion_general: 'Reunión general',
-  reto: 'Reto',
   capacitacion: 'Capacitación',
-  institucional: 'Actividad institucional',
+  reto: 'Reto',
+  semana_dias: 'Semana de DÍAS',
   otro: 'Otro',
+};
+
+/**
+ * Las capacitaciones son de dos clases:
+ *  - 'invitacion': el administrador agrega a las personas que deben asistir.
+ *  - 'abierta': abierta a todos los integrantes.
+ */
+export type TrainingMode = 'invitacion' | 'abierta';
+
+export const TRAINING_MODE_LABELS: Record<TrainingMode, string> = {
+  invitacion: 'Capacitación por invitación',
+  abierta: 'Capacitación abierta',
 };
 
 /** A quién va dirigido un evento. Se pueden combinar varios grupos. */
@@ -334,6 +339,7 @@ export interface CalendarEvent {
   endTime: string; // HH:mm
   location?: string;
   type: CalendarEventType;
+  trainingMode?: TrainingMode; // Solo capacitaciones
   audience: CalendarAudience;
   status: 'activo' | 'cancelado';
   scoring?: ConectadosScoring; // Solo CONECTADOS

@@ -20,12 +20,11 @@ import {
 } from 'lucide-react';
 import {
   CalendarEvent,
-  CalendarEventType,
-  CALENDAR_EVENT_TYPE_LABELS,
   LEAGUE_GTS,
   Person,
   ReminderOffset,
   REMINDER_OFFSETS,
+  TrainingMode,
   REMINDER_OFFSET_LABELS,
 } from '../types';
 import {
@@ -57,6 +56,7 @@ import {
   Card,
   EmptyState,
   EventTypeChip,
+  eventTypeLabel,
   EVENT_TYPE_STYLES,
   inputCls,
   Modal,
@@ -87,6 +87,22 @@ const shortDay = (iso: string) =>
 
 type CalView = 'mes' | 'semana' | 'lista';
 
+/** Tipos para filtrar y leyenda: la capacitación se separa en abierta y por invitación. */
+const LEGEND: { type: CalendarEvent['type']; trainingMode?: TrainingMode }[] = [
+  { type: 'conectados' },
+  { type: 'capacitacion', trainingMode: 'invitacion' },
+  { type: 'capacitacion', trainingMode: 'abierta' },
+  { type: 'reto' },
+  { type: 'semana_dias' },
+  { type: 'otro' },
+];
+const typeFilterKey = (e: Pick<CalendarEvent, 'type' | 'trainingMode'>) =>
+  e.type === 'capacitacion' ? `capacitacion:${e.trainingMode ?? 'invitacion'}` : e.type;
+const TYPE_FILTERS = [
+  { id: 'all', label: 'Todos los tipos' },
+  ...LEGEND.map((l) => ({ id: typeFilterKey(l), label: eventTypeLabel(l.type, l.trainingMode) })),
+];
+
 interface CalendarViewProps {
   mode: 'admin' | 'staff';
   people: Person[];
@@ -110,7 +126,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
     }
   });
   const [cursor, setCursor] = useState(todayIso());
-  const [typeFilter, setTypeFilter] = useState<'all' | CalendarEventType>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [showCancelled, setShowCancelled] = useState(true);
   const [listFrom, setListFrom] = useState(todayIso());
@@ -131,7 +147,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
   const events = useMemo(() => {
     return allEvents
       .filter((e) => isAdmin || (person && isPersonInAudience(person, e.audience)))
-      .filter((e) => typeFilter === 'all' || e.type === typeFilter)
+      .filter((e) => typeFilter === 'all' || typeFilterKey(e) === typeFilter || e.type === typeFilter)
       .filter((e) => showCancelled || e.status === 'activo')
       .filter((e) => {
         if (groupFilter === 'all') return true;
@@ -302,7 +318,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
                     <span className={`font-semibold text-tinta-900 ${e.status === 'cancelado' ? 'line-through' : ''}`}>
                       {e.title}
                     </span>
-                    <EventTypeChip type={e.type} />
+                    <EventTypeChip type={e.type} trainingMode={e.trainingMode} />
                     {e.status === 'cancelado' && (
                       <span className="text-[11px] font-semibold text-coral-700">Cancelado</span>
                     )}
@@ -375,7 +391,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
               </p>
               <p className="font-semibold text-tinta-900 mt-0.5 leading-snug line-clamp-2">{e.title}</p>
               <div className="mt-2 flex items-center justify-between gap-2">
-                <EventTypeChip type={e.type} />
+                <EventTypeChip type={e.type} trainingMode={e.trainingMode} />
                 {!isAdmin && person && prefs.find((p) => p.id === reminderId(e.id, person.id))?.enabled && (
                   <Bell className="w-3.5 h-3.5 text-lila-600" aria-label="Recordatorio activo" />
                 )}
@@ -427,14 +443,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
           <div className="flex items-center gap-2 flex-wrap">
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+              onChange={(e) => setTypeFilter(e.target.value)}
               className={`${inputCls} !py-1.5 !w-auto text-xs`}
               aria-label="Filtrar por tipo"
             >
               <option value="all">Todos los tipos</option>
-              {(Object.keys(CALENDAR_EVENT_TYPE_LABELS) as CalendarEventType[]).map((t) => (
-                <option key={t} value={t}>
-                  {CALENDAR_EVENT_TYPE_LABELS[t]}
+              {TYPE_FILTERS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
                 </option>
               ))}
             </select>
@@ -474,8 +490,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
 
         {/* Leyenda */}
         <div className="px-4 py-3 border-t border-tinta-200 flex flex-wrap gap-2">
-          {(Object.keys(CALENDAR_EVENT_TYPE_LABELS) as CalendarEventType[]).map((t) => (
-            <EventTypeChip key={t} type={t} />
+          {LEGEND.map((l) => (
+            <EventTypeChip key={l.type + (l.trainingMode || '')} type={l.type} trainingMode={l.trainingMode} />
           ))}
           {isAdmin && view === 'mes' && (
             <span className="text-[11px] text-tinta-500 ml-auto self-center">Doble clic en un día para crear un evento</span>
@@ -626,7 +642,7 @@ const EventDetailModal: React.FC<{
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <EventTypeChip type={e.type} />
+          <EventTypeChip type={e.type} trainingMode={e.trainingMode} />
           {e.status === 'cancelado' && (
             <span className="px-2 py-0.5 rounded-full bg-coral-100 text-coral-800 text-[11px] font-semibold">Cancelado</span>
           )}
@@ -662,6 +678,25 @@ const EventDetailModal: React.FC<{
           </div>
         </dl>
         {e.description && <p className="text-sm text-tinta-700 whitespace-pre-line">{e.description}</p>}
+
+        {isAdmin && e.audience.personIds.length > 0 && (
+          <details className="rounded-2xl border border-tinta-200 px-4 py-2.5">
+            <summary className="text-xs font-semibold text-tinta-700 cursor-pointer">
+              Ver personas invitadas ({e.audience.personIds.length})
+            </summary>
+            <ul className="mt-2 max-h-48 overflow-y-auto text-sm divide-y divide-tinta-100">
+              {e.audience.personIds.map((id) => {
+                const p = people.find((x) => x.id === id);
+                return (
+                  <li key={id} className="py-1.5 flex justify-between gap-2">
+                    <span>{p?.name || 'Persona eliminada'}</span>
+                    <span className="text-[11px] text-tinta-500">{p?.gtSubTeam || p?.primaryType}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+        )}
 
         {isAdmin && e.type === 'conectados' && onOpenConectados && (
           <button className={`${btnSecondary} w-full`} onClick={onOpenConectados}>

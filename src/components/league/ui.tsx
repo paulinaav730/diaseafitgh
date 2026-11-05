@@ -1,24 +1,32 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { CalendarEventType, CALENDAR_EVENT_TYPE_LABELS } from '../../types';
+import { CalendarEventType, CALENDAR_EVENT_TYPE_LABELS, TrainingMode, TRAINING_MODE_LABELS } from '../../types';
 
 /** Colores por tipo de evento (paleta de marca). El texto siempre acompaña al color. */
 export const EVENT_TYPE_STYLES: Record<CalendarEventType, { chip: string; dot: string; bar: string }> = {
   conectados: { chip: 'bg-lila-100 text-lila-800 border-lila-200', dot: 'bg-lila-500', bar: 'border-l-lila-500' },
-  reunion_gt: { chip: 'bg-turquesa-100 text-turquesa-800 border-turquesa-200', dot: 'bg-turquesa-500', bar: 'border-l-turquesa-500' },
-  reunion_general: { chip: 'bg-mostaza-100 text-mostaza-800 border-mostaza-200', dot: 'bg-mostaza-400', bar: 'border-l-mostaza-400' },
+  capacitacion: { chip: 'bg-turquesa-100 text-turquesa-800 border-turquesa-200', dot: 'bg-turquesa-500', bar: 'border-l-turquesa-500' },
   reto: { chip: 'bg-coral-100 text-coral-800 border-coral-200', dot: 'bg-coral-400', bar: 'border-l-coral-400' },
-  capacitacion: { chip: 'bg-lima-100 text-lima-800 border-lima-200', dot: 'bg-lima-500', bar: 'border-l-lima-500' },
-  institucional: { chip: 'bg-tinta-200 text-tinta-800 border-tinta-300', dot: 'bg-tinta-700', bar: 'border-l-tinta-700' },
+  semana_dias: { chip: 'bg-mostaza-100 text-mostaza-800 border-mostaza-200', dot: 'bg-mostaza-400', bar: 'border-l-mostaza-400' },
   otro: { chip: 'bg-tinta-100 text-tinta-700 border-tinta-200', dot: 'bg-tinta-400', bar: 'border-l-tinta-400' },
 };
 
-export const EventTypeChip: React.FC<{ type: CalendarEventType; className?: string }> = ({ type, className = '' }) => (
+/** Nombre visible del tipo; las capacitaciones dicen si son abiertas o por invitación. */
+export function eventTypeLabel(type: CalendarEventType, trainingMode?: TrainingMode): string {
+  if (type === 'capacitacion' && trainingMode) return TRAINING_MODE_LABELS[trainingMode];
+  return CALENDAR_EVENT_TYPE_LABELS[type];
+}
+
+export const EventTypeChip: React.FC<{ type: CalendarEventType; trainingMode?: TrainingMode; className?: string }> = ({
+  type,
+  trainingMode,
+  className = '',
+}) => (
   <span
     className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-semibold ${EVENT_TYPE_STYLES[type].chip} ${className}`}
   >
     <span className={`w-1.5 h-1.5 rounded-full ${EVENT_TYPE_STYLES[type].dot}`} />
-    {CALENDAR_EVENT_TYPE_LABELS[type]}
+    {eventTypeLabel(type, trainingMode)}
   </span>
 );
 

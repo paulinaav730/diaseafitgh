@@ -4,12 +4,14 @@ import {
   CalendarAudience,
   CalendarEvent,
   CalendarEventType,
+  CALENDAR_EVENT_TYPES,
   CALENDAR_EVENT_TYPE_LABELS,
   ConectadosScoring,
   LEAGUE_GTS,
   Person,
+  TrainingMode,
 } from '../types';
-import { EMPTY_AUDIENCE, isPersonInAudience, saveCalendarEvent, todayIso } from '../services/calendarService';
+import { EMPTY_AUDIENCE, isPersonInAudience, personGts, saveCalendarEvent, todayIso } from '../services/calendarService';
 import { getClosure, getDefaultScoring } from '../services/leagueService';
 import { btnPrimary, btnSecondary, CheckList, Field, inputCls, Modal } from './league/ui';
 
@@ -30,16 +32,31 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
   const [endTime, setEndTime] = useState(initial?.endTime ?? '19:30');
   const [location, setLocation] = useState(initial?.location ?? '');
   const [type, setType] = useState<CalendarEventType>(initial?.type ?? 'conectados');
+  const [trainingMode, setTrainingMode] = useState<TrainingMode>(initial?.trainingMode ?? 'invitacion');
   const [audience, setAudience] = useState<CalendarAudience>(initial?.audience ?? EMPTY_AUDIENCE);
   const [scoring, setScoring] = useState<ConectadosScoring>(initial?.scoring ?? getDefaultScoring());
   const [personQuery, setPersonQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const isClosed = !!(initial && getClosure(initial.id));
+  const isTraining = type === 'capacitacion';
+  const byInvitation = isTraining && trainingMode === 'invitacion';
+  const isOpenTraining = isTraining && trainingMode === 'abierta';
+  /** Destinatarios efectivos según el tipo */
+  const effectiveAudience: CalendarAudience = isOpenTraining
+    ? { ...EMPTY_AUDIENCE, all: true }
+    : byInvitation
+    ? { ...EMPTY_AUDIENCE, all: false, personIds: audience.personIds }
+    : audience.all
+    ? { ...EMPTY_AUDIENCE, all: true }
+    : audience;
   const invitedCount = useMemo(
-    () => people.filter((p) => p.isActive !== false && isPersonInAudience(p, audience)).length,
-    [people, audience]
+    () => people.filter((p) => p.isActive !== false && isPersonInAudience(p, effectiveAudience)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [people, JSON.stringify(effectiveAudience)]
   );
+  const activePeople = useMemo(() => people.filter((p) => p.isActive !== false), [people]);
+  const addPeople = (ids: string[]) => setA({ personIds: [...new Set([...audience.personIds, ...ids])] });
   const personResults = useMemo(() => {
     const q = personQuery.trim().toLowerCase();
     if (q.length < 2) return [];
@@ -55,7 +72,8 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
     if (!title.trim()) return setError('Escribe el nombre del evento.');
     if (!date) return setError('Elige la fecha.');
     if (!startTime || !endTime || endTime <= startTime) return setError('La hora de finalización debe ser posterior a la de inicio.');
-    const a = audience;
+    const a = effectiveAudience;
+    if (byInvitation && a.personIds.length === 0) return setError('Agrega al menos una persona a la capacitación.');
     if (!a.all && !a.gtTeams.length && !a.includeGap && !a.includeMesa && !a.personIds.length) {
       return setError('Elige al menos un grupo destinatario.');
     }
@@ -70,7 +88,8 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         endTime,
         location: location.trim() || undefined,
         type,
-        audience: a.all ? { ...EMPTY_AUDIENCE, all: true } : a,
+        trainingMode: isTraining ? trainingMode : undefined,
+        audience: a,
         status: initial?.status ?? 'activo',
         scoring: type === 'conectados' ? scoring : undefined,
       },
@@ -104,7 +123,7 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         </Field>
         <Field label="Tipo de actividad">
           <select className={inputCls} value={type} onChange={(e) => setType(e.target.value as CalendarEventType)}>
-            {(Object.keys(CALENDAR_EVENT_TYPE_LABELS) as CalendarEventType[]).map((t) => (
+            {CALENDAR_EVENT_TYPES.map((t) => (
               <option key={t} value={t}>
                 {CALENDAR_EVENT_TYPE_LABELS[t]}
               </option>
@@ -129,7 +148,131 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
           <textarea className={`${inputCls} min-h-[72px]`} value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
 
-        {/* Destinatarios */}
+        {/* Clase de capacitación */}
+        {isTraining && (
+          <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Clase de capacitación">
+            {(
+              [
+                { id: 'invitacion', title: 'Por invitación', text: 'Tú agregas a las personas que deben asistir.' },
+                { id: 'abierta', title: 'Abierta a todos', text: 'Todos los integrantes la ven en su calendario.' },
+              ] as { id: TrainingMode; title: string; text: string }[]
+            ).map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                role="radio"
+                aria-checked={trainingMode === o.id}
+                onClick={() => setTrainingMode(o.id)}
+                className={`text-left rounded-2xl border-2 p-3 transition-colors ${
+                  trainingMode === o.id ? 'border-turquesa-500 bg-turquesa-50' : 'border-tinta-200 hover:border-tinta-400'
+                }`}
+              >
+                <span className="block text-sm font-semibold text-tinta-900">{o.title}</span>
+                <span className="block text-[11px] text-tinta-600 mt-0.5">{o.text}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isOpenTraining && (
+          <p className="sm:col-span-2 text-xs text-tinta-600 rounded-2xl bg-tinta-50 border border-tinta-200 px-4 py-3">
+            Abierta a todos: la verán los {invitedCount} integrantes activos.
+          </p>
+        )}
+
+        {byInvitation && (
+          <div className="sm:col-span-2 rounded-2xl border border-tinta-200 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-tinta-700">Personas invitadas</p>
+              <span className="text-[11px] text-tinta-500">{audience.personIds.length} agregadas</span>
+            </div>
+            <div className="relative">
+              <Search className="w-4 h-4 text-tinta-400 absolute left-3 top-2.5" />
+              <input
+                className={`${inputCls} pl-9`}
+                value={personQuery}
+                onChange={(e) => setPersonQuery(e.target.value)}
+                placeholder="Buscar por nombre, cédula o usuario"
+              />
+              {personResults.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-surface border border-tinta-200 rounded-xl shadow-lg overflow-hidden">
+                  {personResults.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-tinta-50"
+                      onClick={() => {
+                        addPeople([p.id]);
+                        setPersonQuery('');
+                      }}
+                    >
+                      {p.name} <span className="text-tinta-500 text-xs">· {p.gtSubTeam || p.primaryType}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-[11px] text-tinta-500 mb-1.5">Agregar un grupo completo</p>
+              <div className="flex flex-wrap gap-1.5">
+                {LEAGUE_GTS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => addPeople(activePeople.filter((p) => personGts(p).includes(g)).map((p) => p.id))}
+                    className="px-2.5 py-1 rounded-full border border-tinta-300 text-xs font-semibold text-tinta-700 hover:border-tinta-500"
+                  >
+                    + {g}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addPeople(activePeople.filter((p) => p.primaryType === 'GAP' || p.alsoActsAsGap).map((p) => p.id))}
+                  className="px-2.5 py-1 rounded-full border border-tinta-300 text-xs font-semibold text-tinta-700 hover:border-tinta-500"
+                >
+                  + GAP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => addPeople(activePeople.filter((p) => p.primaryType === 'MESA').map((p) => p.id))}
+                  className="px-2.5 py-1 rounded-full border border-tinta-300 text-xs font-semibold text-tinta-700 hover:border-tinta-500"
+                >
+                  + MESA
+                </button>
+              </div>
+            </div>
+            {audience.personIds.length > 0 && (
+              <div className="rounded-xl border border-tinta-200 max-h-48 overflow-y-auto divide-y divide-tinta-100">
+                {audience.personIds.map((id) => {
+                  const p = people.find((x) => x.id === id);
+                  return (
+                    <div key={id} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                      <span className="truncate">
+                        {p?.name || id} <span className="text-[11px] text-tinta-500">· {p?.gtSubTeam || p?.primaryType}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setA({ personIds: audience.personIds.filter((x) => x !== id) })}
+                        className="p-1 rounded-full hover:bg-tinta-100 text-tinta-500"
+                        aria-label={`Quitar a ${p?.name || id}`}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {audience.personIds.length > 0 && (
+              <button type="button" className="text-[11px] font-semibold text-coral-700 hover:underline" onClick={() => setA({ personIds: [] })}>
+                Quitar a todos
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Destinatarios (otros tipos) */}
+        {!isTraining && (
         <div className="sm:col-span-2 rounded-2xl border border-tinta-200 p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-tinta-700">Destinatarios</p>
@@ -208,6 +351,8 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
             </>
           )}
         </div>
+
+        )}
 
         {/* Puntuación de CONECTADOS */}
         {type === 'conectados' && (

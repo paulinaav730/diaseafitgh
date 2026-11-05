@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS public.calendar_events (
     end_time TEXT NOT NULL,
     starts_at TIMESTAMPTZ NOT NULL,     -- inicio absoluto (lo usa la función de recordatorios)
     location TEXT,
-    type TEXT NOT NULL CHECK (type IN ('conectados','reunion_gt','reunion_general','reto','capacitacion','institucional','otro')),
+    type TEXT NOT NULL CHECK (type IN ('conectados','capacitacion','reto','semana_dias','otro')),
+    training_mode TEXT CHECK (training_mode IN ('invitacion','abierta')),  -- solo capacitaciones
     audience JSONB NOT NULL DEFAULT '{"all": true, "gtTeams": [], "includeGap": false, "includeMesa": false, "personIds": []}',
     status TEXT NOT NULL DEFAULT 'activo' CHECK (status IN ('activo','cancelado')),
     scoring JSONB,                      -- reglas de puntos (solo CONECTADOS)

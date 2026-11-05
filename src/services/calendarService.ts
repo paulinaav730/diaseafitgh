@@ -1,6 +1,7 @@
 import {
   CalendarAudience,
   CalendarEvent,
+  CALENDAR_EVENT_TYPES,
   EventReminderPreference,
   Person,
   ReminderOffset,
@@ -28,6 +29,7 @@ export const calendarEvents = createSyncedCollection<CalendarEvent>({
     end_time: e.endTime,
     location: e.location ?? null,
     type: e.type,
+    training_mode: e.type === 'capacitacion' ? e.trainingMode ?? 'invitacion' : null,
     audience: e.audience,
     status: e.status,
     scoring: e.scoring ?? null,
@@ -44,7 +46,8 @@ export const calendarEvents = createSyncedCollection<CalendarEvent>({
     startTime: (r.start_time || '').slice(0, 5),
     endTime: (r.end_time || '').slice(0, 5),
     location: r.location ?? undefined,
-    type: r.type,
+    type: normalizeEventType(r.type),
+    trainingMode: r.type === 'capacitacion' ? r.training_mode ?? 'invitacion' : undefined,
     audience: normalizeAudience(r.audience),
     status: r.status,
     scoring: r.scoring ?? undefined,
@@ -86,6 +89,11 @@ export const EMPTY_AUDIENCE: CalendarAudience = {
   includeMesa: false,
   personIds: [],
 };
+
+/** Tipos anteriores (reuniones, institucional) se muestran como "Otro". */
+export function normalizeEventType(t: string): CalendarEvent['type'] {
+  return (CALENDAR_EVENT_TYPES as string[]).includes(t) ? (t as CalendarEvent['type']) : 'otro';
+}
 
 export function normalizeAudience(a: Partial<CalendarAudience> | null | undefined): CalendarAudience {
   return {
