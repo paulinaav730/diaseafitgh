@@ -357,7 +357,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
         title="Calendario"
         description={
           isAdmin
-            ? 'Conectados, reuniones, retos y actividades de DÍAS EAFIT en un solo lugar.'
+            ? 'Conectados, capacitaciones, retos y la Semana de DÍAS en un solo lugar.'
             : 'Los eventos a los que estás invitado. Activa recordatorios para no perderte ninguno.'
         }
         actions={
