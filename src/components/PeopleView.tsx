@@ -576,17 +576,17 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#182535] font-dalek tracking-wider">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-tinta-900 font-display tracking-wider">
               DIRECTORIO DE PERSONAL
             </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FAF6EC] text-[#64748B] font-bold border border-[#EADDC7] font-montserrat">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-tinta-50 text-tinta-500 font-bold border border-tinta-200 font-sans">
               {people.length} registros
             </span>
           </div>
-          <p className="text-xs text-[#64748B] font-montserrat mt-1">
+          <p className="text-xs text-tinta-500 font-sans mt-1">
             Gestión de integrantes de GT, GAP y MESA con credenciales individuales para Staff.
           </p>
         </div>
@@ -597,7 +597,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             <button
               onClick={handleCloudSync}
               disabled={isSyncingCloud}
-              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors font-montserrat shadow-2xs cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors font-sans shadow-2xs cursor-pointer disabled:opacity-50"
               title="Sincronizar base de datos con Supabase en la nube"
             >
               <Cloud className={`w-4 h-4 text-emerald-600 ${isSyncingCloud ? 'animate-spin' : ''}`} />
@@ -618,14 +618,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   ids: filteredPeople.map((p) => p.id),
                 })
               }
-              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#FDF2EE] hover:bg-[#FBE4DD] text-[#B83A24] border border-[#F6C7BA] font-bold text-xs flex items-center gap-1.5 transition-colors font-montserrat shadow-2xs cursor-pointer"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-lila-50 hover:bg-lila-100 text-lila-600 border border-lila-200 font-bold text-xs flex items-center gap-1.5 transition-colors font-sans shadow-2xs cursor-pointer"
               title={
                 hasActiveFilters
                   ? `Eliminar los ${filteredPeople.length} integrantes filtrados`
                   : `Eliminar a todos los ${people.length} integrantes de la base de datos`
               }
             >
-              <Trash2 className="w-4 h-4 text-[#B83A24]" />
+              <Trash2 className="w-4 h-4 text-lila-600" />
               <span className="hidden sm:inline">
                 {hasActiveFilters
                   ? `Eliminar Filtrados (${filteredPeople.length})`
@@ -638,19 +638,19 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {/* Botón IMPORTAR EXCEL */}
           <button
             onClick={() => setIsExcelModalOpen(true)}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FEF8EC] hover:bg-[#FDF0D5] text-[#C87F17] border border-[#E5A12E]/50 font-bold text-xs flex items-center gap-2 shadow-2xs transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-mostaza-50 hover:bg-mostaza-100 text-mostaza-600 border border-mostaza-300/50 font-bold text-xs flex items-center gap-2 shadow-2xs transition-all font-sans"
           >
-            <FileSpreadsheet className="w-4 h-4 text-[#C87F17]" />
+            <FileSpreadsheet className="w-4 h-4 text-mostaza-600" />
             <span>IMPORTAR EXCEL</span>
           </button>
 
           {/* Botón Exportar */}
           <button
             onClick={() => exportPeopleToOfficialExcel(people, availabilities, shifts)}
-            className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#334155] border border-[#EADDC7] font-bold text-xs flex items-center gap-1.5 transition-colors font-montserrat shadow-2xs"
+            className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-tinta-50 hover:bg-tinta-100 text-tinta-700 border border-tinta-200 font-bold text-xs flex items-center gap-1.5 transition-colors font-sans shadow-2xs"
             title="Exportar archivo oficial Excel Maestro (17 columnas)"
           >
-            <Download className="w-4 h-4 text-[#B83A24]" />
+            <Download className="w-4 h-4 text-lila-600" />
             <span className="hidden sm:inline">Exportar Excel Maestro</span>
             <span className="sm:hidden">Exportar</span>
           </button>
@@ -658,7 +658,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {/* Botón Nueva Persona */}
           <button
             onClick={handleOpenAdd}
-            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all font-montserrat"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition-all font-sans"
           >
             <UserPlus className="w-4 h-4" />
             <span>+ Nueva Persona</span>
@@ -698,13 +698,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               placeholder="Buscar por nombre, cédula, usuario, sub-equipo o función..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] shadow-2xs font-montserrat"
+              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface border border-tinta-200 text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600 shadow-2xs font-sans"
             />
-            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-tinta-400 absolute left-3.5 top-3.5" />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3.5 top-3.5 text-[#94A3B8] hover:text-[#182535] cursor-pointer"
+                className="absolute right-3.5 top-3.5 text-tinta-400 hover:text-tinta-900 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -717,7 +717,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <select
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value as any)}
-                className="w-full pl-9 pr-8 py-3 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24] shadow-2xs font-montserrat appearance-none cursor-pointer"
+                className="w-full pl-9 pr-8 py-3 rounded-2xl bg-surface border border-tinta-200 text-xs font-bold text-tinta-900 focus:outline-hidden focus:border-lila-600 shadow-2xs font-sans appearance-none cursor-pointer"
               >
                 <option value="name-asc">Nombre (A → Z)</option>
                 <option value="name-desc">Nombre (Z → A)</option>
@@ -726,8 +726,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 <option value="gt-asc">Sub-Equipo GT (A → Z)</option>
                 <option value="recent">Registro más reciente</option>
               </select>
-              <ArrowUpDown className="w-4 h-4 text-[#B83A24] absolute left-3 top-3.5 pointer-events-none" />
-              <div className="absolute right-3 top-4 pointer-events-none text-[8px] text-[#64748B]">
+              <ArrowUpDown className="w-4 h-4 text-lila-600 absolute left-3 top-3.5 pointer-events-none" />
+              <div className="absolute right-3 top-4 pointer-events-none text-[8px] text-tinta-500">
                 ▼
               </div>
             </div>
@@ -738,20 +738,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
               }
               title={sortOption === 'name-asc' ? 'Cambiar orden a Z → A' : 'Cambiar orden a A → Z'}
-              className={`min-h-[44px] px-3.5 py-2.5 rounded-2xl border flex items-center gap-1.5 text-xs font-bold font-montserrat transition-all cursor-pointer shadow-2xs ${
+              className={`min-h-[44px] px-3.5 py-2.5 rounded-2xl border flex items-center gap-1.5 text-xs font-bold font-sans transition-all cursor-pointer shadow-2xs ${
                 sortOption === 'name-asc' || sortOption === 'name-desc'
-                  ? 'bg-[#FEF8EC] border-[#E5A12E]/60 text-[#C87F17]'
-                  : 'bg-[#FFFDF8] border-[#EADDC7] text-[#64748B] hover:text-[#182535]'
+                  ? 'bg-mostaza-50 border-mostaza-300/60 text-mostaza-600'
+                  : 'bg-surface border-tinta-200 text-tinta-500 hover:text-tinta-900'
               }`}
             >
               {sortOption === 'name-desc' ? (
                 <>
-                  <ArrowUpZA className="w-4 h-4 text-[#B83A24]" />
+                  <ArrowUpZA className="w-4 h-4 text-lila-600" />
                   <span className="hidden sm:inline">Z → A</span>
                 </>
               ) : (
                 <>
-                  <ArrowDownAZ className="w-4 h-4 text-[#B83A24]" />
+                  <ArrowDownAZ className="w-4 h-4 text-lila-600" />
                   <span className="hidden sm:inline">A → Z</span>
                 </>
               )}
@@ -761,8 +761,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
         {/* Categoría Pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 bg-[#FFFDF8] border border-[#EADDC7] p-1.5 rounded-2xl shadow-2xs overflow-x-auto">
-            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+          <div className="flex items-center gap-1.5 bg-surface border border-tinta-200 p-1.5 rounded-2xl shadow-2xs overflow-x-auto">
+            <span className="text-[11px] font-bold text-tinta-500 px-2 font-sans hidden sm:inline">
               Categoría:
             </span>
             {[
@@ -779,10 +779,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     setSelectedGtSubTeamFilter('ALL');
                   }
                 }}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans whitespace-nowrap transition-all cursor-pointer ${
                   selectedTypeFilter === btn.id
-                    ? 'bg-[#B83A24] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]'
+                    ? 'bg-lila-600 text-white shadow-2xs'
+                    : 'text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50'
                 }`}
               >
                 {btn.label}
@@ -790,23 +790,23 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             ))}
           </div>
 
-          <div className="text-[11px] text-[#64748B] font-montserrat px-2">
+          <div className="text-[11px] text-tinta-500 font-sans px-2">
             Mostrando <strong>{filteredPeople.length}</strong> de {people.length} personas
           </div>
         </div>
 
         {/* Barra de Sub-Equipos GT cuando se selecciona GT */}
         {selectedTypeFilter === 'GT' && (
-          <div className="p-3 bg-[#FAF6EC] border border-[#EADDC7] rounded-2xl space-y-2">
+          <div className="p-3 bg-tinta-50 border border-tinta-200 rounded-2xl space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#182535] font-montserrat flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-[#B83A24]" />
+              <span className="text-xs font-bold text-tinta-900 font-sans flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-lila-600" />
                 Filtrar por Sub-Equipo GT:
               </span>
               {selectedGtSubTeamFilter !== 'ALL' && (
                 <button
                   onClick={() => setSelectedGtSubTeamFilter('ALL')}
-                  className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+                  className="text-[11px] font-bold text-lila-600 hover:underline cursor-pointer"
                 >
                   Ver todos los GT ({gtCount})
                 </button>
@@ -816,10 +816,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 onClick={() => setSelectedGtSubTeamFilter('ALL')}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-montserrat font-bold transition-all cursor-pointer border ${
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer border ${
                   selectedGtSubTeamFilter === 'ALL'
-                    ? 'bg-[#B83A24] text-white border-[#B83A24] shadow-2xs'
-                    : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                    ? 'bg-lila-600 text-white border-lila-600 shadow-2xs'
+                    : 'bg-white text-tinta-600 border-tinta-200 hover:bg-tinta-50'
                 }`}
               >
                 Todos los GT ({gtCount})
@@ -832,10 +832,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   <button
                     key={sub}
                     onClick={() => setSelectedGtSubTeamFilter(sub)}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-montserrat font-bold transition-all cursor-pointer border ${
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer border ${
                       isSelected
-                        ? 'bg-[#B83A24] text-white border-[#B83A24] shadow-2xs'
-                        : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                        ? 'bg-lila-600 text-white border-lila-600 shadow-2xs'
+                        : 'bg-white text-tinta-600 border-tinta-200 hover:bg-tinta-50'
                     }`}
                   >
                     <span>{sub}</span>{' '}
@@ -850,14 +850,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
       {/* People List / Table */}
       {filteredPeople.length === 0 ? (
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-12 text-center space-y-3 shadow-2xs">
-          <div className="w-16 h-16 rounded-full bg-[#FAF6EC] border border-[#EADDC7] text-[#94A3B8] flex items-center justify-center mx-auto">
+        <div className="bg-surface border border-tinta-200 rounded-3xl p-12 text-center space-y-3 shadow-2xs">
+          <div className="w-16 h-16 rounded-full bg-tinta-50 border border-tinta-200 text-tinta-400 flex items-center justify-center mx-auto">
             <Users className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-bold text-[#182535] font-dalek tracking-wide">
+          <h3 className="text-lg font-bold text-tinta-900 font-display tracking-wide">
             {people.length === 0 ? 'NO HAY PERSONAS REGISTRADAS' : 'NO SE ENCONTRARON COINCIDENCIAS'}
           </h3>
-          <p className="text-xs text-[#64748B] font-montserrat max-w-md mx-auto">
+          <p className="text-xs text-tinta-500 font-sans max-w-md mx-auto">
             {people.length === 0
               ? 'Puedes agregar personas individualmente o importar un archivo de Excel con los datos de tu equipo.'
               : 'Intenta modificar el término de búsqueda o el filtro de categoría.'}
@@ -865,14 +865,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           <div className="pt-2 flex items-center justify-center gap-2">
             <button
               onClick={() => setIsExcelModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40 text-xs font-bold flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40 text-xs font-bold flex items-center gap-1.5"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Cargar Excel</span>
             </button>
             <button
               onClick={handleOpenAdd}
-              className="px-4 py-2 rounded-xl bg-[#B83A24] text-white text-xs font-bold flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-lila-600 text-white text-xs font-bold flex items-center gap-1.5"
             >
               <UserPlus className="w-4 h-4" />
               <span>Crear Persona</span>
@@ -880,22 +880,22 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl overflow-hidden shadow-2xs">
+        <div className="bg-surface border border-tinta-200 rounded-3xl overflow-hidden shadow-2xs">
           {/* Active Filter Chips Bar */}
           {(activeColFiltersCount > 0 || searchTerm || selectedTypeFilter !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
-            <div className="bg-[#FAF6EC] border-b border-[#EADDC7] px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap text-xs font-montserrat">
+            <div className="bg-tinta-50 border-b border-tinta-200 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap text-xs font-sans">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-[#182535] text-[11px] flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
+                <span className="font-bold text-tinta-900 text-[11px] flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5 text-lila-600" />
                   Filtros aplicados:
                 </span>
 
                 {searchTerm && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-tinta-200 text-tinta-900 text-[11px] font-bold shadow-2xs">
                     <span>Búsqueda: "{searchTerm}"</span>
                     <button
                       onClick={() => setSearchTerm('')}
-                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                      className="text-tinta-400 hover:text-lila-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -903,11 +903,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
 
                 {colFilterName && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#B83A24]/40 text-[#B83A24] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-lila-600/40 text-lila-600 text-[11px] font-bold shadow-2xs">
                     <span>Nombre: "{colFilterName}"</span>
                     <button
                       onClick={() => setColFilterName('')}
-                      className="text-[#B83A24]/60 hover:text-[#B83A24] cursor-pointer"
+                      className="text-lila-600/60 hover:text-lila-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -915,11 +915,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
 
                 {colFilterDoc && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#E5A12E]/50 text-[#C87F17] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-mostaza-300/50 text-mostaza-600 text-[11px] font-bold shadow-2xs">
                     <span>Cédula/@: "{colFilterDoc}"</span>
                     <button
                       onClick={() => setColFilterDoc('')}
-                      className="text-[#C87F17]/60 hover:text-[#C87F17] cursor-pointer"
+                      className="text-mostaza-600/60 hover:text-mostaza-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -927,14 +927,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
 
                 {(colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL') && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-tinta-200 text-tinta-900 text-[11px] font-bold shadow-2xs">
                     <span>Tipo: {colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter}</span>
                     <button
                       onClick={() => {
                         setColFilterType('ALL');
                         setSelectedTypeFilter('ALL');
                       }}
-                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                      className="text-tinta-400 hover:text-lila-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -942,14 +942,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
 
                 {(colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#B83A24]/40 text-[#B83A24] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-lila-600/40 text-lila-600 text-[11px] font-bold shadow-2xs">
                     <span>GT: {colFilterGt !== 'ALL' ? colFilterGt : selectedGtSubTeamFilter}</span>
                     <button
                       onClick={() => {
                         setColFilterGt('ALL');
                         setSelectedGtSubTeamFilter('ALL');
                       }}
-                      className="text-[#B83A24]/60 hover:text-[#B83A24] cursor-pointer"
+                      className="text-lila-600/60 hover:text-lila-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -957,11 +957,11 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 )}
 
                 {colFilterContact && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] text-[11px] font-bold shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-tinta-200 text-tinta-900 text-[11px] font-bold shadow-2xs">
                     <span>Contacto: "{colFilterContact}"</span>
                     <button
                       onClick={() => setColFilterContact('')}
-                      className="text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                      className="text-tinta-400 hover:text-lila-600 cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -979,16 +979,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       ids: filteredPeople.map((p) => p.id),
                     })
                   }
-                  className="text-[11px] font-bold text-[#B83A24] bg-[#FDF2EE] hover:bg-[#FBE4DD] px-2.5 py-1 rounded-xl border border-[#F6C7BA] flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  className="text-[11px] font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 px-2.5 py-1 rounded-xl border border-lila-200 flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
                   title="Eliminar solo las personas que coinciden con los filtros actuales"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-[#B83A24]" />
+                  <Trash2 className="w-3.5 h-3.5 text-lila-600" />
                   <span>Eliminar los {filteredPeople.length} filtrados</span>
                 </button>
 
                 <button
                   onClick={handleResetAllFilters}
-                  className="text-[11px] font-bold text-[#64748B] hover:text-[#182535] flex items-center gap-1 cursor-pointer shrink-0"
+                  className="text-[11px] font-bold text-tinta-500 hover:text-tinta-900 flex items-center gap-1 cursor-pointer shrink-0"
                 >
                   <FilterX className="w-3.5 h-3.5" />
                   <span>Restablecer todo</span>
@@ -999,16 +999,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
           {/* Selected Batch Actions Bar */}
           {selectedIds.size > 0 && (
-            <div className="bg-[#182535] text-white px-4 py-3 rounded-2xl mx-4 my-3 flex items-center justify-between gap-3 shadow-lg flex-wrap animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="bg-tinta-900 text-white px-4 py-3 rounded-2xl mx-4 my-3 flex items-center justify-between gap-3 shadow-lg flex-wrap animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-lg bg-[#C87F17] text-white flex items-center justify-center font-bold text-xs">
+                <div className="w-6 h-6 rounded-lg bg-mostaza-600 text-white flex items-center justify-center font-bold text-xs">
                   {selectedIds.size}
                 </div>
-                <span className="text-xs font-bold font-montserrat">
+                <span className="text-xs font-bold font-sans">
                   {selectedIds.size === 1
                     ? '1 persona seleccionada'
                     : `${selectedIds.size} personas seleccionadas`}
-                  <span className="text-[#94A3B8] font-normal ml-1">
+                  <span className="text-tinta-400 font-normal ml-1">
                     (de {filteredPeople.length} visibles)
                   </span>
                 </span>
@@ -1016,13 +1016,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setSelectedIds(new Set(filteredPeople.map((p) => p.id)))}
-                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-montserrat transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-sans transition-colors cursor-pointer"
                 >
                   Seleccionar todos ({filteredPeople.length})
                 </button>
                 <button
                   onClick={() => setSelectedIds(new Set())}
-                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-montserrat transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold font-sans transition-colors cursor-pointer"
                 >
                   Deseleccionar
                 </button>
@@ -1035,7 +1035,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       ids: Array.from(selectedIds),
                     })
                   }
-                  className="px-3.5 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-sans flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Eliminar Seleccionados ({selectedIds.size})</span>
@@ -1047,7 +1047,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#FAF6EC] text-[#64748B] font-bold border-b border-[#EADDC7]">
+              <thead className="bg-tinta-50 text-tinta-500 font-bold border-b border-tinta-200">
                 {/* Row 1: Column Titles with Sort & Indicators */}
                 <tr>
                   {/* Selector / Checkbox */}
@@ -1059,7 +1059,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         if (el) el.indeterminate = isSomeFilteredSelected;
                       }}
                       onChange={toggleSelectAllFiltered}
-                      className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer"
+                      className="w-4 h-4 rounded text-lila-600 border-tinta-300 focus:ring-lila-600 cursor-pointer"
                       title={isAllFilteredSelected ? 'Deseleccionar todos' : 'Seleccionar todos los visibles'}
                     />
                   </th>
@@ -1071,20 +1071,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         onClick={() =>
                           setSortOption((prev) => (prev === 'name-asc' ? 'name-desc' : 'name-asc'))
                         }
-                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        className="flex items-center gap-1.5 hover:text-tinta-900 font-bold cursor-pointer group"
                         title="Ordenar por Nombre (clic para A-Z o Z-A)"
                       >
-                        <span className="font-montserrat text-xs text-[#182535]">Persona</span>
+                        <span className="font-sans text-xs text-tinta-900">Persona</span>
                         {sortOption === 'name-asc' ? (
-                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <ArrowUp className="w-3.5 h-3.5 text-lila-600" />
                         ) : sortOption === 'name-desc' ? (
-                          <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <ArrowDown className="w-3.5 h-3.5 text-lila-600" />
                         ) : (
                           <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                         )}
                       </button>
                       {colFilterName && (
-                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de nombre activo" />
+                        <span className="w-2 h-2 rounded-full bg-lila-600" title="Filtro de nombre activo" />
                       )}
                     </div>
                   </th>
@@ -1096,20 +1096,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         onClick={() =>
                           setSortOption((prev) => (prev === 'doc-asc' ? 'doc-desc' : 'doc-asc'))
                         }
-                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        className="flex items-center gap-1.5 hover:text-tinta-900 font-bold cursor-pointer group"
                         title="Ordenar por Cédula (clic para 0-9 o 9-0)"
                       >
-                        <span className="font-montserrat text-xs text-[#182535]">Cédula & Usuario</span>
+                        <span className="font-sans text-xs text-tinta-900">Cédula & Usuario</span>
                         {sortOption === 'doc-asc' ? (
-                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <ArrowUp className="w-3.5 h-3.5 text-lila-600" />
                         ) : sortOption === 'doc-desc' ? (
-                          <ArrowDown className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <ArrowDown className="w-3.5 h-3.5 text-lila-600" />
                         ) : (
                           <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                         )}
                       </button>
                       {colFilterDoc && (
-                        <span className="w-2 h-2 rounded-full bg-[#C87F17]" title="Filtro de documento activo" />
+                        <span className="w-2 h-2 rounded-full bg-mostaza-600" title="Filtro de documento activo" />
                       )}
                     </div>
                   </th>
@@ -1117,9 +1117,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   {/* Tipo Principal */}
                   <th className="p-3.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-montserrat text-xs text-[#182535]">Tipo Principal</span>
+                      <span className="font-sans text-xs text-tinta-900">Tipo Principal</span>
                       {(colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL') && (
-                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de tipo activo" />
+                        <span className="w-2 h-2 rounded-full bg-lila-600" title="Filtro de tipo activo" />
                       )}
                     </div>
                   </th>
@@ -1131,18 +1131,18 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         onClick={() =>
                           setSortOption((prev) => (prev === 'gt-asc' ? 'name-asc' : 'gt-asc'))
                         }
-                        className="flex items-center gap-1.5 hover:text-[#182535] font-bold cursor-pointer group"
+                        className="flex items-center gap-1.5 hover:text-tinta-900 font-bold cursor-pointer group"
                         title="Ordenar por Sub-Equipo GT"
                       >
-                        <span className="font-montserrat text-xs text-[#182535]">GT / Funciones</span>
+                        <span className="font-sans text-xs text-tinta-900">GT / Funciones</span>
                         {sortOption === 'gt-asc' ? (
-                          <ArrowUp className="w-3.5 h-3.5 text-[#B83A24]" />
+                          <ArrowUp className="w-3.5 h-3.5 text-lila-600" />
                         ) : (
                           <ArrowUpDown className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                         )}
                       </button>
                       {(colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL') && (
-                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de GT activo" />
+                        <span className="w-2 h-2 rounded-full bg-lila-600" title="Filtro de GT activo" />
                       )}
                     </div>
                   </th>
@@ -1150,9 +1150,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   {/* Contacto */}
                   <th className="p-3.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-montserrat text-xs text-[#182535]">Contacto</span>
+                      <span className="font-sans text-xs text-tinta-900">Contacto</span>
                       {colFilterContact && (
-                        <span className="w-2 h-2 rounded-full bg-[#B83A24]" title="Filtro de contacto activo" />
+                        <span className="w-2 h-2 rounded-full bg-lila-600" title="Filtro de contacto activo" />
                       )}
                     </div>
                   </th>
@@ -1161,14 +1161,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   <th className="p-3.5 text-right">
                     <button
                       onClick={() => setShowColumnFilters(!showColumnFilters)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold font-montserrat transition-all cursor-pointer border ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold font-sans transition-all cursor-pointer border ${
                         showColumnFilters
-                          ? 'bg-[#FEF8EC] text-[#C87F17] border-[#E5A12E]/60 shadow-2xs'
-                          : 'bg-white text-[#64748B] border-[#EADDC7] hover:text-[#182535]'
+                          ? 'bg-mostaza-50 text-mostaza-600 border-mostaza-300/60 shadow-2xs'
+                          : 'bg-white text-tinta-500 border-tinta-200 hover:text-tinta-900'
                       }`}
                       title={showColumnFilters ? 'Ocultar campos de filtro' : 'Mostrar campos de filtro por columna'}
                     >
-                      <Filter className="w-3 h-3 text-[#B83A24]" />
+                      <Filter className="w-3 h-3 text-lila-600" />
                       <span>{showColumnFilters ? 'Filtros ON' : 'Filtrar'}</span>
                     </button>
                   </th>
@@ -1176,9 +1176,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                 {/* Row 2: Direct Column Filter Inputs & Selects */}
                 {showColumnFilters && (
-                  <tr className="bg-[#FEF8EC]/60 border-t border-[#EADDC7]">
+                  <tr className="bg-mostaza-50/60 border-t border-tinta-200">
                     {/* Checkbox placeholder */}
-                    <th className="p-2.5 w-12 text-center text-[#94A3B8] font-normal text-xs">
+                    <th className="p-2.5 w-12 text-center text-tinta-400 font-normal text-xs">
                       —
                     </th>
 
@@ -1190,15 +1190,15 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           value={colFilterName}
                           onChange={(e) => setColFilterName(e.target.value)}
                           placeholder="Filtrar nombre..."
-                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
-                            colFilterName ? 'border-[#B83A24] font-semibold ring-1 ring-[#B83A24]/20' : 'border-[#EADDC7]'
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600 font-sans shadow-2xs transition-colors ${
+                            colFilterName ? 'border-lila-600 font-semibold ring-1 ring-lila-600/20' : 'border-tinta-200'
                           }`}
                         />
-                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2.5 pointer-events-none" />
                         {colFilterName && (
                           <button
                             onClick={() => setColFilterName('')}
-                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            className="absolute right-2 top-2.5 text-tinta-400 hover:text-lila-600 cursor-pointer"
                             title="Borrar filtro"
                           >
                             <X className="w-3 h-3" />
@@ -1215,15 +1215,15 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           value={colFilterDoc}
                           onChange={(e) => setColFilterDoc(e.target.value)}
                           placeholder="Cédula o @user..."
-                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
-                            colFilterDoc ? 'border-[#C87F17] font-semibold ring-1 ring-[#C87F17]/20' : 'border-[#EADDC7]'
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600 font-sans shadow-2xs transition-colors ${
+                            colFilterDoc ? 'border-mostaza-600 font-semibold ring-1 ring-mostaza-600/20' : 'border-tinta-200'
                           }`}
                         />
-                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2.5 pointer-events-none" />
                         {colFilterDoc && (
                           <button
                             onClick={() => setColFilterDoc('')}
-                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            className="absolute right-2 top-2.5 text-tinta-400 hover:text-lila-600 cursor-pointer"
                             title="Borrar filtro"
                           >
                             <X className="w-3 h-3" />
@@ -1246,10 +1246,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                               setSelectedGtSubTeamFilter('ALL');
                             }
                           }}
-                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs appearance-none cursor-pointer ${
+                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600 font-sans shadow-2xs appearance-none cursor-pointer ${
                             (colFilterType !== 'ALL' || selectedTypeFilter !== 'ALL')
-                              ? 'border-[#B83A24] font-bold text-[#B83A24]'
-                              : 'border-[#EADDC7]'
+                              ? 'border-lila-600 font-bold text-lila-600'
+                              : 'border-tinta-200'
                           }`}
                         >
                           <option value="ALL">Todos los tipos ({people.length})</option>
@@ -1257,7 +1257,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           <option value="GAP">GAP ({gapCount})</option>
                           <option value="MESA">MESA ({mesaCount})</option>
                         </select>
-                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-[#64748B]">
+                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-tinta-500">
                           ▼
                         </div>
                       </div>
@@ -1277,10 +1277,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                               setSelectedTypeFilter('GT');
                             }
                           }}
-                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs appearance-none cursor-pointer ${
+                          className={`w-full px-2.5 py-1.5 rounded-xl bg-white border text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600 font-sans shadow-2xs appearance-none cursor-pointer ${
                             (colFilterGt !== 'ALL' || selectedGtSubTeamFilter !== 'ALL')
-                              ? 'border-[#B83A24] font-bold text-[#B83A24]'
-                              : 'border-[#EADDC7]'
+                              ? 'border-lila-600 font-bold text-lila-600'
+                              : 'border-tinta-200'
                           }`}
                         >
                           <option value="ALL">Todos los GT ({gtCount})</option>
@@ -1290,7 +1290,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                             </option>
                           ))}
                         </select>
-                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-[#64748B]">
+                        <div className="absolute right-2.5 top-2.5 pointer-events-none text-[8px] text-tinta-500">
                           ▼
                         </div>
                       </div>
@@ -1304,15 +1304,15 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           value={colFilterContact}
                           onChange={(e) => setColFilterContact(e.target.value)}
                           placeholder="Email o tel..."
-                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] font-montserrat shadow-2xs transition-colors ${
-                            colFilterContact ? 'border-[#B83A24] font-semibold ring-1 ring-[#B83A24]/20' : 'border-[#EADDC7]'
+                          className={`w-full pl-7 pr-6 py-1.5 rounded-xl bg-white border text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600 font-sans shadow-2xs transition-colors ${
+                            colFilterContact ? 'border-lila-600 font-semibold ring-1 ring-lila-600/20' : 'border-tinta-200'
                           }`}
                         />
-                        <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2.5 pointer-events-none" />
+                        <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2.5 pointer-events-none" />
                         {colFilterContact && (
                           <button
                             onClick={() => setColFilterContact('')}
-                            className="absolute right-2 top-2.5 text-[#94A3B8] hover:text-[#B83A24] cursor-pointer"
+                            className="absolute right-2 top-2.5 text-tinta-400 hover:text-lila-600 cursor-pointer"
                             title="Borrar filtro"
                           >
                             <X className="w-3 h-3" />
@@ -1326,14 +1326,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       {activeColFiltersCount > 0 ? (
                         <button
                           onClick={handleResetAllFilters}
-                          className="w-full px-2.5 py-1.5 rounded-xl bg-[#FDF2EE] hover:bg-[#FBE4DD] text-[#B83A24] border border-[#F6C7BA] font-bold text-[11px] flex items-center justify-center gap-1 font-montserrat cursor-pointer transition-colors shadow-2xs"
+                          className="w-full px-2.5 py-1.5 rounded-xl bg-lila-50 hover:bg-lila-100 text-lila-600 border border-lila-200 font-bold text-[11px] flex items-center justify-center gap-1 font-sans cursor-pointer transition-colors shadow-2xs"
                           title="Limpiar filtros de columna"
                         >
                           <FilterX className="w-3 h-3" />
                           <span>Limpiar</span>
                         </button>
                       ) : (
-                        <span className="text-[10px] text-[#94A3B8] block text-center font-montserrat">
+                        <span className="text-[10px] text-tinta-400 block text-center font-sans">
                           —
                         </span>
                       )}
@@ -1341,28 +1341,28 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   </tr>
                 )}
               </thead>
-              <tbody className="divide-y divide-[#EADDC7]/60">
+              <tbody className="divide-y divide-tinta-200/60">
                 {filteredPeople.map((person) => (
-                  <tr key={person.id} className="hover:bg-[#FAF6EC]/60 transition-colors">
+                  <tr key={person.id} className="hover:bg-tinta-50/60 transition-colors">
                     {/* Checkbox Selector */}
                     <td className="p-4 w-12 text-center">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(person.id)}
                         onChange={() => toggleSelect(person.id)}
-                        className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer"
+                        className="w-4 h-4 rounded text-lila-600 border-tinta-300 focus:ring-lila-600 cursor-pointer"
                       />
                     </td>
 
                     {/* Persona */}
                     <td className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-[#B83A24] font-bold font-dalek flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-9 h-9 rounded-xl bg-tinta-50 border border-tinta-200 text-lila-600 font-bold font-display flex items-center justify-center shrink-0 mt-0.5">
                           {person.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-bold text-sm text-[#182535]">{person.name}</div>
-                          <div className="text-[11px] text-[#64748B]">
+                          <div className="font-bold text-sm text-tinta-900">{person.name}</div>
+                          <div className="text-[11px] text-tinta-500">
                             {person.roleTitle || 'Staff'} {person.shirtSize ? `• Talla ${person.shirtSize}` : ''}
                           </div>
 
@@ -1400,7 +1400,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                               )}
                             </div>
                           ) : (
-                            <div className="text-[10px] text-[#94A3B8] mt-1">
+                            <div className="text-[10px] text-tinta-400 mt-1">
                               Salud: Sin novedades
                             </div>
                           )}
@@ -1410,10 +1410,10 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                     {/* Cédula & Usuario */}
                     <td className="p-4">
-                      <div className="font-mono text-xs font-bold text-[#182535]">
+                      <div className="font-mono text-xs font-bold text-tinta-900">
                         {person.documentId}
                       </div>
-                      <div className="text-[11px] font-mono text-[#C87F17] flex items-center gap-1 mt-0.5">
+                      <div className="text-[11px] font-mono text-mostaza-600 flex items-center gap-1 mt-0.5">
                         <Key className="w-3 h-3" />
                         <span>@{person.username || person.documentId}</span>
                       </div>
@@ -1427,9 +1427,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           <span
                             className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-bold ${
                               effType === 'GT'
-                                ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
+                                ? 'bg-lila-50 text-lila-600 border border-lila-200'
                                 : effType === 'GAP'
-                                ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                ? 'bg-mostaza-50 text-mostaza-600 border border-mostaza-200'
                                 : 'bg-purple-50 text-purple-700 border border-purple-200'
                             }`}
                           >
@@ -1440,20 +1440,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     </td>
 
                     {/* GT / Funciones */}
-                    <td className="p-4 text-[#475569]">
+                    <td className="p-4 text-tinta-600">
                       <div className="space-y-1">
                         {getEffectivePersonType(person) === 'GT' && (
                           <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-[10px] text-[#64748B] font-bold">GT:</span>
+                            <span className="text-[10px] text-tinta-500 font-bold">GT:</span>
                             {person.gtTeams && person.gtTeams.length > 1 ? (
                               <span
-                                className="px-2 py-0.5 rounded-md bg-[#FFF5F2] border border-[#FADCD5] text-[11px] font-bold text-[#B83A24]"
+                                className="px-2 py-0.5 rounded-md bg-lila-50 border border-lila-100 text-[11px] font-bold text-lila-600"
                                 title={person.gtTeams.join(', ')}
                               >
                                 {person.gtTeams.join(', ')}
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-md bg-[#FAF6EC] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
+                              <span className="px-2 py-0.5 rounded-md bg-tinta-50 border border-tinta-200 text-[11px] font-bold text-lila-600">
                                 {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
                               </span>
                             )}
@@ -1464,22 +1464,22 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                             {person.functions.map((f, i) => (
                               <span
                                 key={i}
-                                className="px-2 py-0.5 rounded-md bg-[#F0FDF4] border border-[#BBF7D0] text-[10px] font-bold text-[#16A34A]"
+                                className="px-2 py-0.5 rounded-md bg-turquesa-50 border border-turquesa-200 text-[10px] font-bold text-turquesa-600"
                               >
                                 {f}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-[#94A3B8]">Sin funciones registradas</span>
+                          <span className="text-[11px] text-tinta-400">Sin funciones registradas</span>
                         )}
                       </div>
                     </td>
 
                     {/* Contacto */}
-                    <td className="p-4 text-xs text-[#64748B]">
+                    <td className="p-4 text-xs text-tinta-500">
                       <div className="truncate max-w-[180px]">{person.email}</div>
-                      {person.phone && <div className="text-[11px] text-[#94A3B8]">{person.phone}</div>}
+                      {person.phone && <div className="text-[11px] text-tinta-400">{person.phone}</div>}
                     </td>
 
                     {/* Acciones */}
@@ -1487,14 +1487,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleOpenEdit(person)}
-                          className="p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC] transition-colors"
+                          className="p-2 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50 transition-colors"
                           title="Editar persona"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(person.id, person.name)}
-                          className="p-2 rounded-xl text-[#B83A24] hover:bg-[#FDF2EE] transition-colors"
+                          className="p-2 rounded-xl text-lila-600 hover:bg-lila-50 transition-colors"
                           title="Eliminar persona"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1508,46 +1508,46 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
           </div>
 
           {/* Mobile Card View */}
-          <div className="md:hidden divide-y divide-[#EADDC7]/70">
+          <div className="md:hidden divide-y divide-tinta-200/70">
             {/* Mobile Filters Toggle & Panel */}
-            <div className="p-3 bg-[#FAF6EC] border-b border-[#EADDC7]">
+            <div className="p-3 bg-tinta-50 border-b border-tinta-200">
               <button
                 onClick={() => setShowColumnFilters(!showColumnFilters)}
-                className="w-full py-2.5 px-3 rounded-xl bg-white border border-[#EADDC7] text-xs font-bold text-[#182535] flex items-center justify-between shadow-2xs cursor-pointer font-montserrat"
+                className="w-full py-2.5 px-3 rounded-xl bg-white border border-tinta-200 text-xs font-bold text-tinta-900 flex items-center justify-between shadow-2xs cursor-pointer font-sans"
               >
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#B83A24]" />
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-lila-600" />
                   <span>Filtros por Columna (Nombre, Cédula, GT...)</span>
                   {activeColFiltersCount > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-[#B83A24] text-white text-[10px] flex items-center justify-center font-bold">
+                    <span className="w-5 h-5 rounded-full bg-lila-600 text-white text-[10px] flex items-center justify-center font-bold">
                       {activeColFiltersCount}
                     </span>
                   )}
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${
-                    showColumnFilters ? 'rotate-180 text-[#B83A24]' : ''
+                  className={`w-4 h-4 text-tinta-500 transition-transform duration-200 ${
+                    showColumnFilters ? 'rotate-180 text-lila-600' : ''
                   }`}
                 />
               </button>
 
               {showColumnFilters && (
-                <div className="mt-2.5 space-y-2.5 p-3.5 bg-white rounded-2xl border border-[#EADDC7] shadow-2xs font-montserrat">
+                <div className="mt-2.5 space-y-2.5 p-3.5 bg-white rounded-2xl border border-tinta-200 shadow-2xs font-sans">
                   <div>
-                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Nombre de la Persona</label>
+                    <label className="text-[10px] font-bold text-tinta-500 block mb-1">Nombre de la Persona</label>
                     <div className="relative">
                       <input
                         type="text"
                         value={colFilterName}
                         onChange={(e) => setColFilterName(e.target.value)}
                         placeholder="Filtrar por nombre..."
-                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-surface border border-tinta-200 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                       />
-                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2 pointer-events-none" />
                       {colFilterName && (
                         <button
                           onClick={() => setColFilterName('')}
-                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                          className="absolute right-2 top-2 text-tinta-400 hover:text-lila-600"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1556,20 +1556,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Cédula o Usuario (@)</label>
+                    <label className="text-[10px] font-bold text-tinta-500 block mb-1">Cédula o Usuario (@)</label>
                     <div className="relative">
                       <input
                         type="text"
                         value={colFilterDoc}
                         onChange={(e) => setColFilterDoc(e.target.value)}
                         placeholder="Cédula o @usuario..."
-                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-surface border border-tinta-200 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                       />
-                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2 pointer-events-none" />
                       {colFilterDoc && (
                         <button
                           onClick={() => setColFilterDoc('')}
-                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                          className="absolute right-2 top-2 text-tinta-400 hover:text-lila-600"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1579,7 +1579,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-bold text-[#64748B] block mb-1">Tipo</label>
+                      <label className="text-[10px] font-bold text-tinta-500 block mb-1">Tipo</label>
                       <select
                         value={colFilterType !== 'ALL' ? colFilterType : selectedTypeFilter}
                         onChange={(e) => {
@@ -1591,7 +1591,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                             setSelectedGtSubTeamFilter('ALL');
                           }
                         }}
-                        className="w-full px-2 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                        className="w-full px-2 py-1.5 rounded-xl bg-surface border border-tinta-200 text-xs font-bold text-tinta-900 focus:outline-hidden focus:border-lila-600"
                       >
                         <option value="ALL">Todos los tipos</option>
                         <option value="GT">GT</option>
@@ -1601,7 +1601,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-bold text-[#64748B] block mb-1">Sub-Equipo GT</label>
+                      <label className="text-[10px] font-bold text-tinta-500 block mb-1">Sub-Equipo GT</label>
                       <select
                         value={colFilterGt !== 'ALL' ? colFilterGt : selectedGtSubTeamFilter}
                         onChange={(e) => {
@@ -1613,7 +1613,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                             setSelectedTypeFilter('GT');
                           }
                         }}
-                        className="w-full px-2 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                        className="w-full px-2 py-1.5 rounded-xl bg-surface border border-tinta-200 text-xs font-bold text-tinta-900 focus:outline-hidden focus:border-lila-600"
                       >
                         <option value="ALL">Todos los GT</option>
                         {GT_SUBTEAMS.map((sub) => (
@@ -1626,20 +1626,20 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-[#64748B] block mb-1">Contacto (Email / Teléfono)</label>
+                    <label className="text-[10px] font-bold text-tinta-500 block mb-1">Contacto (Email / Teléfono)</label>
                     <div className="relative">
                       <input
                         type="text"
                         value={colFilterContact}
                         onChange={(e) => setColFilterContact(e.target.value)}
                         placeholder="Email o teléfono..."
-                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                        className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-surface border border-tinta-200 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                       />
-                      <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-2 top-2 pointer-events-none" />
+                      <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-2 top-2 pointer-events-none" />
                       {colFilterContact && (
                         <button
                           onClick={() => setColFilterContact('')}
-                          className="absolute right-2 top-2 text-[#94A3B8] hover:text-[#B83A24]"
+                          className="absolute right-2 top-2 text-tinta-400 hover:text-lila-600"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1650,7 +1650,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   {activeColFiltersCount > 0 && (
                     <button
                       onClick={handleResetAllFilters}
-                      className="w-full py-2 rounded-xl bg-[#FDF2EE] text-[#B83A24] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#F6C7BA] cursor-pointer"
+                      className="w-full py-2 rounded-xl bg-lila-50 text-lila-600 text-xs font-bold flex items-center justify-center gap-1.5 border border-lila-200 cursor-pointer"
                     >
                       <FilterX className="w-3.5 h-3.5" />
                       <span>Limpiar filtros de columna</span>
@@ -1668,16 +1668,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       type="checkbox"
                       checked={selectedIds.has(person.id)}
                       onChange={() => toggleSelect(person.id)}
-                      className="w-4 h-4 rounded text-[#B83A24] border-[#CBD5E1] focus:ring-[#B83A24] cursor-pointer shrink-0"
+                      className="w-4 h-4 rounded text-lila-600 border-tinta-300 focus:ring-lila-600 cursor-pointer shrink-0"
                     />
-                    <div className="w-10 h-10 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-[#B83A24] font-bold font-dalek flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-tinta-50 border border-tinta-200 text-lila-600 font-bold font-display flex items-center justify-center shrink-0">
                       {person.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-[#182535]">{person.name}</h4>
+                      <h4 className="font-bold text-sm text-tinta-900">{person.name}</h4>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-xs text-[#64748B]">{person.documentId}</span>
-                        <span className="text-xs text-[#C87F17] font-mono">@{person.username || person.documentId}</span>
+                        <span className="font-mono text-xs text-tinta-500">{person.documentId}</span>
+                        <span className="text-xs text-mostaza-600 font-mono">@{person.username || person.documentId}</span>
                       </div>
                     </div>
                   </div>
@@ -1688,9 +1688,9 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       <span
                         className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                           effType === 'GT'
-                            ? 'bg-[#FDF2EE] text-[#B83A24]'
+                            ? 'bg-lila-50 text-lila-600'
                             : effType === 'GAP'
-                            ? 'bg-[#FEF8EC] text-[#C87F17]'
+                            ? 'bg-mostaza-50 text-mostaza-600'
                             : 'bg-purple-50 text-purple-700'
                         }`}
                       >
@@ -1701,19 +1701,19 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 </div>
 
                 {/* Details */}
-                <div className="text-xs text-[#64748B] space-y-2 bg-[#FAF6EC] p-3 rounded-2xl border border-[#EADDC7]/60">
+                <div className="text-xs text-tinta-500 space-y-2 bg-tinta-50 p-3 rounded-2xl border border-tinta-200/60">
                   {getEffectivePersonType(person) === 'GT' && (
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-[#182535]">Sub-Equipo:</span>
+                      <span className="font-bold text-tinta-900">Sub-Equipo:</span>
                       {person.gtTeams && person.gtTeams.length > 1 ? (
                         <span
-                          className="px-2 py-0.5 rounded-md bg-[#FFF5F2] border border-[#FADCD5] text-[11px] font-bold text-[#B83A24]"
+                          className="px-2 py-0.5 rounded-md bg-lila-50 border border-lila-100 text-[11px] font-bold text-lila-600"
                           title={person.gtTeams.join(', ')}
                         >
                           {person.gtTeams.join(', ')}
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-md bg-[#FFFDF8] border border-[#EADDC7] text-[11px] font-bold text-[#B83A24]">
+                        <span className="px-2 py-0.5 rounded-md bg-surface border border-tinta-200 text-[11px] font-bold text-lila-600">
                           {person.gtSubTeam || (person.gtTeams && person.gtTeams[0]) || 'Generales'}
                         </span>
                       )}
@@ -1721,12 +1721,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   )}
                   {person.functions && person.functions.length > 0 && (
                     <div>
-                      <span className="font-bold text-[#182535] block mb-1">Funciones:</span>
+                      <span className="font-bold text-tinta-900 block mb-1">Funciones:</span>
                       <div className="flex flex-wrap gap-1">
                         {person.functions.map((f, i) => (
                           <span
                             key={i}
-                            className="px-2 py-0.5 rounded-md bg-[#F0FDF4] border border-[#BBF7D0] text-[10px] font-bold text-[#16A34A]"
+                            className="px-2 py-0.5 rounded-md bg-turquesa-50 border border-turquesa-200 text-[10px] font-bold text-turquesa-600"
                           >
                             {f}
                           </span>
@@ -1735,7 +1735,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     </div>
                   )}
                   <div>
-                    <span className="font-bold text-[#182535]">Correo: </span>
+                    <span className="font-bold text-tinta-900">Correo: </span>
                     <span>{person.email}</span>
                   </div>
                 </div>
@@ -1744,14 +1744,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 <div className="flex items-center justify-end gap-2 pt-1">
                   <button
                     onClick={() => handleOpenEdit(person)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#334155] bg-[#FAF6EC] border border-[#EADDC7] flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-tinta-700 bg-tinta-50 border border-tinta-200 flex items-center gap-1"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                     <span>Editar</span>
                   </button>
                   <button
                     onClick={() => handleDelete(person.id, person.name)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#B83A24] bg-[#FDF2EE] border border-[#F6C7BA] flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 border border-lila-200 flex items-center gap-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Eliminar</span>
@@ -1766,25 +1766,25 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       {/* Add / Edit Person Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/50 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl w-full max-w-xl p-6 sm:p-8 shadow-2xl relative my-6 text-[#182535] animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface border-2 border-tinta-200 rounded-3xl w-full max-w-xl p-6 sm:p-8 shadow-2xl relative my-6 text-tinta-900 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]"
+              className="absolute top-5 right-5 p-2 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="mb-5">
-              <span className="text-[10px] uppercase font-bold text-[#C87F17] font-montserrat tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-mostaza-600 font-sans tracking-wider">
                 {editingPerson ? 'Editar Registro' : 'Nuevo Registro'}
               </span>
-              <h2 className="text-xl font-extrabold text-[#182535] font-dalek tracking-wider">
+              <h2 className="text-xl font-extrabold text-tinta-900 font-display tracking-wider">
                 {editingPerson ? 'MODIFICAR PERSONA' : 'REGISTRAR NUEVA PERSONA'}
               </h2>
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-xl bg-[#FDF2EE] border border-[#F6C7BA] text-xs font-semibold text-[#B83A24] flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-xl bg-lila-50 border border-lila-200 text-xs font-semibold text-lila-600 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -1794,7 +1794,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Nombre */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Nombre Completo *
                   </label>
                   <input
@@ -1803,13 +1803,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="Ej. Alejandra Pérez"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   />
                 </div>
 
                 {/* Cédula */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Cédula / Documento *
                   </label>
                   <input
@@ -1818,16 +1818,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     value={formDoc}
                     onChange={(e) => setFormDoc(e.target.value)}
                     placeholder="Ej. 1234567890"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   />
-                  <span className="text-[10px] text-[#64748B] mt-0.5 block">
+                  <span className="text-[10px] text-tinta-500 mt-0.5 block">
                     (Se utilizará como contraseña inicial de Staff)
                   </span>
                 </div>
 
                 {/* Usuario individual */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Usuario Staff (Login)
                   </label>
                   <input
@@ -1835,19 +1835,19 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     value={formUser}
                     onChange={(e) => setFormUser(e.target.value)}
                     placeholder="Ej. alejaperez"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   />
                 </div>
 
                 {/* Tipo Principal */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Tipo Principal *
                   </label>
                   <select
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as PersonType)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   >
                     <option value="GT">GT (Guías Técnicos)</option>
                     <option value="GAP">GAP (Guías de Apoyo y Protocolo)</option>
@@ -1857,7 +1857,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                 {/* Correo */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Correo Electrónico
                   </label>
                   <input
@@ -1865,13 +1865,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="ejemplo@eafit.edu.co"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   />
                 </div>
 
                 {/* Celular */}
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                     Teléfono Celular
                   </label>
                   <input
@@ -1879,19 +1879,19 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="300 123 4567"
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                   />
                 </div>
 
                 {/* Grupo / GT Sub-teams con selección múltiple */}
                 {formType === 'GT' ? (
-                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-2.5">
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="block text-xs font-bold text-[#182535] font-montserrat">
+                        <label className="block text-xs font-bold text-tinta-900 font-sans">
                           Sub-Equipos GT Asignados *
                         </label>
-                        <span className="text-[11px] text-[#64748B]">
+                        <span className="text-[11px] text-tinta-500">
                           Seleccione uno o varios sub-equipos a los que pertenece esta persona
                         </span>
                       </div>
@@ -1903,7 +1903,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           setFormGtSubTeams(newTeams as GtSubTeam[]);
                           setFormGtSubTeam(newTeams[0] as GtSubTeam);
                         }}
-                        className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer"
+                        className="text-[11px] font-bold text-lila-600 hover:underline cursor-pointer"
                       >
                         {formGtSubTeams.length === GT_SUBTEAMS.length
                           ? 'Solo Logística'
@@ -1929,18 +1929,18 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                               setFormGtSubTeams(updated);
                               setFormGtSubTeam(updated[0]);
                             }}
-                            className={`px-3 py-2 rounded-xl text-xs font-montserrat flex items-center justify-between border transition-all text-left cursor-pointer ${
+                            className={`px-3 py-2 rounded-xl text-xs font-sans flex items-center justify-between border transition-all text-left cursor-pointer ${
                               isSelected
-                                ? 'bg-white border-[#B83A24] text-[#B83A24] font-bold shadow-2xs ring-1 ring-[#B83A24]/20'
-                                : 'bg-[#FAF6EC]/70 border-[#D8C7A5] text-[#475569] hover:bg-white'
+                                ? 'bg-white border-lila-600 text-lila-600 font-bold shadow-2xs ring-1 ring-lila-600/20'
+                                : 'bg-tinta-50/70 border-tinta-300 text-tinta-600 hover:bg-white'
                             }`}
                           >
                             <span>{sub}</span>
                             <div
                               className={`w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors ${
                                 isSelected
-                                  ? 'bg-[#B83A24] border-[#B83A24] text-white'
-                                  : 'border-[#CBD5E1] bg-white text-transparent'
+                                  ? 'bg-lila-600 border-lila-600 text-white'
+                                  : 'border-tinta-300 bg-white text-transparent'
                               }`}
                             >
                               ✓
@@ -1950,29 +1950,29 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       })}
                     </div>
 
-                    <div className="pt-2 border-t border-[#EADDC7]/70 flex items-center justify-between text-[11px] text-[#64748B]">
+                    <div className="pt-2 border-t border-tinta-200/70 flex items-center justify-between text-[11px] text-tinta-500">
                       <span>
                         Grupos asignados:{' '}
-                        <strong className="text-[#182535]">
+                        <strong className="text-tinta-900">
                           {formGtSubTeams.length === GT_SUBTEAMS.length
                             ? 'Todos los 8 sub-equipos'
                             : formGtSubTeams.join(', ')}
                         </strong>
                       </span>
-                      <span className="font-semibold text-[#B83A24]">
+                      <span className="font-semibold text-lila-600">
                         {formGtSubTeams.length} de {GT_SUBTEAMS.length} grupos
                       </span>
                     </div>
 
-                    <div className="pt-3 mt-3 border-t border-[#EADDC7]/70 flex flex-col gap-2">
+                    <div className="pt-3 mt-3 border-t border-tinta-200/70 flex flex-col gap-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={formAlsoActsAsGap}
                           onChange={(e) => setFormAlsoActsAsGap(e.target.checked)}
-                          className="w-4 h-4 rounded text-[#B83A24] bg-white border-gray-300 focus:ring-[#B83A24]"
+                          className="w-4 h-4 rounded text-lila-600 bg-white border-gray-300 focus:ring-lila-600"
                         />
-                        <span className="text-xs font-bold text-[#182535]">
+                        <span className="text-xs font-bold text-tinta-900">
                           Este GT también apoya como GAP en The Games/Carnival
                         </span>
                       </label>
@@ -1982,14 +1982,14 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           value={formGapRoleDesc}
                           onChange={(e) => setFormGapRoleDesc(e.target.value)}
                           placeholder="Especificar días o rol (Ej. Jueves y Viernes GAP Generales)"
-                          className="w-full px-3 py-2 mt-1 rounded-xl bg-white border border-[#EADDC7] text-[11px] text-[#182535] focus:outline-none focus:border-[#B83A24]"
+                          className="w-full px-3 py-2 mt-1 rounded-xl bg-white border border-tinta-200 text-[11px] text-tinta-900 focus:outline-none focus:border-lila-600"
                         />
                       )}
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                    <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                       Rol / Cargo
                     </label>
                     <input
@@ -1997,16 +1997,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       value={formRole}
                       onChange={(e) => setFormRole(e.target.value)}
                       placeholder="Ej. Líder, Coordinador, Staff"
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                     />
                   </div>
                 )}
               </div>
 
               {/* Funciones Jerárquicas según Grupo */}
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-3">
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-[#182535] font-montserrat">
+                  <label className="block text-xs font-bold text-tinta-900 font-sans">
                     Funciones Asignadas a este Integrante (
                     {formType === 'GT'
                       ? formGtSubTeams.length === GT_SUBTEAMS.length
@@ -2015,7 +2015,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       : formType}
                     )
                   </label>
-                  <span className="text-[10px] text-[#64748B]">
+                  <span className="text-[10px] text-tinta-500">
                     Seleccione una o varias aptitudes
                   </span>
                 </div>
@@ -2042,8 +2042,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                                 onClick={() => toggleFunctionSelection(fn.name)}
                                 className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
                                   isSelected
-                                    ? 'bg-[#182535] text-white border-[#182535] shadow-2xs'
-                                    : 'bg-[#FFFDF8] text-[#475569] border-[#E2D6BC] hover:border-[#182535]'
+                                    ? 'bg-tinta-900 text-white border-tinta-900 shadow-2xs'
+                                    : 'bg-surface text-tinta-600 border-tinta-300 hover:border-tinta-900'
                                 }`}
                               >
                                 {isSelected ? (
@@ -2057,7 +2057,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           })}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-[#94A3B8]">
+                        <p className="text-[11px] text-tinta-400">
                           No hay funciones registradas en el catálogo para{' '}
                           {formType === 'GT' ? `GT → ${formGtSubTeam}` : formType}. Puede agregarlas en el módulo FUNCIONES o escribir una personalizada abajo.
                         </p>
@@ -2065,12 +2065,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
                       {/* Show active selections */}
                       {formSelectedFunctions.length > 0 && (
-                        <div className="pt-2 border-t border-[#EADDC7]/60 flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10px] text-[#64748B] font-bold">Seleccionadas:</span>
+                        <div className="pt-2 border-t border-tinta-200/60 flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] text-tinta-500 font-bold">Seleccionadas:</span>
                           {formSelectedFunctions.map((fnName) => (
                             <span
                               key={fnName}
-                              className="px-2 py-0.5 rounded-md bg-[#FDF2EE] border border-[#F6C7BA] text-[#B83A24] text-[11px] font-bold flex items-center gap-1"
+                              className="px-2 py-0.5 rounded-md bg-lila-50 border border-lila-200 text-lila-600 text-[11px] font-bold flex items-center gap-1"
                             >
                               <span>{fnName}</span>
                               <button
@@ -2092,7 +2092,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                           value={customFunctionInput}
                           onChange={(e) => setCustomFunctionInput(e.target.value)}
                           placeholder="Otra función específica..."
-                          className="flex-1 px-3 py-1.5 rounded-lg bg-[#FFFDF8] border border-[#E2D6BC] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                          className="flex-1 px-3 py-1.5 rounded-lg bg-surface border border-tinta-300 text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
@@ -2103,7 +2103,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                         <button
                           type="button"
                           onClick={handleAddCustomFunction}
-                          className="min-h-[34px] px-3 py-1.5 rounded-lg bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold font-montserrat flex items-center gap-1"
+                          className="min-h-[34px] px-3 py-1.5 rounded-lg bg-tinta-50 hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold font-sans flex items-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Añadir</span>
@@ -2116,13 +2116,13 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
               {/* Talla Camiseta */}
               <div>
-                <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                   Talla Camiseta
                 </label>
                 <select
                   value={formShirt}
                   onChange={(e) => setFormShirt(e.target.value as any)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                  className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                 >
                   <option value="XS">XS</option>
                   <option value="S">S</option>
@@ -2134,15 +2134,15 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               </div>
 
               {/* Salud, Alergias y Restricciones de Comida (3 casillas solicitadas) */}
-              <div className="bg-[#FAF6EC]/80 border border-[#EADDC7] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#182535]">
-                  <HeartPulse className="w-4 h-4 text-[#B83A24]" />
+              <div className="bg-tinta-50/80 border border-tinta-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-tinta-900">
+                  <HeartPulse className="w-4 h-4 text-lila-600" />
                   <span>Salud, Alergias y Alimentación</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                    <label className="block text-[11px] font-bold text-tinta-700 mb-1 font-sans flex items-center gap-1">
                       <AlertCircle className="w-3 h-3 text-rose-600" />
                       <span>Alergias Alimentarias</span>
                     </label>
@@ -2151,12 +2151,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       value={formFoodAllergies}
                       onChange={(e) => setFormFoodAllergies(e.target.value)}
                       placeholder="Ej. Maní, Mariscos, Ninguna"
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                    <label className="block text-[11px] font-bold text-tinta-700 mb-1 font-sans flex items-center gap-1">
                       <Utensils className="w-3 h-3 text-amber-600" />
                       <span>Restricción de Comidas</span>
                     </label>
@@ -2165,12 +2165,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       value={formDiet}
                       onChange={(e) => setFormDiet(e.target.value)}
                       placeholder="Ej. Vegetariana, Celíaca, Ninguna"
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[#334155] mb-1 font-montserrat flex items-center gap-1">
+                    <label className="block text-[11px] font-bold text-tinta-700 mb-1 font-sans flex items-center gap-1">
                       <HeartPulse className="w-3 h-3 text-blue-600" />
                       <span>Enfermedad o Condición</span>
                     </label>
@@ -2179,7 +2179,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       value={formMedicalConditions}
                       onChange={(e) => setFormMedicalConditions(e.target.value)}
                       placeholder="Ej. Asma, Diabetes, Ninguna"
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                     />
                   </div>
                 </div>
@@ -2187,7 +2187,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
               {/* Notas */}
               <div>
-                <label className="block text-xs font-bold text-[#334155] mb-1 font-montserrat">
+                <label className="block text-xs font-bold text-tinta-700 mb-1 font-sans">
                   Observaciones
                 </label>
                 <textarea
@@ -2195,23 +2195,23 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   placeholder="Información relevante..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                  className="w-full px-3 py-2 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600"
                 />
               </div>
 
               {/* Modal buttons */}
-              <div className="pt-4 border-t border-[#EADDC7] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-tinta-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-[#FAF6EC]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-tinta-500 hover:bg-tinta-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-2xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs font-dalek tracking-wider shadow-md transition-all disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-2xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs font-display tracking-wider shadow-md transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? 'GUARDANDO...' : editingPerson ? 'ACTUALIZAR' : 'GUARDAR PERSONA'}
                 </button>
@@ -2224,23 +2224,23 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
       {/* Bulk Delete Confirmation Modal */}
       {bulkDeleteModal && bulkDeleteModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-[#FFFDF8] border-2 border-[#F6C7BA] rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative text-[#182535] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-surface border-2 border-lila-200 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative text-tinta-900 animate-in fade-in zoom-in-95 duration-150">
             <button
               onClick={() => !isDeletingBulk && setBulkDeleteModal(null)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC] cursor-pointer"
+              className="absolute top-5 right-5 p-2 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FDF2EE] border border-[#F6C7BA] flex items-center justify-center text-[#B83A24] shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-lila-50 border border-lila-200 flex items-center justify-center text-lila-600 shrink-0">
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#B83A24] font-montserrat tracking-wider">
+                <span className="text-[10px] uppercase font-bold text-lila-600 font-sans tracking-wider">
                   Acción Definitiva
                 </span>
-                <h3 className="text-lg font-bold font-dalek text-[#182535]">
+                <h3 className="text-lg font-bold font-display text-tinta-900">
                   {bulkDeleteModal.mode === 'all'
                     ? '¿ELIMINAR A TODOS LOS INTEGRANTES?'
                     : bulkDeleteModal.mode === 'filtered'
@@ -2250,8 +2250,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               </div>
             </div>
 
-            <div className="space-y-3 mb-6 text-xs text-[#64748B] font-montserrat">
-              <p className="text-sm text-[#182535] font-semibold">
+            <div className="space-y-3 mb-6 text-xs text-tinta-500 font-sans">
+              <p className="text-sm text-tinta-900 font-semibold">
                 {bulkDeleteModal.mode === 'all'
                   ? `Estás a punto de eliminar a la totalidad de los ${people.length} integrantes registrados en la base de datos.`
                   : bulkDeleteModal.mode === 'filtered'
@@ -2259,12 +2259,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                   : `Se eliminarán las ${bulkDeleteModal.count} personas seleccionadas con casillas de verificación.`}
               </p>
 
-              <div className="p-3.5 rounded-2xl bg-[#FDF2EE] border border-[#F6C7BA] text-[#B83A24] text-xs space-y-1">
+              <div className="p-3.5 rounded-2xl bg-lila-50 border border-lila-200 text-lila-600 text-xs space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>Atención: Acción Irreversible</span>
                 </div>
-                <p className="text-[11px] leading-relaxed text-[#852717]">
+                <p className="text-[11px] leading-relaxed text-lila-800">
                   Esta operación borrará los perfiles, así como todos sus turnos asignados y disponibilidades registradas en el evento.
                 </p>
               </div>
@@ -2272,7 +2272,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               {/* Selector de modo si hay filtros aplicados o personas seleccionadas */}
               {hasActiveFilters && bulkDeleteModal.mode !== 'selected' && (
                 <div className="pt-2">
-                  <span className="block text-[11px] font-bold text-[#182535] mb-2">
+                  <span className="block text-[11px] font-bold text-tinta-900 mb-2">
                     Selecciona el alcance de la eliminación:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
@@ -2288,8 +2288,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       }
                       className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                         bulkDeleteModal.mode === 'filtered'
-                          ? 'border-[#B83A24] bg-[#FDF2EE] text-[#B83A24] font-bold shadow-2xs'
-                          : 'border-[#EADDC7] bg-white text-[#64748B] hover:bg-[#FAF6EC]'
+                          ? 'border-lila-600 bg-lila-50 text-lila-600 font-bold shadow-2xs'
+                          : 'border-tinta-200 bg-white text-tinta-500 hover:bg-tinta-50'
                       }`}
                     >
                       <div className="text-xs font-bold">Solo Filtrados</div>
@@ -2307,8 +2307,8 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       }
                       className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
                         bulkDeleteModal.mode === 'all'
-                          ? 'border-[#B83A24] bg-[#FDF2EE] text-[#B83A24] font-bold shadow-2xs'
-                          : 'border-[#EADDC7] bg-white text-[#64748B] hover:bg-[#FAF6EC]'
+                          ? 'border-lila-600 bg-lila-50 text-lila-600 font-bold shadow-2xs'
+                          : 'border-tinta-200 bg-white text-tinta-500 hover:bg-tinta-50'
                       }`}
                     >
                       <div className="text-xs font-bold">Todos en Base de Datos</div>
@@ -2319,12 +2319,12 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#EADDC7]">
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-tinta-200">
               <button
                 type="button"
                 disabled={isDeletingBulk}
                 onClick={() => setBulkDeleteModal(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#64748B] hover:bg-[#FAF6EC] cursor-pointer disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-tinta-500 hover:bg-tinta-50 cursor-pointer disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -2332,7 +2332,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                 type="button"
                 disabled={isDeletingBulk}
                 onClick={handleConfirmBulkDelete}
-                className="px-5 py-2.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 font-montserrat"
+                className="px-5 py-2.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 font-sans"
               >
                 {isDeletingBulk ? (
                   <>

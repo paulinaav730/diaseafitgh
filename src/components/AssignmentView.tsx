@@ -2067,26 +2067,26 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 text-[#182535]">
+    <div className="space-y-6 text-tinta-900">
       {/* Header and Day Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-xl sm:text-2xl font-bold text-[#182535] tracking-wide font-dalek">
+            <h2 className="text-xl sm:text-2xl font-bold text-tinta-900 tracking-wide font-display">
               ASIGNACIÓN DE TURNOS Y BASES
             </h2>
             {onNavigateToConfig && (
               <button
                 onClick={onNavigateToConfig}
                 title="Configurar y editar turnos, bases y eventos"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-[#B83A24] bg-[#FDF2EE] hover:bg-[#FBE4DD] border border-[#F6C7BA] transition-all shadow-2xs"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 border border-lila-200 transition-all shadow-2xs"
               >
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Configurar Turnos y Bases</span>
               </button>
             )}
           </div>
-          <p className="text-xs text-[#64748B] mt-0.5 font-montserrat">
+          <p className="text-xs text-tinta-500 mt-0.5 font-sans">
             Distribución operativa con cupos por GT/Grupo, funciones jerárquicas y bases físicas.
           </p>
         </div>
@@ -2097,14 +2097,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <button
               onClick={onNavigateToConfig}
               title="Configurar y editar turnos, bases y eventos"
-              className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#B83A24] bg-[#FDF2EE] hover:bg-[#FBE4DD] border border-[#F6C7BA] transition-all shadow-2xs"
+              className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 border border-lila-200 transition-all shadow-2xs"
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>Configurar</span>
             </button>
           )}
 
-          <div className="flex items-center gap-1.5 overflow-x-auto bg-[#FAF6EC] border border-[#EADDC7] p-1.5 rounded-2xl shadow-2xs scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto bg-tinta-50 border border-tinta-200 p-1.5 rounded-2xl shadow-2xs scrollbar-none">
             {EVENT_SCHEDULE.map((day) => {
               const isSelected = day.dayId === selectedDayId;
               return (
@@ -2113,8 +2113,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   onClick={() => handleDaySelect(day.dayId)}
                   className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold tracking-wider whitespace-nowrap transition-all ${
                     isSelected
-                      ? 'bg-[#B83A24] text-white shadow-xs font-dalek'
-                      : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8] font-montserrat'
+                      ? 'bg-lila-600 text-white shadow-xs font-display'
+                      : 'text-tinta-500 hover:text-tinta-900 hover:bg-surface font-sans'
                   }`}
                 >
                   {day.dayName}
@@ -2127,34 +2127,34 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       {/* CARNIVAL DEDICATED ARCHITECTURE PANEL (If Wednesday) */}
       {isCarnival && (
-        <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#EADDC7]">
+        <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-tinta-200">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA] font-dalek">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-lila-50 text-lila-600 border border-lila-200 font-display">
                   {currentDay.dayName.toUpperCase()} • {currentDay.eventName}
                 </span>
-                <span className="text-xs text-[#C87F17] font-montserrat font-bold">
+                <span className="text-xs text-mostaza-600 font-sans font-bold">
                   Estructura Oficial Diferenciada
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-[#182535] mt-1 font-dalek tracking-wide">
+              <h3 className="text-xl sm:text-2xl font-bold text-tinta-900 mt-1 font-display tracking-wide">
                 DISTRIBUCIÓN OPERATIVA DE {currentDay.eventName.toUpperCase()}
               </h3>
-              <p className="text-xs text-[#64748B] mt-0.5 font-montserrat max-w-2xl leading-relaxed">
+              <p className="text-xs text-tinta-500 mt-0.5 font-sans max-w-2xl leading-relaxed">
                 Los turnos de <b>GT</b> y <b>GAP</b> son completamente independientes y NO se mezclan.
                 GAP cuenta con exactamente <b>22 bases físicas únicas</b> (1 a 19 normales + 3 especiales: Toro, Speedway y Arcade) compartidas en sus 3 turnos.
               </p>
             </div>
 
             {/* Sub-Category Switcher for Carnival: GAP, GT, and MESA */}
-            <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] self-start lg:self-center">
+            <div className="flex items-center gap-1.5 bg-tinta-50 p-1.5 rounded-2xl border border-tinta-200 self-start lg:self-center">
               <button
                 onClick={() => handleCarnivalCategorySelect('GAP')}
                 className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   carnivalCategory === 'GAP'
-                    ? 'bg-[#B83A24] text-white shadow-xs font-montserrat'
-                    : 'text-[#64748B] hover:text-[#182535] font-montserrat'
+                    ? 'bg-lila-600 text-white shadow-xs font-sans'
+                    : 'text-tinta-500 hover:text-tinta-900 font-sans'
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
@@ -2165,8 +2165,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 onClick={() => handleCarnivalCategorySelect('GT')}
                 className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   carnivalCategory === 'GT'
-                    ? 'bg-[#182535] text-white shadow-xs font-montserrat'
-                    : 'text-[#64748B] hover:text-[#182535] font-montserrat'
+                    ? 'bg-tinta-900 text-white shadow-xs font-sans'
+                    : 'text-tinta-500 hover:text-tinta-900 font-sans'
                 }`}
               >
                 <Shield className="w-3.5 h-3.5" />
@@ -2177,8 +2177,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 onClick={() => handleCarnivalCategorySelect('MESA')}
                 className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   carnivalCategory === 'MESA'
-                    ? 'bg-purple-700 text-white shadow-xs font-montserrat'
-                    : 'text-[#64748B] hover:text-purple-700 font-montserrat'
+                    ? 'bg-purple-700 text-white shadow-xs font-sans'
+                    : 'text-tinta-500 hover:text-purple-700 font-sans'
                 }`}
               >
                 <Crown className="w-3.5 h-3.5" />
@@ -2189,42 +2189,42 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
           {/* Visual Blueprint Diagram */}
           {isCarnival && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1 text-xs font-montserrat">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1 text-xs font-sans">
             <div
               className={`p-4 rounded-2xl border transition-all ${
                 carnivalCategory === 'GT'
-                  ? 'bg-[#FAF6EC] border-[#182535] shadow-2xs'
-                  : 'bg-[#FFFDF8] border-[#EADDC7] text-[#64748B]'
+                  ? 'bg-tinta-50 border-tinta-900 shadow-2xs'
+                  : 'bg-surface border-tinta-200 text-tinta-500'
               }`}
             >
-              <div className="flex items-center justify-between font-bold text-[#182535] mb-2">
-                <span className="flex items-center gap-1.5 text-[#182535]">
+              <div className="flex items-center justify-between font-bold text-tinta-900 mb-2">
+                <span className="flex items-center gap-1.5 text-tinta-900">
                   <Shield className="w-4 h-4" />
                   CARNIVAL — GT (GRUPO DE TRABAJO & MESA)
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#182535] text-white font-mono">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-tinta-900 text-white font-mono">
                   5 TURNOS
                 </span>
               </div>
               <ul className="space-y-1 text-[11px] font-mono">
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T1</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T1</span>
                   <span>6:50 AM – 9:00 AM</span>
                 </li>
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T2</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T2</span>
                   <span>8:50 AM – 12:10 PM</span>
                 </li>
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T3</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T3</span>
                   <span>12:00 PM – 3:10 PM</span>
                 </li>
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T4</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T4</span>
                   <span>3:00 PM – 6:10 PM</span>
                 </li>
                 <li className="flex justify-between py-0.5">
-                  <span className="font-bold text-[#182535]">T5</span>
+                  <span className="font-bold text-tinta-900">T5</span>
                   <span>6:00 PM – 9:00 PM</span>
                 </li>
               </ul>
@@ -2233,34 +2233,34 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <div
               className={`p-4 rounded-2xl border transition-all ${
                 carnivalCategory === 'GAP'
-                  ? 'bg-[#FAF6EC] border-[#B83A24] shadow-2xs'
-                  : 'bg-[#FFFDF8] border-[#EADDC7] text-[#64748B]'
+                  ? 'bg-tinta-50 border-lila-600 shadow-2xs'
+                  : 'bg-surface border-tinta-200 text-tinta-500'
               }`}
             >
-              <div className="flex items-center justify-between font-bold text-[#B83A24] mb-2">
-                <span className="flex items-center gap-1.5 text-[#B83A24]">
+              <div className="flex items-center justify-between font-bold text-lila-600 mb-2">
+                <span className="flex items-center gap-1.5 text-lila-600">
                   <Grid className="w-4 h-4" />
                   CARNIVAL — GAP (BASES FÍSICAS)
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#B83A24] text-white font-mono">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-lila-600 text-white font-mono">
                   3 TURNOS • 30 BASES
                 </span>
               </div>
               <ul className="space-y-1 text-[11px] font-mono">
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T1</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T1</span>
                   <span>8:50 AM – 12:10 PM</span>
                 </li>
-                <li className="flex justify-between py-0.5 border-b border-[#EADDC7]/60">
-                  <span className="font-bold text-[#182535]">T2</span>
+                <li className="flex justify-between py-0.5 border-b border-tinta-200/60">
+                  <span className="font-bold text-tinta-900">T2</span>
                   <span>12:00 PM – 3:10 PM</span>
                 </li>
                 <li className="flex justify-between py-0.5">
-                  <span className="font-bold text-[#182535]">T3</span>
+                  <span className="font-bold text-tinta-900">T3</span>
                   <span>3:00 PM – 6:10 PM</span>
                 </li>
               </ul>
-              <div className="mt-2 text-[10px] text-[#B83A24] font-medium">
+              <div className="mt-2 text-[10px] text-lila-600 font-medium">
                 <strong>30 Bases Físicas:</strong> Base 1..27 + Toro, Speedway, Arcade.
               </div>
             </div>
@@ -2270,13 +2270,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       )}
 
       {/* SHIFTS SELECTION BAR */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#EADDC7]">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-tinta-200">
           <div>
-            <span className="text-xs font-bold text-[#C87F17] uppercase tracking-wide font-dalek">
+            <span className="text-xs font-bold text-mostaza-600 uppercase tracking-wide font-display">
               {currentDay.dayName} {isDivided ? `• ${carnivalCategory}` : `• ${currentDay.eventName}`}
             </span>
-            <h3 className="text-base font-bold text-[#182535] font-montserrat mt-0.5">
+            <h3 className="text-base font-bold text-tinta-900 font-sans mt-0.5">
               Turnos disponibles para {isDivided ? `${currentDay.eventName} (${carnivalCategory})` : currentDay.eventName}
             </h3>
           </div>
@@ -2289,14 +2289,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   recreateThursdayShifts(true);
                   setSelectedShiftId('jueves-gt-t1');
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#8A3800] bg-[#FFF2E2] hover:bg-[#FFE4CA] border border-[#F5C799] rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95 font-montserrat"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-mostaza-800 bg-mostaza-50 hover:bg-mostaza-100 border border-mostaza-200 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95 font-sans"
                 title="Restablece y garantiza los 5 turnos oficiales del Jueves"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Recrear turnos de Jueves</span>
               </button>
             )}
-            <span className="text-xs text-[#64748B] font-mono">
+            <span className="text-xs text-tinta-500 font-mono">
               {availableShifts.length} turno(s) visible(s)
             </span>
           </div>
@@ -2304,8 +2304,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
         {/* Filter shifts by GT / GAP (only if GAP shifts exist) */}
         {gapShiftsInDay.length > 0 && (
-          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto">
-            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat hidden sm:inline">
+          <div className="flex items-center gap-1.5 bg-tinta-50 p-1.5 rounded-2xl border border-tinta-200 overflow-x-auto">
+            <span className="text-[11px] font-bold text-tinta-500 px-2 font-sans hidden sm:inline">
               Filtrar turnos:
             </span>
             {[
@@ -2320,16 +2320,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 key={pill.id}
                 type="button"
                 onClick={() => handleShiftCategoryFilterChange(pill.id as any)}
-                className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap ${
                   shiftCategoryFilter === pill.id
                     ? pill.id === 'GAP'
-                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      ? 'bg-turquesa-600 text-white shadow-2xs'
                       : pill.id === 'GT'
-                      ? 'bg-[#182535] text-white shadow-2xs'
+                      ? 'bg-tinta-900 text-white shadow-2xs'
                       : pill.id === 'MESA'
                       ? 'bg-purple-700 text-white shadow-2xs'
-                      : 'bg-[#B83A24] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                      : 'bg-lila-600 text-white shadow-2xs'
+                    : 'text-tinta-500 hover:text-tinta-900 hover:bg-surface'
                 }`}
               >
                 {pill.label}
@@ -2372,11 +2372,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 className={`min-h-[40px] flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   isSelected
                     ? isMesaPill
-                      ? 'bg-[#C87F17] text-white border-[#C87F17] shadow-xs font-montserrat'
-                      : 'bg-[#B83A24] text-white border-[#B83A24] shadow-xs font-montserrat'
+                      ? 'bg-mostaza-600 text-white border-mostaza-600 shadow-xs font-sans'
+                      : 'bg-lila-600 text-white border-lila-600 shadow-xs font-sans'
                     : isMesaPill
-                    ? 'bg-[#FAF6EC] text-[#C87F17] border-[#EADDC7] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat'
-                    : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat'
+                    ? 'bg-tinta-50 text-mostaza-600 border-tinta-200 hover:text-tinta-900 hover:bg-tinta-100 font-sans'
+                    : 'bg-tinta-50 text-tinta-500 border-tinta-200 hover:text-tinta-900 hover:bg-tinta-100 font-sans'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -2384,7 +2384,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 <span className="font-mono text-[11px] opacity-80">({shift.label})</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-[#EAE0CA] text-[#475569]'
+                    isSelected ? 'bg-white/20 text-white' : 'bg-tinta-200 text-tinta-600'
                   }`}
                   title={`${relevantFilled} cupo(s) ocupados${!isMesaPill && shiftMesaAssigned > 0 ? ` (+${shiftMesaAssigned} MESA sin cupo)` : ''}`}
                 >
@@ -2398,28 +2398,28 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       </div>
 
       {/* SECTION: GESTIÓN DE CUPOS Y FUNCIONES POR TURNO (NUEVA LÓGICA) */}
-      <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EADDC7]">
+      <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-tinta-200">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-[#FAF6EC] text-[#B83A24] border border-[#EADDC7] font-dalek">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-tinta-50 text-lila-600 border border-tinta-200 font-display">
                 {activeShift.name} ({activeShift.label})
               </span>
-              <span className="text-xs font-bold text-[#182535] font-montserrat">
+              <span className="text-xs font-bold text-tinta-900 font-sans">
                 Cupos y Funciones
               </span>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-[#182535] mt-1 font-dalek tracking-wide">
+            <h3 className="text-lg sm:text-xl font-bold text-tinta-900 mt-1 font-display tracking-wide">
               NECESIDADES DE TURNO POR GT / GAP / MESA
             </h3>
-            <p className="text-xs text-[#64748B] font-montserrat mt-0.5 max-w-2xl">
+            <p className="text-xs text-tinta-500 font-sans mt-0.5 max-w-2xl">
               Defina el número de personas requerido por grupo (ej. <b>Logística T1 = 10 personas</b>) y opcionalmente asigne funciones específicas como filtro.
             </p>
           </div>
 
           <button
             onClick={handleOpenCreateRequirement}
-            className="min-h-[42px] px-4 py-2 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider flex items-center gap-2 shadow-xs transition-all self-start sm:self-auto"
+            className="min-h-[42px] px-4 py-2 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-display tracking-wider flex items-center gap-2 shadow-xs transition-all self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             <span>DEFINIR CUPO DE TURNO</span>
@@ -2428,12 +2428,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
         {/* Requirements Cards */}
         {currentShiftRequirements.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
-            <Users className="w-8 h-8 text-[#C87F17] mx-auto opacity-75" />
-            <div className="font-bold text-[#182535] text-xs">
+          <div className="p-6 rounded-2xl bg-tinta-50 border border-dashed border-tinta-200 text-center space-y-2">
+            <Users className="w-8 h-8 text-mostaza-600 mx-auto opacity-75" />
+            <div className="font-bold text-tinta-900 text-xs">
               No hay necesidades de cupos específicas creadas para este turno
             </div>
-            <p className="text-[11px] text-[#64748B] max-w-md mx-auto">
+            <p className="text-[11px] text-tinta-500 max-w-md mx-auto">
               Haga clic en &quot;<b>DEFINIR CUPO DE TURNO</b>&quot; para registrar, por ejemplo: <b>Logística T1 = 10 cupos</b> y asociarle funciones específicas.
             </p>
           </div>
@@ -2460,7 +2460,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               return (
                 <div
                   key={req.id}
-                  className="p-4 rounded-2xl bg-[#FFFDF8] border-2 border-[#EADDC7] hover:border-[#B83A24]/60 transition-all shadow-2xs flex flex-col justify-between space-y-3"
+                  className="p-4 rounded-2xl bg-surface border-2 border-tinta-200 hover:border-lila-600/60 transition-all shadow-2xs flex flex-col justify-between space-y-3"
                 >
                   <div>
                     {/* Header */}
@@ -2470,9 +2470,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                               req.groupType === 'GT'
-                                ? 'bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]'
+                                ? 'bg-lila-50 text-lila-600 border border-lila-200'
                                 : req.groupType === 'GAP'
-                                ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                ? 'bg-mostaza-50 text-mostaza-600 border border-mostaza-200'
                                 : 'bg-purple-50 text-purple-700 border border-purple-200'
                             }`}
                           >
@@ -2481,10 +2481,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono border ${
                               reqStatus === 'COMPLETO'
-                                ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]'
+                                ? 'bg-turquesa-50 text-turquesa-600 border-turquesa-200'
                                 : reqStatus === 'SUPERADO'
-                                ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FED7AA]'
-                                : 'bg-[#FEF9C3] text-[#854D0E] border-[#FEF08A]'
+                                ? 'bg-mostaza-50 text-mostaza-500 border-mostaza-200'
+                                : 'bg-mostaza-100 text-mostaza-800 border-mostaza-200'
                             }`}
                           >
                             {reqStatus === 'COMPLETO' && '🟢 COMPLETO'}
@@ -2492,7 +2492,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             {reqStatus === 'PENDIENTE' && `🟡 PENDIENTE (Faltan ${reqCap - reqCount})`}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#182535] mt-1 font-montserrat">
+                        <h4 className="text-sm font-bold text-tinta-900 mt-1 font-sans">
                           {req.groupType === 'GT'
                             ? `GT ${req.gtSubTeam} (${activeShift.name})`
                             : `${req.groupType} (${activeShift.name})`}
@@ -2501,7 +2501,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                       <button
                         onClick={() => handleDeleteRequirement(req.id)}
-                        className="text-[#64748B] hover:text-[#B83A24] p-1 rounded-lg transition-colors cursor-pointer"
+                        className="text-tinta-500 hover:text-lila-600 p-1 rounded-lg transition-colors cursor-pointer"
                         title="Eliminar necesidad"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -2511,7 +2511,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     {/* Capacity and Progress */}
                     <div className="mt-3 space-y-1.5">
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-[#64748B]">Requerimiento asignado:</span>
+                        <span className="text-tinta-500">Requerimiento asignado:</span>
                         <span className={`font-bold ${
                           reqStatus === 'COMPLETO'
                             ? 'text-emerald-700'
@@ -2522,7 +2522,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           {reqCount} / {reqCap} personas
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-[#FAF6EC] overflow-hidden border border-[#EADDC7]">
+                      <div className="w-full h-2 rounded-full bg-tinta-50 overflow-hidden border border-tinta-200">
                         <div
                           className={`h-full transition-all duration-300 ${
                             reqStatus === 'COMPLETO'
@@ -2537,8 +2537,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     {/* Filtered functions */}
-                    <div className="mt-3 pt-2.5 border-t border-[#EADDC7]/60">
-                      <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block mb-1">
+                    <div className="mt-3 pt-2.5 border-t border-tinta-200/60">
+                      <span className="text-[10px] font-bold text-tinta-500 uppercase tracking-wider block mb-1">
                         Filtro de Funciones:
                       </span>
                       {req.specificFunctions && req.specificFunctions.length > 0 ? (
@@ -2546,14 +2546,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           {req.specificFunctions.map((fnName) => (
                             <span
                               key={fnName}
-                              className="px-2 py-0.5 rounded-md bg-[#F0FDF4] border border-[#BBF7D0] text-[10px] font-bold text-[#16A34A]"
+                              className="px-2 py-0.5 rounded-md bg-turquesa-50 border border-turquesa-200 text-[10px] font-bold text-turquesa-600"
                             >
                               {fnName}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-[11px] text-[#94A3B8] italic">
+                        <span className="text-[11px] text-tinta-400 italic">
                           Sin filtro específico: cualquier integrante de{' '}
                           {req.groupType === 'GT' ? req.gtSubTeam : req.groupType}
                         </span>
@@ -2562,15 +2562,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-tinta-200 flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleOpenAssignModal(req)}
-                      className={`min-h-[38px] w-full px-3 py-1.5 rounded-xl text-xs font-bold font-montserrat flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
+                      className={`min-h-[38px] w-full px-3 py-1.5 rounded-xl text-xs font-bold font-sans flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
                         reqStatus === 'COMPLETO'
-                          ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]'
+                          ? 'bg-turquesa-50 hover:bg-turquesa-100 text-turquesa-600 border border-turquesa-200'
                           : reqStatus === 'SUPERADO'
-                          ? 'bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] border border-[#FED7AA]'
-                          : 'bg-[#182535] hover:bg-[#2A3F55] text-white'
+                          ? 'bg-mostaza-50 hover:bg-mostaza-100 text-mostaza-500 border border-mostaza-200'
+                          : 'bg-tinta-900 hover:bg-tinta-800 text-white'
                       }`}
                     >
                       <UserCheck className="w-3.5 h-3.5" />
@@ -2588,22 +2588,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
       {/* CONDITIONAL: 19 PHYSICAL BASES FOR CARNIVAL GAP */}
       {activeShift.hasBases && physicalBases.length > 0 && (
-        <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EADDC7]">
+        <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-tinta-200">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40 font-dalek">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40 font-display">
                   {activeShift.category || 'GT'} • {activeShift.name} ({activeShift.label})
                 </span>
-                <span className="text-xs text-[#16A34A] font-semibold flex items-center gap-1 font-montserrat">
+                <span className="text-xs text-turquesa-600 font-semibold flex items-center gap-1 font-sans">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {physicalBases.length} Bases Físicas Oficiales
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-[#182535] font-dalek tracking-wide mt-1">
+              <h3 className="text-lg sm:text-xl font-bold text-tinta-900 font-display tracking-wide mt-1">
                 ASIGNACIÓN DE BASES FÍSICAS {currentDay.eventName.toUpperCase()}
               </h3>
-              <p className="text-xs text-[#64748B] font-montserrat">
+              <p className="text-xs text-tinta-500 font-sans">
                 {selectedDayId === 'miercoles'
                   ? 'Bases 1 a 19 + Toro, Speed y Arcade — 22 bases oficiales con cupos específicos de GAP.'
                   : selectedDayId === 'jueves'
@@ -2613,7 +2613,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[#B83A24] font-mono bg-[#FDF2EE] border border-[#F6C7BA] px-2.5 py-1 rounded-lg font-bold">
+              <span className="text-[11px] text-lila-600 font-mono bg-lila-50 border border-lila-200 px-2.5 py-1 rounded-lg font-bold">
                 {selectedDayId === 'miercoles'
                   ? 'Cupos GAP: 2 a 3 por base • 22 bases oficiales'
                   : selectedDayId === 'jueves'
@@ -2649,16 +2649,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               return (
                 <div
                   key={base.id}
-                  className={`bg-[#FFFDF8] border rounded-2xl p-4 flex flex-col justify-between transition-all relative shadow-2xs ${
+                  className={`bg-surface border rounded-2xl p-4 flex flex-col justify-between transition-all relative shadow-2xs ${
                     isSpecial
-                      ? 'border-[#E5A12E] bg-[#FEF8EC]'
+                      ? 'border-mostaza-300 bg-mostaza-50'
                       : baseStatus === 'COMPLETO'
-                      ? 'border-[#BBF7D0] bg-[#F0FDF4]'
+                      ? 'border-turquesa-200 bg-turquesa-50'
                       : baseStatus === 'SUPERADO'
-                      ? 'border-[#FED7AA] bg-[#FFF7ED]'
+                      ? 'border-mostaza-200 bg-mostaza-50'
                       : baseCount > 0
-                      ? 'border-[#EADDC7] bg-[#FAF6EC]'
-                      : 'border-[#EADDC7] hover:border-[#B83A24]'
+                      ? 'border-tinta-200 bg-tinta-50'
+                      : 'border-tinta-200 hover:border-lila-600'
                   }`}
                 >
                   <div>
@@ -2668,33 +2668,33 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         <span
                           className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                             isSpecial
-                              ? 'bg-[#FEF8EC] border border-[#E5A12E]/50 text-[#C87F17]'
-                              : 'bg-[#FAF6EC] border border-[#EADDC7] text-[#182535]'
+                              ? 'bg-mostaza-50 border border-mostaza-300/50 text-mostaza-600'
+                              : 'bg-tinta-50 border border-tinta-200 text-tinta-900'
                           }`}
                         >
                           {isSpecial ? '★' : (base.baseNumber || String(base.id).replace(/^\D+/g, ''))}
                         </span>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-[#182535] text-sm font-montserrat truncate">
+                          <h4 className="font-bold text-tinta-900 text-sm font-sans truncate">
                             {selectedDayId === 'jueves' || selectedDayId === 'viernes'
                               ? `BASE ${base.baseNumber || base.id}`
                               : base.baseLabel || (isSpecial ? base.name : `BASE ${base.baseNumber || base.id}`)}
                           </h4>
                           {selectedDayId === 'jueves' || selectedDayId === 'viernes' ? (
-                            <p className="text-[11px] text-[#64748B] font-montserrat">
+                            <p className="text-[11px] text-tinta-500 font-sans">
                               Requerimiento GAP: {baseReq} personas
                             </p>
                           ) : base.gameName ? (
-                            <p className="text-[11px] text-[#64748B] font-montserrat truncate">
+                            <p className="text-[11px] text-tinta-500 font-sans truncate">
                               {base.gameName}
                             </p>
                           ) : (
-                            <p className="text-[11px] text-[#64748B] font-montserrat truncate">
+                            <p className="text-[11px] text-tinta-500 font-sans truncate">
                               {base.name}
                             </p>
                           )}
                           {isSpecial && (selectedDayId !== 'jueves' && selectedDayId !== 'viernes') && (
-                            <span className="text-[9px] uppercase font-bold text-[#C87F17] font-mono block">
+                            <span className="text-[9px] uppercase font-bold text-mostaza-600 font-mono block">
                               Base Especial
                             </span>
                           )}
@@ -2704,10 +2704,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       <span
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
                           baseStatus === 'COMPLETO'
-                            ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]'
+                            ? 'bg-turquesa-50 text-turquesa-600 border-turquesa-200'
                             : baseStatus === 'SUPERADO'
-                            ? 'bg-[#FFF7ED] text-[#C2410C] border-[#FED7AA]'
-                            : 'bg-[#FEF9C3] text-[#854D0E] border-[#FEF08A]'
+                            ? 'bg-mostaza-50 text-mostaza-500 border-mostaza-200'
+                            : 'bg-mostaza-100 text-mostaza-800 border-mostaza-200'
                         }`}
                       >
                         {baseStatus === 'COMPLETO' && '🟢 '}
@@ -2720,7 +2720,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     {/* Occupants list */}
                     <div className="space-y-1.5 mt-3 min-h-[48px]">
                       {baseAssignments.length === 0 ? (
-                        <div className="py-2 text-center text-[11px] text-[#94A3B8] italic">
+                        <div className="py-2 text-center text-[11px] text-tinta-400 italic">
                           Base vacía en este turno
                         </div>
                       ) : (
@@ -2735,13 +2735,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           return (
                             <div
                               key={assign.id}
-                              className="p-2 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] flex items-center justify-between text-xs"
+                              className="p-2 rounded-xl bg-surface border border-tinta-200 flex items-center justify-between text-xs"
                             >
                               <div className="min-w-0 pr-2">
-                                <div className="font-semibold text-[#182535] truncate flex items-center gap-1.5">
+                                <div className="font-semibold text-tinta-900 truncate flex items-center gap-1.5">
                                   <span>{person?.name || 'Persona'}</span>
                                 </div>
-                                <div className="text-[10px] text-[#64748B] font-mono truncate flex items-center gap-1.5 mt-0.5">
+                                <div className="text-[10px] text-tinta-500 font-mono truncate flex items-center gap-1.5 mt-0.5">
                                   <span>{person?.documentId}</span>
                                   <span>•</span>
                                   <span
@@ -2754,7 +2754,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                         ? 'bg-sky-50 text-sky-800 border-sky-300'
                                         : isVar
                                         ? 'bg-purple-50 text-purple-800 border-purple-300'
-                                        : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7]'
+                                        : 'bg-tinta-50 text-tinta-500 border-tinta-200'
                                     }`}
                                   >
                                     {assign.assignedFunction || assign.roleInBase || 'Base'}
@@ -2765,7 +2765,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               <button
                                 onClick={() => handleRemoveAssignment(assign.id)}
                                 title="Quitar de base"
-                                className="min-h-[36px] min-w-[36px] text-[#64748B] hover:text-[#B83A24] p-1.5 rounded-lg hover:bg-[#FDF2EE] transition-colors flex items-center justify-center shrink-0"
+                                className="min-h-[36px] min-w-[36px] text-tinta-500 hover:text-lila-600 p-1.5 rounded-lg hover:bg-lila-50 transition-colors flex items-center justify-center shrink-0"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -2782,12 +2782,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         const unassigned = CARNIVAL_GAP_OFFICIAL_FUNCTIONS.filter((f) => !usedFns.has(f.toUpperCase()));
                         if (unassigned.length === 0) return null;
                         return (
-                          <div className="pt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-[#64748B]">
-                            <span className="text-[9px] text-[#94A3B8] font-semibold">Disponibles:</span>
+                          <div className="pt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-tinta-500">
+                            <span className="text-[9px] text-tinta-400 font-semibold">Disponibles:</span>
                             {unassigned.map((f) => (
                               <span
                                 key={f}
-                                className="px-1.5 py-0.5 rounded bg-[#FAF6EC] border border-[#EADDC7] text-[9px] font-mono text-[#64748B]"
+                                className="px-1.5 py-0.5 rounded bg-tinta-50 border border-tinta-200 text-[9px] font-mono text-tinta-500"
                               >
                                 {f}
                               </span>
@@ -2799,15 +2799,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
 
                   {/* Manage / Add Person to Base Button */}
-                  <div className="mt-3 pt-3 border-t border-[#EADDC7]">
+                  <div className="mt-3 pt-3 border-t border-tinta-200">
                     <button
                       onClick={() => handleOpenAssignModal(undefined, base.id)}
                       className={`min-h-[40px] w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         baseStatus === 'COMPLETO'
-                          ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]'
+                          ? 'bg-turquesa-50 hover:bg-turquesa-100 text-turquesa-600 border border-turquesa-200'
                           : baseStatus === 'SUPERADO'
-                          ? 'bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] border border-[#FED7AA]'
-                          : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs font-bold'
+                          ? 'bg-mostaza-50 hover:bg-mostaza-100 text-mostaza-500 border border-mostaza-200'
+                          : 'bg-lila-600 hover:bg-lila-700 text-white shadow-2xs font-bold'
                       }`}
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -2824,16 +2824,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       )}
 
       {/* GENERAL SHIFT ROSTER (PERSONAL ASIGNADO) */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-6 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EADDC7]">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-6 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-tinta-200">
           <div>
-            <h4 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
+            <h4 className="text-base sm:text-lg font-bold text-tinta-900 font-display tracking-wide">
               PERSONAL ASIGNADO A {activeShift.name} ({activeShift.label})
             </h4>
             <div className="flex flex-wrap items-center gap-2 mt-0.5">
-              <p className="text-xs font-montserrat text-[#64748B]">
+              <p className="text-xs font-sans text-tinta-500">
                 Cupo ocupado:{' '}
-                <strong className={shiftCupoFilledCount >= (activeShift.capacity || 0) ? 'text-[#16A34A]' : 'text-[#182535]'}>
+                <strong className={shiftCupoFilledCount >= (activeShift.capacity || 0) ? 'text-turquesa-600' : 'text-tinta-900'}>
                   {shiftCupoFilledCount} / {activeShift.capacity || 0}
                 </strong>{' '}
                 {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}
@@ -2847,7 +2847,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
           <button
             onClick={() => handleOpenAssignModal()}
-            className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#B83A24] hover:bg-[#9E2F1B] text-white shadow-2xs transition-all self-start sm:self-auto font-dalek tracking-wider cursor-pointer"
+            className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-lila-600 hover:bg-lila-700 text-white shadow-2xs transition-all self-start sm:self-auto font-display tracking-wider cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Asignar Persona a Turno</span>
@@ -2859,16 +2859,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           {/* Main Controls: Selector Dropdown + Search + Reset */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             {/* Primary Selector Dropdown ("Seleccionar y no copiar") */}
-            <div className="flex items-center gap-2 bg-[#FAF6EC] p-1.5 px-3 rounded-2xl border border-[#EADDC7] overflow-x-auto">
-              <Filter className="w-4 h-4 text-[#B83A24] shrink-0" />
-              <label htmlFor="roster-filter-select" className="text-[11px] font-bold text-[#64748B] font-montserrat whitespace-nowrap">
+            <div className="flex items-center gap-2 bg-tinta-50 p-1.5 px-3 rounded-2xl border border-tinta-200 overflow-x-auto">
+              <Filter className="w-4 h-4 text-lila-600 shrink-0" />
+              <label htmlFor="roster-filter-select" className="text-[11px] font-bold text-tinta-500 font-sans whitespace-nowrap">
                 Seleccionar filtro:
               </label>
               <select
                 id="roster-filter-select"
                 value={activeRosterFilter}
                 onChange={(e) => setActiveRosterFilter(e.target.value)}
-                className="min-h-[34px] px-3 py-1.5 rounded-xl bg-white border border-[#EADDC7] text-xs font-bold text-[#182535] font-montserrat cursor-pointer hover:border-[#B83A24] focus:outline-hidden focus:ring-2 focus:ring-[#B83A24]/30"
+                className="min-h-[34px] px-3 py-1.5 rounded-xl bg-white border border-tinta-200 text-xs font-bold text-tinta-900 font-sans cursor-pointer hover:border-lila-600 focus:outline-hidden focus:ring-2 focus:ring-lila-600/30"
               >
                 <option value="ALL">Mostrar Todos ({currentShiftAssignments.length})</option>
                 <optgroup label="── SUB-EQUIPOS DE GT ──">
@@ -2889,19 +2889,19 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             {/* Quick Search in Roster */}
             <div className="flex items-center gap-2">
               <div className="relative min-w-[200px] sm:w-64">
-                <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-tinta-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Buscar asignado o GT..."
                   value={assignedRosterSearch}
                   onChange={(e) => setAssignedRosterSearch(e.target.value)}
-                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 placeholder:text-tinta-400 focus:outline-hidden focus:border-lila-600"
                 />
                 {assignedRosterSearch && (
                   <button
                     type="button"
                     onClick={() => setAssignedRosterSearch('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-0.5 cursor-pointer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-tinta-400 hover:text-tinta-900 p-0.5 cursor-pointer"
                   >
                     ×
                   </button>
@@ -2915,7 +2915,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     setActiveRosterFilter('ALL');
                     setAssignedRosterSearch('');
                   }}
-                  className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer whitespace-nowrap hidden sm:inline"
+                  className="text-[11px] font-bold text-lila-600 hover:underline cursor-pointer whitespace-nowrap hidden sm:inline"
                 >
                   Ver todos ({currentShiftAssignments.length})
                 </button>
@@ -2924,17 +2924,17 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </div>
 
           {/* Quick Click Filter Pills: Direct Selection without typing */}
-          <div className="flex items-center gap-1.5 bg-[#FAF6EC] p-1.5 rounded-2xl border border-[#EADDC7] overflow-x-auto pb-2">
-            <span className="text-[11px] font-bold text-[#64748B] px-2 font-montserrat shrink-0">
+          <div className="flex items-center gap-1.5 bg-tinta-50 p-1.5 rounded-2xl border border-tinta-200 overflow-x-auto pb-2">
+            <span className="text-[11px] font-bold text-tinta-500 px-2 font-sans shrink-0">
               Acceso rápido:
             </span>
             <button
               type="button"
               onClick={() => setActiveRosterFilter('ALL')}
-              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap ${
                 activeRosterFilter === 'ALL'
-                  ? 'bg-[#182535] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                  ? 'bg-tinta-900 text-white shadow-2xs'
+                  : 'text-tinta-500 hover:text-tinta-900 hover:bg-surface'
               }`}
             >
               Todos ({currentShiftAssignments.length})
@@ -2943,10 +2943,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveRosterFilter('GT')}
-              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap ${
                 activeRosterFilter === 'GT'
-                  ? 'bg-[#182535] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                  ? 'bg-tinta-900 text-white shadow-2xs'
+                  : 'text-tinta-500 hover:text-tinta-900 hover:bg-surface'
               }`}
             >
               Todos los GT ({assignedGtCount})
@@ -2960,12 +2960,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   key={st.filterId}
                   type="button"
                   onClick={() => setActiveRosterFilter(st.filterId)}
-                  className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-[#B83A24] text-white shadow-2xs'
+                      ? 'bg-lila-600 text-white shadow-2xs'
                       : st.count > 0
-                      ? 'bg-[#FFFDF8] text-[#182535] hover:bg-[#FAF6EC] border border-[#EADDC7]'
-                      : 'text-[#94A3B8] hover:text-[#182535] hover:bg-[#FFFDF8]'
+                      ? 'bg-surface text-tinta-900 hover:bg-tinta-50 border border-tinta-200'
+                      : 'text-tinta-400 hover:text-tinta-900 hover:bg-surface'
                   }`}
                 >
                   <span>{st.displayLabel}</span>
@@ -2974,8 +2974,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       isSelected
                         ? 'bg-white/20 text-white'
                         : st.count > 0
-                        ? 'bg-[#FAF6EC] text-[#B83A24] font-bold'
-                        : 'bg-[#FAF6EC] text-[#94A3B8]'
+                        ? 'bg-tinta-50 text-lila-600 font-bold'
+                        : 'bg-tinta-50 text-tinta-400'
                     }`}
                   >
                     {st.count}
@@ -2989,10 +2989,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveRosterFilter('MESA')}
-                className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+                className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap ${
                   activeRosterFilter === 'MESA'
                     ? 'bg-purple-700 text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-purple-700 hover:bg-[#FFFDF8]'
+                    : 'text-tinta-500 hover:text-purple-700 hover:bg-surface'
                 }`}
               >
                 MESA ({assignedMesaCount})
@@ -3002,10 +3002,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveRosterFilter('GAP')}
-              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-montserrat whitespace-nowrap ${
+              className={`min-h-[32px] px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer font-sans whitespace-nowrap ${
                 activeRosterFilter === 'GAP'
-                  ? 'bg-[#16A34A] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#16A34A] hover:bg-[#FFFDF8]'
+                  ? 'bg-turquesa-600 text-white shadow-2xs'
+                  : 'text-tinta-500 hover:text-turquesa-600 hover:bg-surface'
               }`}
             >
               GAP ({assignedGapCount})
@@ -3015,7 +3015,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveRosterFilter('ALL')}
-                className="text-[11px] font-bold text-[#B83A24] hover:underline cursor-pointer ml-auto px-2 whitespace-nowrap"
+                className="text-[11px] font-bold text-lila-600 hover:underline cursor-pointer ml-auto px-2 whitespace-nowrap"
               >
                 Quitar filtro ({activeFilterLabel})
               </button>
@@ -3024,17 +3024,17 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         </div>
 
         {currentShiftAssignments.length === 0 ? (
-          <div className="py-12 text-center text-xs text-[#64748B]">
-            <Users className="w-10 h-10 text-[#C87F17] mx-auto mb-2 opacity-60" />
-            <p className="font-semibold text-[#182535] text-sm">0 Personas asignadas a este turno</p>
-            <p className="text-xs text-[#94A3B8] mt-1">
+          <div className="py-12 text-center text-xs text-tinta-500">
+            <Users className="w-10 h-10 text-mostaza-600 mx-auto mb-2 opacity-60" />
+            <p className="font-semibold text-tinta-900 text-sm">0 Personas asignadas a este turno</p>
+            <p className="text-xs text-tinta-400 mt-1">
               Seleccione una necesidad de cupo arriba o pulse &quot;Asignar Persona a Turno&quot;.
             </p>
           </div>
         ) : filteredCurrentShiftAssignments.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#64748B] bg-[#FAF6EC]/60 rounded-2xl border border-dashed border-[#EADDC7]">
-            <Users className="w-8 h-8 text-[#C87F17] mx-auto mb-2 opacity-60" />
-            <p className="font-semibold text-[#182535] text-sm">
+          <div className="py-8 text-center text-xs text-tinta-500 bg-tinta-50/60 rounded-2xl border border-dashed border-tinta-200">
+            <Users className="w-8 h-8 text-mostaza-600 mx-auto mb-2 opacity-60" />
+            <p className="font-semibold text-tinta-900 text-sm">
               {assignedRosterSearch
                 ? `No hay personas que coincidan con "${assignedRosterSearch}" en este turno`
                 : `No hay personas de ${activeFilterLabel} asignadas en este turno`}
@@ -3044,18 +3044,18 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 setActiveRosterFilter('ALL');
                 setAssignedRosterSearch('');
               }}
-              className="mt-2 text-xs font-bold text-[#B83A24] hover:underline cursor-pointer"
+              className="mt-2 text-xs font-bold text-lila-600 hover:underline cursor-pointer"
             >
               Mostrar todas las asignaciones ({currentShiftAssignments.length})
             </button>
           </div>
         ) : (
           <>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 bg-[#FAF6EC]/50 p-2.5 px-4 rounded-xl border border-[#EADDC7]">
-              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#182535]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 bg-tinta-50/50 p-2.5 px-4 rounded-xl border border-tinta-200">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-tinta-900">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded text-[#B83A24] focus:ring-[#B83A24]"
+                  className="w-4 h-4 rounded text-lila-600 focus:ring-lila-600"
                   checked={filteredCurrentShiftAssignments.length > 0 && selectedAssignmentIds.length === filteredCurrentShiftAssignments.length}
                   onChange={() => toggleSelectAllAssignments(filteredCurrentShiftAssignments.map(a => a.id))}
                 />
@@ -3064,7 +3064,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               {selectedAssignmentIds.length > 0 && (
                 <button
                   onClick={handleBulkRemoveAssignments}
-                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#B83A24] hover:bg-[#9E2F1B] text-white rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-lila-600 hover:bg-lila-700 text-white rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Eliminar {selectedAssignmentIds.length} seleccionados
@@ -3080,20 +3080,20 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               return (
                 <div
                   key={assign.id}
-                  className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-colors ${selectedAssignmentIds.includes(assign.id) ? 'bg-[#FDF2EE] border-[#B83A24]/40 shadow-sm' : 'bg-[#FAF6EC] border-[#EADDC7]'}`}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-colors ${selectedAssignmentIds.includes(assign.id) ? 'bg-lila-50 border-lila-600/40 shadow-sm' : 'bg-tinta-50 border-tinta-200'}`}
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="pt-0.5">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded text-[#B83A24] focus:ring-[#B83A24] cursor-pointer"
+                        className="w-4 h-4 rounded text-lila-600 focus:ring-lila-600 cursor-pointer"
                         checked={selectedAssignmentIds.includes(assign.id)}
                         onChange={() => toggleAssignmentSelection(assign.id)}
                       />
                     </div>
                     <div className="min-w-0 pr-2">
-                      <div className="font-semibold text-[#182535] truncate">{person?.name || 'Persona'}</div>
-                    <div className="text-[11px] text-[#64748B] font-mono truncate">
+                      <div className="font-semibold text-tinta-900 truncate">{person?.name || 'Persona'}</div>
+                    <div className="text-[11px] text-tinta-500 font-mono truncate">
                       {person?.documentId || ''}
                     </div>
 
@@ -3112,10 +3112,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         }`}
                         className={`text-[10px] px-2 py-0.5 rounded font-bold border transition-colors cursor-pointer hover:opacity-80 ${
                           isMesaAssign
-                            ? 'bg-[#FEF8EC] text-[#C87F17] border-[#FDE68A]'
+                            ? 'bg-mostaza-50 text-mostaza-600 border-mostaza-200'
                             : assign.assignedType === 'GAP'
-                            ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]'
-                            : 'bg-[#FFFDF8] text-[#182535] border-[#EADDC7]'
+                            ? 'bg-turquesa-50 text-turquesa-600 border-turquesa-200'
+                            : 'bg-surface text-tinta-900 border-tinta-200'
                         }`}
                       >
                         {assign.assignedType === 'GT'
@@ -3125,12 +3125,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           : 'GAP'}
                       </button>
                       {assign.assignedFunction && (
-                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-turquesa-50 text-turquesa-600 border border-turquesa-200">
                           {assign.assignedFunction}
                         </span>
                       )}
                       {assign.baseNumber !== undefined && (
-                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
                           {getBaseDisplayName(assign.baseNumber)}
                         </span>
                       )}
@@ -3140,7 +3140,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                   <button
                     onClick={() => handleRemoveAssignment(assign.id)}
-                    className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                    className="min-h-[36px] min-w-[36px] p-2 rounded-lg text-tinta-500 hover:text-lila-600 hover:bg-lila-50 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                     title="Quitar turno"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -3156,29 +3156,29 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       {/* MODAL 1: DEFINIR NECESIDAD DE CUPO (REQUERIMIENTO POR GT) */}
       {isReqModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-[#EADDC7]">
+          <div className="bg-surface border-2 border-tinta-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-tinta-200">
               <div>
-                <span className="text-[10px] font-bold text-[#B83A24] uppercase font-dalek tracking-wider">
+                <span className="text-[10px] font-bold text-lila-600 uppercase font-display tracking-wider">
                   {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                 </span>
-                <h3 className="text-lg font-bold text-[#182535] font-dalek">
+                <h3 className="text-lg font-bold text-tinta-900 font-display">
                   CREAR NECESIDAD DE TURNO
                 </h3>
               </div>
               <button
                 onClick={() => setIsReqModalOpen(false)}
-                className="p-1 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]"
+                className="p-1 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveRequirement} className="space-y-4 mt-4 text-xs font-montserrat">
+            <form onSubmit={handleSaveRequirement} className="space-y-4 mt-4 text-xs font-sans">
               {/* Grupo */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1">
                     Grupo Principal *
                   </label>
                   <select
@@ -3188,7 +3188,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       setReqGroupType(val);
                       setReqSelectedFunctions([]);
                     }}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
+                    className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs font-semibold text-tinta-900"
                   >
                     <option value="GT">GT (Guías Técnicos)</option>
                     <option value="GAP">GAP (Guías de Apoyo y Protocolo)</option>
@@ -3199,7 +3199,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 {/* Sub-equipo GT if GT */}
                 {reqGroupType === 'GT' ? (
                   <div>
-                    <label className="block text-xs font-bold text-[#334155] mb-1">
+                    <label className="block text-xs font-bold text-tinta-700 mb-1">
                       Sub-Equipo GT *
                     </label>
                     <select
@@ -3208,7 +3208,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         setReqGtSubTeam(e.target.value as GtSubTeam);
                         setReqSelectedFunctions([]);
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs font-semibold text-tinta-900"
                     >
                       {GT_SUBTEAMS.map((sub) => (
                         <option key={sub} value={sub}>
@@ -3219,7 +3219,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-bold text-[#334155] mb-1">
+                    <label className="block text-xs font-bold text-tinta-700 mb-1">
                       Cupos Necesarios *
                     </label>
                     <input
@@ -3228,7 +3228,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       max={100}
                       value={reqCapacity}
                       onChange={(e) => setReqCapacity(Number(e.target.value))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-bold text-[#182535]"
+                      className="w-full px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs font-bold text-tinta-900"
                     />
                   </div>
                 )}
@@ -3237,7 +3237,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               {/* Capacity if GT */}
               {reqGroupType === 'GT' && (
                 <div>
-                  <label className="block text-xs font-bold text-[#334155] mb-1">
+                  <label className="block text-xs font-bold text-tinta-700 mb-1">
                     Cupos Necesarios para {reqGtSubTeam} en {activeShift.name} *
                   </label>
                   <div className="flex items-center gap-3">
@@ -3247,9 +3247,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       max={100}
                       value={reqCapacity}
                       onChange={(e) => setReqCapacity(Number(e.target.value))}
-                      className="w-32 px-3 py-2.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-sm font-bold text-[#182535]"
+                      className="w-32 px-3 py-2.5 rounded-xl bg-tinta-50 border border-tinta-300 text-sm font-bold text-tinta-900"
                     />
-                    <span className="text-xs text-[#64748B]">
+                    <span className="text-xs text-tinta-500">
                       personas (El cupo total pertenece a <b>{reqGtSubTeam}</b>)
                     </span>
                   </div>
@@ -3257,13 +3257,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               )}
 
               {/* SECCIÓN OPCIONAL: ASIGNAR FUNCIONES ESPECÍFICAS */}
-              <div className="p-4 rounded-2xl bg-[#FAF6EC] border border-[#EADDC7] space-y-3">
+              <div className="p-4 rounded-2xl bg-tinta-50 border border-tinta-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-bold text-[#182535]">
+                    <span className="text-xs font-bold text-tinta-900">
                       Asignar Funciones Específicas
                     </span>
-                    <span className="text-[10px] text-[#64748B] block">
+                    <span className="text-[10px] text-tinta-500 block">
                       Opcional: filtra a las personas que tengan estas funciones
                     </span>
                   </div>
@@ -3272,13 +3272,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     id="toggleReqFunc"
                     checked={reqShowSpecificFunctions}
                     onChange={(e) => setReqShowSpecificFunctions(e.target.checked)}
-                    className="w-4 h-4 accent-[#B83A24] rounded cursor-pointer"
+                    className="w-4 h-4 accent-lila-600 rounded cursor-pointer"
                   />
                 </div>
 
                 {reqShowSpecificFunctions && (
-                  <div className="pt-2 border-t border-[#EADDC7]/60 space-y-2">
-                    <p className="text-[11px] text-[#475569]">
+                  <div className="pt-2 border-t border-tinta-200/60 space-y-2">
+                    <p className="text-[11px] text-tinta-600">
                       Seleccione las funciones exclusivas de{' '}
                       <b>{reqGroupType === 'GT' ? `GT → ${reqGtSubTeam}` : reqGroupType}</b>:
                     </p>
@@ -3293,7 +3293,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                       if (availableCatalogFns.length === 0) {
                         return (
-                          <div className="p-2.5 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] text-[11px] text-[#64748B]">
+                          <div className="p-2.5 rounded-xl bg-surface border border-tinta-200 text-[11px] text-tinta-500">
                             No hay funciones específicas registradas para este grupo. Puede crearlas en la pestaña <b>FUNCIONES</b>.
                           </div>
                         );
@@ -3316,8 +3316,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 }}
                                 className={`min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
                                   isChecked
-                                    ? 'bg-[#182535] text-white border-[#182535]'
-                                    : 'bg-[#FFFDF8] text-[#475569] border-[#E2D6BC] hover:border-[#182535]'
+                                    ? 'bg-tinta-900 text-white border-tinta-900'
+                                    : 'bg-surface text-tinta-600 border-tinta-300 hover:border-tinta-900'
                                 }`}
                               >
                                 {isChecked ? (
@@ -3338,7 +3338,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
               {/* Notas opcionales */}
               <div>
-                <label className="block text-xs font-bold text-[#334155] mb-1">
+                <label className="block text-xs font-bold text-tinta-700 mb-1">
                   Notas / Observaciones del Cupo
                 </label>
                 <input
@@ -3346,22 +3346,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   value={reqNotes}
                   onChange={(e) => setReqNotes(e.target.value)}
                   placeholder="Ej. Llevar chaleco reflectivo, coordinar con líder..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535]"
+                  className="w-full px-3 py-2 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900"
                 />
               </div>
 
               {/* Botones de acción */}
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#EADDC7]">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-tinta-200">
                 <button
                   type="button"
                   onClick={() => setIsReqModalOpen(false)}
-                  className="min-h-[42px] px-4 py-2 rounded-xl text-[#64748B] hover:text-[#182535] text-xs font-semibold"
+                  className="min-h-[42px] px-4 py-2 rounded-xl text-tinta-500 hover:text-tinta-900 text-xs font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="min-h-[42px] px-5 py-2 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white font-bold text-xs shadow-md transition-all font-dalek tracking-wider"
+                  className="min-h-[42px] px-5 py-2 rounded-xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs shadow-md transition-all font-display tracking-wider"
                 >
                   Guardar Cupo de Turno
                 </button>
@@ -3386,39 +3386,39 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
-            <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="bg-surface border-2 border-tinta-200 rounded-3xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col overflow-hidden">
               {/* Modal Header */}
-              <div className="flex items-start justify-between pb-2.5 border-b border-[#EADDC7] shrink-0">
+              <div className="flex items-start justify-between pb-2.5 border-b border-tinta-200 shrink-0">
                 <div>
                   {modalBase ? (
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
+                        <span className="text-xs font-bold text-lila-600 uppercase font-sans tracking-wide">
                           {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                         </span>
                         {modalBase.isSpecial && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-[#FEF8EC] border border-[#E5A12E]/50 text-[#C87F17] font-bold">
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-mostaza-50 border border-mostaza-300/50 text-mostaza-600 font-bold">
                             BASE ESPECIAL
                           </span>
                         )}
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-black text-[#182535] font-montserrat mt-0.5">
+                      <h3 className="text-xl sm:text-2xl font-black text-tinta-900 font-sans mt-0.5">
                         {selectedDayId === 'jueves' || selectedDayId === 'viernes'
                           ? `BASE ${modalBase.baseNumber || modalBase.id}`
                           : modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-[#64748B] mt-1 font-montserrat flex-wrap">
-                        <span>Cupo GAP: <b className="text-[#182535] font-mono">{modalBase.defaultCapacity}</b></span>
+                      <div className="flex items-center gap-2 text-xs text-tinta-500 mt-1 font-sans flex-wrap">
+                        <span>Cupo GAP: <b className="text-tinta-900 font-mono">{modalBase.defaultCapacity}</b></span>
                         <span>•</span>
-                        <span>Personas asignadas: <b className={`font-mono font-bold ${isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}`}>{currentBaseOccupants.length}/{modalBase.defaultCapacity}</b></span>
+                        <span>Personas asignadas: <b className={`font-mono font-bold ${isBaseFull ? 'text-emerald-700' : 'text-lila-600'}`}>{currentBaseOccupants.length}/{modalBase.defaultCapacity}</b></span>
                       </div>
                     </div>
                   ) : (
                     <div>
-                      <span className="text-[10px] font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
+                      <span className="text-[10px] font-bold text-lila-600 uppercase font-sans tracking-wide">
                         {currentDay.eventName} • {activeShift.name} ({activeShift.label})
                       </span>
-                      <h3 className="text-lg sm:text-xl font-extrabold text-[#182535] font-montserrat">
+                      <h3 className="text-lg sm:text-xl font-extrabold text-tinta-900 font-sans">
                         {activeRequirement
                           ? `ASIGNAR A: ${
                               activeRequirement.groupType === 'GT'
@@ -3430,11 +3430,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           : `ASIGNAR A ${activeShift.name}`}
                       </h3>
                       {activeRequirement ? (
-                        <p className="text-xs text-[#64748B] mt-0.5">
+                        <p className="text-xs text-tinta-500 mt-0.5">
                           Cupo objetivo: <b>{activeRequirement.capacity} personas ({activeRequirement.groupType})</b>
                         </p>
                       ) : (
-                        <p className="text-xs text-[#64748B] mt-0.5">
+                        <p className="text-xs text-tinta-500 mt-0.5">
                           Cupo del turno: <b>{shiftCupoFilledCount} / {activeShift.capacity || 0} {isShiftMesa ? 'MESA' : activeShift.category === 'GAP' ? 'GAP' : 'GT'}</b>
                           {assignedMesaCount > 0 && !isShiftMesa && (
                             <span className="ml-1 text-purple-700 font-medium">
@@ -3448,7 +3448,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 </div>
                 <button
                   onClick={() => setIsAssignModalOpen(false)}
-                  className="p-1 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC]"
+                  className="p-1 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -3458,8 +3458,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               <div className="flex-1 min-h-0 overflow-y-auto pr-1 sm:pr-2 py-2 space-y-3 overscroll-contain">
                 {/* Modal Alert if continuity or error */}
                 {modalAlert && (
-                  <div className="p-3 rounded-2xl bg-[#FEF8EC] border border-[#E5A12E]/40 text-[#C87F17] text-xs flex items-start gap-2 leading-relaxed">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#C87F17]" />
+                  <div className="p-3 rounded-2xl bg-mostaza-50 border border-mostaza-300/40 text-mostaza-600 text-xs flex items-start gap-2 leading-relaxed">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-mostaza-600" />
                     <span>{modalAlert}</span>
                   </div>
                 )}
@@ -3467,22 +3467,22 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 {modalBase ? (
                   <div className="space-y-3.5">
                     {/* Status Banner */}
-                    <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-2.5">
+                    <div className="p-4 rounded-2xl bg-surface border border-tinta-200 space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                          <span className="text-[10px] font-bold text-[#B83A24] uppercase font-montserrat tracking-wide">
+                          <span className="text-[10px] font-bold text-lila-600 uppercase font-sans tracking-wide">
                             {currentDay.eventName} • {activeShift.name}
                           </span>
-                          <h2 className="text-xl sm:text-2xl font-black text-[#182535] font-montserrat">
+                          <h2 className="text-xl sm:text-2xl font-black text-tinta-900 font-sans">
                             {selectedDayId === 'jueves' || selectedDayId === 'viernes'
                               ? `BASE ${modalBase.baseNumber || modalBase.id}`
                               : modalBase.baseLabel || (modalBase.isSpecial ? modalBase.name : `BASE ${modalBase.baseNumber || modalBase.id}`)}
                           </h2>
                         </div>
                         <div className="flex items-center gap-2.5">
-                          <div className="px-3 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#EADDC7] text-xs font-montserrat">
-                            <span className="text-[#64748B] font-bold">Cupo GAP: </span>
-                            <span className="text-[#182535] font-extrabold">{modalBase.defaultCapacity}</span>
+                          <div className="px-3 py-1.5 rounded-xl bg-tinta-50 border border-tinta-200 text-xs font-sans">
+                            <span className="text-tinta-500 font-bold">Cupo GAP: </span>
+                            <span className="text-tinta-900 font-extrabold">{modalBase.defaultCapacity}</span>
                           </div>
                           {(() => {
                             const modalReq = modalBase.defaultCapacity || 2;
@@ -3491,12 +3491,12 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                               modalCount < modalReq ? 'PENDIENTE' : modalCount === modalReq ? 'COMPLETO' : 'SUPERADO';
 
                             return (
-                              <div className={`px-3 py-1.5 rounded-xl border text-xs font-montserrat font-bold flex items-center gap-1.5 ${
+                              <div className={`px-3 py-1.5 rounded-xl border text-xs font-sans font-bold flex items-center gap-1.5 ${
                                 modalStatus === 'COMPLETO'
-                                  ? 'bg-[#F0FDF4] border-[#BBF7D0] text-[#16A34A]'
+                                  ? 'bg-turquesa-50 border-turquesa-200 text-turquesa-600'
                                   : modalStatus === 'SUPERADO'
-                                  ? 'bg-[#FFF7ED] border-[#FED7AA] text-[#C2410C]'
-                                  : 'bg-[#FEF9C3] border-[#FEF08A] text-[#854D0E]'
+                                  ? 'bg-mostaza-50 border-mostaza-200 text-mostaza-500'
+                                  : 'bg-mostaza-100 border-mostaza-200 text-mostaza-800'
                               }`}>
                                 <span>
                                   {modalStatus === 'COMPLETO' && '🟢 '}
@@ -3507,7 +3507,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 <span className="font-mono font-extrabold">{modalCount}/{modalReq}</span>
                                 <span className="text-[10px] font-semibold uppercase">({modalStatus})</span>
                                 {currentBaseGtOccupants.length > 0 && (
-                                  <span className="ml-1 text-[#64748B] font-normal text-[10px]">
+                                  <span className="ml-1 text-tinta-500 font-normal text-[10px]">
                                     (+{currentBaseGtOccupants.length} GT)
                                   </span>
                                 )}
@@ -3525,25 +3525,25 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                         if (modalStatus === 'COMPLETO') {
                           return (
-                            <div className="p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl text-[#16A34A] text-xs font-medium flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#16A34A]" />
+                            <div className="p-3 bg-turquesa-50 border border-turquesa-200 rounded-xl text-turquesa-600 text-xs font-medium flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 shrink-0 text-turquesa-600" />
                               <span>🟢 <b>Requerimiento completo ({modalCount}/{modalReq}):</b> Se ha alcanzado la cantidad requerida de GAP. Puede seguir agregando personas adicionales si el operativo lo amerita.</span>
                             </div>
                           );
                         } else if (modalStatus === 'SUPERADO') {
                           return (
-                            <div className="p-3 bg-[#FFF7ED] border border-[#FED7AA] rounded-xl text-[#C2410C] text-xs font-medium flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 shrink-0 text-[#C2410C]" />
+                            <div className="p-3 bg-mostaza-50 border border-mostaza-200 rounded-xl text-mostaza-500 text-xs font-medium flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 shrink-0 text-mostaza-500" />
                               <span>🟠 <b>Requerimiento superado ({modalCount}/{modalReq}):</b> Hay +{modalCount - modalReq} persona{modalCount - modalReq > 1 ? 's' : ''} adicional{modalCount - modalReq > 1 ? 'es' : ''}. El administrador puede seguir asignando si es necesario.</span>
                             </div>
                           );
                         } else {
                           return (
-                            <div className="p-2.5 bg-[#FEF9C3] border border-[#FEF08A] rounded-xl text-xs text-[#854D0E] flex items-center justify-between">
+                            <div className="p-2.5 bg-mostaza-100 border border-mostaza-200 rounded-xl text-xs text-mostaza-800 flex items-center justify-between">
                               <span className="font-medium">
-                                🟡 Requerimiento pendiente: <strong className="text-[#854D0E]">{modalCount} / {modalReq}</strong>
+                                🟡 Requerimiento pendiente: <strong className="text-mostaza-800">{modalCount} / {modalReq}</strong>
                               </span>
-                              <span className="text-[11px] font-bold font-montserrat">
+                              <span className="text-[11px] font-bold font-sans">
                                 {modalReq - modalCount === 1
                                   ? 'Falta 1 persona GAP'
                                   : `Faltan ${modalReq - modalCount} personas GAP`}
@@ -3555,15 +3555,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     {/* Personas Asignadas y Funciones Oficiales */}
-                    <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-3">
-                      <div className="flex items-center justify-between pb-2 border-b border-[#EADDC7]">
+                    <div className="p-4 rounded-2xl bg-surface border border-tinta-200 space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-tinta-200">
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-[#B83A24]" />
-                          <h3 className="text-xs font-bold text-[#182535] uppercase font-montserrat tracking-wide">
+                          <Users className="w-4 h-4 text-lila-600" />
+                          <h3 className="text-xs font-bold text-tinta-900 uppercase font-sans tracking-wide">
                             Personas Asignadas ({currentBaseOccupants.length}/{modalBase.defaultCapacity})
                           </h3>
                         </div>
-                        <span className="text-[10px] text-[#64748B] font-montserrat hidden sm:inline">
+                        <span className="text-[10px] text-tinta-500 font-sans hidden sm:inline">
                           Funciones: LÍDER DE BASE, CALIFICADOR, VEEDOR, VAR
                         </span>
                       </div>
@@ -3583,7 +3583,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                       )}
 
                       {currentBaseOccupants.length === 0 ? (
-                        <div className="p-4 rounded-xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center text-xs text-[#94A3B8]">
+                        <div className="p-4 rounded-xl bg-tinta-50 border border-dashed border-tinta-200 text-center text-xs text-tinta-400">
                           No hay personas asignadas todavía a esta base.
                         </div>
                       ) : (
@@ -3595,24 +3595,24 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             return (
                               <div
                                 key={occ.id}
-                                className="p-3 rounded-xl border border-[#EADDC7] bg-[#FAF6EC] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                                className="p-3 rounded-xl border border-tinta-200 bg-tinta-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="w-6 h-6 rounded-full bg-[#182535] text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                                  <span className="w-6 h-6 rounded-full bg-tinta-900 text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
                                     {idx + 1}
                                   </span>
                                   <div className="min-w-0">
-                                    <div className="font-bold text-xs text-[#182535] truncate">
+                                    <div className="font-bold text-xs text-tinta-900 truncate">
                                       {person?.name || 'Persona Asignada'}
                                     </div>
-                                    <div className="text-[10px] text-[#64748B] font-mono">
+                                    <div className="text-[10px] text-tinta-500 font-mono">
                                       C.C: {person?.documentId || 'S/N'} • @{person?.username || person?.documentId}
                                     </div>
                                   </div>
                                 </div>
 
                                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                                  <label className="text-[10px] font-bold text-[#64748B] font-montserrat">
+                                  <label className="text-[10px] font-bold text-tinta-500 font-sans">
                                     Función:
                                   </label>
                                   <select
@@ -3620,7 +3620,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                     onChange={(e) =>
                                       handleManualFunctionChange(occ.id, e.target.value, modalBase.id)
                                     }
-                                    className="text-xs font-bold py-1 px-2.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                                    className="text-xs font-bold py-1 px-2.5 rounded-lg bg-white border border-tinta-200 text-tinta-900 cursor-pointer hover:border-lila-600 focus:outline-hidden"
                                   >
                                     {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((fn) => (
                                       <option key={fn} value={fn}>
@@ -3632,7 +3632,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveAssignment(occ.id)}
-                                    className="p-1.5 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
+                                    className="p-1.5 rounded-lg text-tinta-500 hover:text-lila-600 hover:bg-lila-50 transition-colors cursor-pointer"
                                     title="Quitar persona de la base"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -3646,34 +3646,34 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     {/* Section: Asignar Persona GAP */}
-                    <div className="p-4 rounded-2xl bg-[#FFFDF8] border border-[#EADDC7] space-y-3">
-                      <div className="flex items-center justify-between pb-1 border-b border-[#EADDC7]">
+                    <div className="p-4 rounded-2xl bg-surface border border-tinta-200 space-y-3">
+                      <div className="flex items-center justify-between pb-1 border-b border-tinta-200">
                         <div className="flex items-center gap-1.5">
-                          <Plus className="w-4 h-4 text-[#B83A24]" />
-                          <h3 className="text-xs font-bold text-[#182535] uppercase font-montserrat tracking-wide">
+                          <Plus className="w-4 h-4 text-lila-600" />
+                          <h3 className="text-xs font-bold text-tinta-900 uppercase font-sans tracking-wide">
                             + ASIGNAR PERSONA ({currentBaseOccupants.length}/{modalBase.defaultCapacity})
                           </h3>
                         </div>
-                        <span className="text-[11px] font-bold text-[#B83A24] font-mono">
+                        <span className="text-[11px] font-bold text-lila-600 font-mono">
                           {filteredCandidates.length} disponibles
                         </span>
                       </div>
 
                       {/* Search */}
                       <div className="relative">
-                        <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-tinta-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="text"
                           placeholder="Buscar persona para asignar..."
                           value={candidateSearchQuery}
                           onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                          className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                          className="w-full pl-9 pr-8 py-2 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 placeholder:text-tinta-400 focus:outline-hidden focus:border-lila-600"
                         />
                         {candidateSearchQuery && (
                           <button
                             type="button"
                             onClick={() => setCandidateSearchQuery('')}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-tinta-400 hover:text-tinta-900 p-1"
                           >
                             ×
                           </button>
@@ -3682,11 +3682,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                       {/* Candidates list */}
                       {filteredCandidates.length === 0 ? (
-                        <div className="p-6 rounded-xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-1">
-                          <p className="text-xs font-bold text-[#182535] font-montserrat">
+                        <div className="p-6 rounded-xl bg-tinta-50 border border-dashed border-tinta-200 text-center space-y-1">
+                          <p className="text-xs font-bold text-tinta-900 font-sans">
                             No hay candidatos GAP disponibles para este turno
                           </p>
-                          <p className="text-[11px] text-[#64748B]">
+                          <p className="text-[11px] text-tinta-500">
                             Solo se muestran integrantes activos con disponibilidad registrada en este turno y sin asignaciones previas.
                           </p>
                         </div>
@@ -3698,13 +3698,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             return (
                               <div
                                 key={person.id}
-                                className="p-3 rounded-xl border border-[#EADDC7] bg-[#FAF6EC] hover:border-[#B83A24]/40 flex items-center justify-between gap-2 transition-colors"
+                                className="p-3 rounded-xl border border-tinta-200 bg-tinta-50 hover:border-lila-600/40 flex items-center justify-between gap-2 transition-colors"
                               >
                                 <div className="min-w-0">
-                                  <div className="font-bold text-xs text-[#182535] truncate">
+                                  <div className="font-bold text-xs text-tinta-900 truncate">
                                     {person.name}
                                   </div>
-                                  <div className="text-[10px] text-[#64748B] font-mono">
+                                  <div className="text-[10px] text-tinta-500 font-mono">
                                     C.C: {person.documentId || 'S/N'} • @{person.username || person.documentId}
                                   </div>
                                 </div>
@@ -3713,7 +3713,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   type="button"
                                   onClick={() => handleCandidateAssignClick(person, nextFn)}
                                   disabled={isSubmitting}
-                                  className="min-h-[34px] px-3 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                                  className="min-h-[34px] px-3 py-1.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-sans flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0 disabled:opacity-50"
                                 >
                                   <Plus className="w-3.5 h-3.5" />
                                   <span>Asignar ({nextFn})</span>
@@ -3729,10 +3729,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   <>
                 {/* MANDATORY BASE SELECTION (for shifts requiring a base) */}
                 {shiftRequiresBase && (
-                  <div className="p-3.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7] space-y-2">
+                  <div className="p-3.5 bg-tinta-50 rounded-2xl border border-tinta-200 space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <label className="text-xs font-bold text-[#182535] flex items-center gap-1.5 font-montserrat">
-                        <MapPin className="w-3.5 h-3.5 text-[#B83A24]" />
+                      <label className="text-xs font-bold text-tinta-900 flex items-center gap-1.5 font-sans">
+                        <MapPin className="w-3.5 h-3.5 text-lila-600" />
                         <span>Base Física Obligatoria *</span>
                       </label>
                       {modalBase && (
@@ -3791,7 +3791,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           setSelectedBaseNumber(val);
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-[#FFFDF8] border border-[#E5DAC0] text-xs font-bold text-[#182535] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full px-3 py-2 rounded-xl bg-surface border border-tinta-300 text-xs font-bold text-tinta-900 focus:outline-hidden focus:border-lila-600"
                     >
                       <option value="">-- Seleccionar Base Física (Obligatorio) --</option>
                       {physicalBases.map((b) => (
@@ -3819,15 +3819,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                 {/* 4 FUNCIONES OFICIALES GAP DE CARNIVAL (Solo visible en pestaña GAP) */}
                 {selectedDayId === 'miercoles' && (modalBase || selectedBaseNumber !== null) && baseAssignTab === 'GAP' && (
-                  <div className="p-3 bg-[#FFFDF8] rounded-2xl border border-[#B83A24]/30 space-y-2">
-                    <div className="flex items-center justify-between pb-1 border-b border-[#EADDC7]/60">
+                  <div className="p-3 bg-surface rounded-2xl border border-lila-600/30 space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b border-tinta-200/60">
                       <div className="flex items-center gap-1.5">
-                        <Shield className="w-3.5 h-3.5 text-[#B83A24]" />
-                        <h4 className="text-xs font-bold text-[#182535] font-montserrat">
+                        <Shield className="w-3.5 h-3.5 text-lila-600" />
+                        <h4 className="text-xs font-bold text-tinta-900 font-sans">
                           Funciones Oficiales GAP de la Base
                         </h4>
                       </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FAF6EC] border border-[#EADDC7] text-[#64748B] font-bold">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-tinta-50 border border-tinta-200 text-tinta-500 font-bold">
                         Cupo: {currentBaseOccupants.length} / {modalBase?.defaultCapacity || 2} personas
                       </span>
                     </div>
@@ -3870,25 +3870,25 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 : isVeedor
                                 ? 'bg-sky-50/70 border-sky-300'
                                 : 'bg-purple-50/70 border-purple-300'
-                                : 'bg-[#FAF6EC]/80 border-[#EADDC7] text-[#64748B]'
+                                : 'bg-tinta-50/80 border-tinta-200 text-tinta-500'
                             }`}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5">
-                                <span className="w-4 h-4 rounded-full bg-[#182535] text-white text-[9px] flex items-center justify-center font-bold shrink-0 font-mono">
+                                <span className="w-4 h-4 rounded-full bg-tinta-900 text-white text-[9px] flex items-center justify-center font-bold shrink-0 font-mono">
                                   {idx + 1}
                                 </span>
-                                <span className="text-[11px] font-bold text-[#182535] font-montserrat truncate">
+                                <span className="text-[11px] font-bold text-tinta-900 font-sans truncate">
                                   {fn}
                                 </span>
                               </div>
 
                               {occupant && person ? (
-                                <div className="text-[11px] font-semibold text-[#182535] truncate mt-0.5 ml-5.5">
+                                <div className="text-[11px] font-semibold text-tinta-900 truncate mt-0.5 ml-5.5">
                                   {person.name}
                                 </div>
                               ) : (
-                                <div className="text-[10px] text-[#94A3B8] italic mt-0.5 ml-5.5">
+                                <div className="text-[10px] text-tinta-400 italic mt-0.5 ml-5.5">
                                   {isBaseFull ? 'Sin asignar (Cupo lleno)' : 'Disponible al asignar'}
                                 </div>
                               )}
@@ -3906,7 +3906,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                         modalBase?.id || selectedBaseNumber || undefined
                                       )
                                     }
-                                    className="text-[10px] py-1 px-1.5 rounded-lg bg-white border border-[#EADDC7] text-[#182535] font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                                    className="text-[10px] py-1 px-1.5 rounded-lg bg-white border border-tinta-200 text-tinta-900 font-bold cursor-pointer hover:border-lila-600 focus:outline-hidden"
                                     title="Cambiar función"
                                   >
                                     {CARNIVAL_GAP_OFFICIAL_FUNCTIONS.map((f) => (
@@ -3918,7 +3918,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveAssignment(occupant.id)}
-                                    className="p-1 rounded-lg text-[#64748B] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-colors cursor-pointer"
+                                    className="p-1 rounded-lg text-tinta-500 hover:text-lila-600 hover:bg-lila-50 transition-colors cursor-pointer"
                                     title="Quitar de base"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -3928,8 +3928,8 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 <span
                                   className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
                                     isBaseFull
-                                      ? 'bg-neutral-100 text-[#94A3B8] border border-neutral-200'
-                                      : 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
+                                      ? 'bg-neutral-100 text-tinta-400 border border-neutral-200'
+                                      : 'bg-mostaza-50 text-mostaza-600 border border-mostaza-200'
                                   }`}
                                 >
                                   {isBaseFull ? 'Vacante' : 'Libre'}
@@ -3942,33 +3942,33 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
 
                     {/* Subtle 1-line note */}
-                    <p className="text-[10px] text-[#64748B] font-montserrat pt-0.5">
-                      <span className="font-semibold text-[#182535]">Regla de cupos:</span> El cupo de la base ({modalBase?.defaultCapacity || 2}) rige las asignaciones. La función VAR no aumenta el cupo automáticamente.
+                    <p className="text-[10px] text-tinta-500 font-sans pt-0.5">
+                      <span className="font-semibold text-tinta-900">Regla de cupos:</span> El cupo de la base ({modalBase?.defaultCapacity || 2}) rige las asignaciones. La función VAR no aumenta el cupo automáticamente.
                     </p>
                   </div>
                 )}
 
                 {/* [GAP] / [GT] / [MESA] TABS - ALWAYS VISIBLE TO SEPARATE GAP AND GT */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#64748B] px-1 font-montserrat">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-tinta-500 px-1 font-sans">
                     <span>SELECCIONAR PESTAÑA DE PERSONAL:</span>
                     {activeRequirement && (
-                      <span className="text-[#B83A24] font-semibold">
+                      <span className="text-lila-600 font-semibold">
                         Cupo actual: {activeRequirement.groupType} {activeRequirement.gtSubTeam ? `(${activeRequirement.gtSubTeam})` : ''}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 p-1.5 bg-[#FAF6EC] rounded-2xl border border-[#EADDC7]">
+                  <div className="flex items-center gap-2 p-1.5 bg-tinta-50 rounded-2xl border border-tinta-200">
                     <button
                       type="button"
                       onClick={() => {
                         setBaseAssignTab('GAP');
                         setModalAssignedType('GAP');
                       }}
-                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
                         baseAssignTab === 'GAP'
-                          ? 'bg-[#B83A24] text-white shadow-xs'
-                          : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                          ? 'bg-lila-600 text-white shadow-xs'
+                          : 'text-tinta-500 hover:text-tinta-900 hover:bg-white/60'
                       }`}
                     >
                       <Grid className="w-4 h-4" />
@@ -3981,10 +3981,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         setBaseAssignTab('GT');
                         setModalAssignedType('GT');
                       }}
-                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
                         baseAssignTab === 'GT'
-                          ? 'bg-[#182535] text-white shadow-xs'
-                          : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                          ? 'bg-tinta-900 text-white shadow-xs'
+                          : 'text-tinta-500 hover:text-tinta-900 hover:bg-white/60'
                       }`}
                     >
                       <Shield className="w-4 h-4" />
@@ -3998,10 +3998,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           setBaseAssignTab('MESA');
                           setModalAssignedType('MESA');
                         }}
-                        className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-montserrat ${
+                        className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
                           baseAssignTab === 'MESA'
                             ? 'bg-purple-700 text-white shadow-xs'
-                            : 'text-[#64748B] hover:text-[#182535] hover:bg-white/60'
+                            : 'text-tinta-500 hover:text-tinta-900 hover:bg-white/60'
                         }`}
                       >
                         <Crown className="w-4 h-4" />
@@ -4012,21 +4012,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 </div>
 
                 {/* Search Control */}
-                <div className="pt-2 pb-1 border-b border-[#EADDC7]/60">
+                <div className="pt-2 pb-1 border-b border-tinta-200/60">
                   <div className="relative">
-                    <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-tinta-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Buscar candidato por nombre, cédula o usuario..."
                       value={candidateSearchQuery}
                       onChange={(e) => setCandidateSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs text-[#182535] placeholder:text-[#94A3B8] focus:outline-hidden focus:border-[#B83A24]"
+                      className="w-full pl-9 pr-8 py-2 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 placeholder:text-tinta-400 focus:outline-hidden focus:border-lila-600"
                     />
                     {candidateSearchQuery && (
                       <button
                         type="button"
                         onClick={() => setCandidateSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#182535] p-1"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-tinta-400 hover:text-tinta-900 p-1"
                       >
                         ×
                       </button>
@@ -4037,15 +4037,15 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                   {(baseAssignTab === 'GT' || activeRequirement?.groupType === 'GT') && (
                     <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Filter className="w-3.5 h-3.5 text-[#B83A24]" />
-                        <label htmlFor="modal-gt-select" className="text-[10px] font-bold text-[#64748B] font-montserrat">
+                        <Filter className="w-3.5 h-3.5 text-lila-600" />
+                        <label htmlFor="modal-gt-select" className="text-[10px] font-bold text-tinta-500 font-sans">
                           Filtrar GT:
                         </label>
                         <select
                           id="modal-gt-select"
                           value={modalGtSubTeamFilter}
                           onChange={(e) => setModalGtSubTeamFilter(e.target.value)}
-                          className="text-xs px-2 py-1 rounded-xl bg-white border border-[#EADDC7] text-[#182535] font-montserrat font-bold cursor-pointer hover:border-[#B83A24] focus:outline-hidden"
+                          className="text-xs px-2 py-1 rounded-xl bg-white border border-tinta-200 text-tinta-900 font-sans font-bold cursor-pointer hover:border-lila-600 focus:outline-hidden"
                         >
                           <option value="ALL">Todos los GT</option>
                           {GT_SUBTEAMS.map((st) => (
@@ -4060,10 +4060,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setModalGtSubTeamFilter('ALL')}
-                          className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-sans whitespace-nowrap cursor-pointer transition-all ${
                             modalGtSubTeamFilter === 'ALL'
-                              ? 'bg-[#182535] text-white shadow-2xs'
-                              : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                              ? 'bg-tinta-900 text-white shadow-2xs'
+                              : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 border border-tinta-200'
                           }`}
                         >
                           Todos los GT
@@ -4072,10 +4072,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setModalGtSubTeamFilter(activeRequirement.gtSubTeam!)}
-                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-sans whitespace-nowrap cursor-pointer transition-all ${
                               modalGtSubTeamFilter === activeRequirement.gtSubTeam
-                                ? 'bg-[#182535] text-white shadow-2xs'
-                                : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                                ? 'bg-tinta-900 text-white shadow-2xs'
+                                : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 border border-tinta-200'
                             }`}
                           >
                             ⭐ Solo {activeRequirement.gtSubTeam}
@@ -4086,10 +4086,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                             key={subteam}
                             type="button"
                             onClick={() => setModalGtSubTeamFilter(subteam)}
-                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-montserrat whitespace-nowrap cursor-pointer transition-all ${
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-sans whitespace-nowrap cursor-pointer transition-all ${
                               modalGtSubTeamFilter === subteam
-                                ? 'bg-[#B83A24] text-white shadow-2xs'
-                                : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] border border-[#EADDC7]'
+                                ? 'bg-lila-600 text-white shadow-2xs'
+                                : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 border border-tinta-200'
                             }`}
                           >
                             GT {subteam.toUpperCase()}
@@ -4099,7 +4099,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#64748B] mt-1.5 px-1 font-montserrat">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-tinta-500 mt-1.5 px-1 font-sans">
                     <div className="flex items-center gap-2">
                       <span>
                         Candidatos disponibles: <b>{filteredCandidates.length}</b>
@@ -4110,7 +4110,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                         className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                           showOnlyAvailableInModal
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                            : 'bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7] hover:text-[#182535]'
+                            : 'bg-tinta-50 text-tinta-500 border border-tinta-200 hover:text-tinta-900'
                         }`}
                       >
                         {showOnlyAvailableInModal ? '✓ Solo con turno registrado' : 'Mostrando todo el personal'}
@@ -4118,7 +4118,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                     </div>
                     <span>
                       Pestaña activa:{' '}
-                      <b className={baseAssignTab === 'GAP' ? 'text-[#B83A24]' : baseAssignTab === 'GT' ? 'text-[#182535]' : 'text-purple-700'}>
+                      <b className={baseAssignTab === 'GAP' ? 'text-lila-600' : baseAssignTab === 'GT' ? 'text-tinta-900' : 'text-purple-700'}>
                         {baseAssignTab === 'GT'
                           ? `GT ${modalGtSubTeamFilter !== 'ALL' ? `(${modalGtSubTeamFilter})` : '(Todo GT)'}`
                           : baseAssignTab}
@@ -4130,16 +4130,16 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 {/* Candidate Pool List */}
                 <div className="space-y-2 pt-1">
                   {filteredCandidates.length === 0 ? (
-                    <div className="p-8 rounded-2xl bg-[#FAF6EC] border border-dashed border-[#EADDC7] text-center space-y-2">
-                      <Users className="w-8 h-8 text-[#94A3B8] mx-auto" />
-                      <p className="font-bold text-[#182535] text-xs font-montserrat">
+                    <div className="p-8 rounded-2xl bg-tinta-50 border border-dashed border-tinta-200 text-center space-y-2">
+                      <Users className="w-8 h-8 text-tinta-400 mx-auto" />
+                      <p className="font-bold text-tinta-900 text-xs font-sans">
                         No hay candidatos disponibles en la pestaña{' '}
                         {baseAssignTab === 'GT'
                           ? `GT ${modalGtSubTeamFilter !== 'ALL' ? `(${modalGtSubTeamFilter})` : ''}`
                           : baseAssignTab}{' '}
                         para este turno
                       </p>
-                      <p className="text-[11px] text-[#64748B] max-w-sm mx-auto">
+                      <p className="text-[11px] text-tinta-500 max-w-sm mx-auto">
                         Solo se muestran integrantes activos sin conflictos de horario en esta pestaña. Puede hacer clic en &quot;Mostrando todo el personal&quot; arriba o buscar por nombre.
                       </p>
                     </div>
@@ -4170,13 +4170,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                           key={person.id}
                           className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                             isSelected
-                              ? 'bg-[#FEF8EC] border-[#B83A24] shadow-xs'
-                              : 'bg-[#FFFDF8] border-[#EADDC7] hover:border-[#B83A24]/50'
+                              ? 'bg-mostaza-50 border-lila-600 shadow-xs'
+                              : 'bg-surface border-tinta-200 hover:border-lila-600/50'
                           }`}
                         >
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-sm text-[#182535]">
+                              <span className="font-bold text-sm text-tinta-900">
                                 {person.name}
                               </span>
                               {(() => {
@@ -4186,21 +4186,21 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                     <span
                                       className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                                         effType === 'GT'
-                                          ? 'bg-[#FDF2EE] text-[#B83A24]'
+                                          ? 'bg-lila-50 text-lila-600'
                                           : effType === 'GAP'
-                                          ? 'bg-[#FEF8EC] text-[#C87F17]'
+                                          ? 'bg-mostaza-50 text-mostaza-600'
                                           : 'bg-purple-50 text-purple-700'
                                       }`}
                                     >
                                       {person.gtSubTeam ? `GT: ${person.gtSubTeam}` : effType}
                                     </span>
                                     {effType === 'MESA' && (
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40">
                                         MESA
                                       </span>
                                     )}
                                     {effType === 'GT' && person.alsoActsAsGap && (
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-turquesa-50 text-turquesa-600 border border-turquesa-200">
                                         + GAP Habilitado
                                       </span>
                                     )}
@@ -4232,13 +4232,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   0 turnos hoy ({totalAssignmentsCount} total)
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-[#64748B] bg-[#FAF6EC] border border-[#EADDC7]">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono text-tinta-500 bg-tinta-50 border border-tinta-200">
                                   {dayAssignmentsCount} {dayAssignmentsCount === 1 ? 'turno hoy' : 'turnos hoy'}
                                 </span>
                               )}
                             </div>
 
-                            <div className="text-[11px] text-[#64748B] font-mono mt-0.5">
+                            <div className="text-[11px] text-tinta-500 font-mono mt-0.5">
                               C.C: {person.documentId || 'S/N'} • @{person.username || person.documentId}
                             </div>
 
@@ -4265,7 +4265,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
                             {/* Show functions of person */}
                             <div className="flex items-center gap-1 flex-wrap mt-1.5">
-                              <span className="text-[10px] text-[#64748B] font-bold">
+                              <span className="text-[10px] text-tinta-500 font-bold">
                                 Funciones:
                               </span>
                               {person.functions && person.functions.length > 0 ? (
@@ -4278,7 +4278,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                       className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                                         isMatchingReq
                                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                          : 'bg-[#FAF6EC] text-[#475569] border border-[#EADDC7]'
+                                          : 'bg-tinta-50 text-tinta-600 border border-tinta-200'
                                       }`}
                                     >
                                       {f}
@@ -4286,7 +4286,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   );
                                 })
                               ) : (
-                                <span className="text-[10px] text-[#94A3B8]">Sin funciones registradas</span>
+                                <span className="text-[10px] text-tinta-400">Sin funciones registradas</span>
                               )}
                             </div>
                           </div>
@@ -4300,7 +4300,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                   setModalPersonId(person.id);
                                   setModalAssignedFunction(e.target.value);
                                 }}
-                                className="px-2.5 py-1.5 rounded-xl bg-[#FAF6EC] border border-[#E5DAC0] text-xs font-semibold text-[#182535]"
+                                className="px-2.5 py-1.5 rounded-xl bg-tinta-50 border border-tinta-300 text-xs font-semibold text-tinta-900"
                               >
                                 {matchingFunctionsList.map((fn) => (
                                   <option key={fn} value={fn}>
@@ -4309,7 +4309,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 ))}
                               </select>
                             ) : matchingFunctionsList.length === 1 ? (
-                              <span className="px-2 py-1 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-bold text-[#16A34A]">
+                              <span className="px-2 py-1 rounded-lg bg-turquesa-50 border border-turquesa-200 text-[11px] font-bold text-turquesa-600">
                                 {matchingFunctionsList[0]}
                               </span>
                             ) : null}
@@ -4323,14 +4323,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                                 );
                               }}
                               disabled={cannotAssign}
-                              className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold font-montserrat flex items-center gap-1.5 shadow-2xs transition-all ${
+                              className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans flex items-center gap-1.5 shadow-2xs transition-all ${
                                 cannotAssign
-                                  ? 'bg-[#FAF6EC] text-[#94A3B8] border border-[#EADDC7] cursor-not-allowed'
+                                  ? 'bg-tinta-50 text-tinta-400 border border-tinta-200 cursor-not-allowed'
                                   : baseAssignTab === 'GT'
-                                  ? 'bg-[#182535] hover:bg-[#2A3F55] text-white cursor-pointer'
+                                  ? 'bg-tinta-900 hover:bg-tinta-800 text-white cursor-pointer'
                                   : baseAssignTab === 'MESA'
                                   ? 'bg-purple-700 hover:bg-purple-800 text-white cursor-pointer'
-                                  : 'bg-[#B83A24] hover:bg-[#9E2F1B] text-white cursor-pointer'
+                                  : 'bg-lila-600 hover:bg-lila-700 text-white cursor-pointer'
                               }`}
                             >
                               <Plus className="w-3.5 h-3.5" />
@@ -4358,13 +4358,13 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
               </div>
 
             {/* Modal Footer */}
-            <div className="pt-3 border-t border-[#EADDC7] flex items-center justify-between shrink-0">
-                <span className="text-xs text-[#64748B] font-montserrat">
+            <div className="pt-3 border-t border-tinta-200 flex items-center justify-between shrink-0">
+                <span className="text-xs text-tinta-500 font-sans">
                   {modalBase ? (
                     <span>
-                      Ocupación Base: <strong className={isBaseFull ? 'text-emerald-700' : 'text-[#B83A24]'}>{currentBaseGapOccupants.length} / {modalBase.defaultCapacity}</strong> personas GAP
+                      Ocupación Base: <strong className={isBaseFull ? 'text-emerald-700' : 'text-lila-600'}>{currentBaseGapOccupants.length} / {modalBase.defaultCapacity}</strong> personas GAP
                       {currentBaseGtOccupants.length > 0 && (
-                        <span className="ml-1.5 text-[#182535] font-semibold">
+                        <span className="ml-1.5 text-tinta-900 font-semibold">
                           (+{currentBaseGtOccupants.length} GT apoyo)
                         </span>
                       )}
@@ -4383,7 +4383,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAssignModalOpen(false)}
-                  className="min-h-[40px] px-5 py-2 rounded-xl bg-[#FAF6EC] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] text-xs font-bold font-montserrat cursor-pointer"
+                  className="min-h-[40px] px-5 py-2 rounded-xl bg-tinta-50 hover:bg-tinta-100 text-tinta-900 border border-tinta-200 text-xs font-bold font-sans cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -4408,9 +4408,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       {actionSuccessToast && (
         <div
           id="carnival-assignment-success-toast"
-          className="fixed bottom-6 right-6 z-80 bg-[#182535] text-white px-5 py-3.5 rounded-2xl shadow-xl border border-[#2E3F53] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 max-w-md font-montserrat"
+          className="fixed bottom-6 right-6 z-80 bg-tinta-900 text-white px-5 py-3.5 rounded-2xl shadow-xl border border-tinta-800 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 max-w-md font-sans"
         >
-          <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-turquesa-600 shrink-0" />
           <span className="text-xs font-semibold leading-tight">{actionSuccessToast}</span>
           <button
             type="button"

@@ -604,7 +604,7 @@ export function initializeStorage(): void {
         isActive: true,
         eventId: 'carnival',
         dayId: 'miercoles',
-        color: '#B83A24',
+        color: '#C08FD7',
         orderIndex: Number(b.id) || 99,
       }));
 

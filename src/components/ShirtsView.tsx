@@ -328,24 +328,24 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-montserrat">
+    <div className="space-y-6 pb-12 font-sans">
       {/* Header oficial */}
-      <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-5 sm:p-7 shadow-xs">
+      <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-5 sm:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-[#FEF8EC] border-2 border-[#E5A12E]/40 text-[#B83A24] flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-mostaza-50 border-2 border-mostaza-300/40 text-lila-600 flex items-center justify-center shrink-0 shadow-xs">
               <Shirt className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-extrabold font-dalek text-[#182535] tracking-wide">
+                <h1 className="text-xl sm:text-2xl font-extrabold font-display text-tinta-900 tracking-wide">
                   CONTROL Y ENTREGA DE CAMISETAS
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#E5A12E]/40">
-                  DÍAS EAFIT 2026
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-300/40">
+                  DÍAS EAFIT 2027
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+              <p className="text-xs sm:text-sm text-tinta-500 mt-0.5">
                 Inventario total, conteo por talla y registro de entrega individual a cada integrante.
               </p>
             </div>
@@ -354,7 +354,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => exportShirtDeliveryExcel(people)}
-              className="px-4 py-2.5 rounded-xl bg-[#FFFDF8] hover:bg-[#F3EEDC] text-[#182535] border border-[#EADDC7] font-semibold text-xs transition-all shadow-2xs flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-surface hover:bg-tinta-100 text-tinta-900 border border-tinta-200 font-semibold text-xs transition-all shadow-2xs flex items-center gap-2 cursor-pointer"
               title="Descargar reporte oficial en Excel con hojas de inventario y listado"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
@@ -364,22 +364,22 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
         </div>
 
         {/* Banner de Regla Oficial */}
-        <div className="mt-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#FEF8EC] via-[#FFFDF8] to-[#FEF8EC] border-2 border-[#E5A12E]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="mt-5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-mostaza-50 via-surface to-mostaza-50 border-2 border-mostaza-300/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-start sm:items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#B83A24] text-white flex items-center justify-center shrink-0 font-bold text-xs">
+            <div className="w-7 h-7 rounded-lg bg-lila-600 text-white flex items-center justify-center shrink-0 font-bold text-xs">
               ★
             </div>
-            <div className="text-xs text-[#182535]">
-              <span className="font-bold text-[#B83A24] uppercase tracking-wider">Regla Oficial DÍAS:</span>{' '}
+            <div className="text-xs text-tinta-900">
+              <span className="font-bold text-lila-600 uppercase tracking-wider">Regla Oficial DÍAS:</span>{' '}
               A cada persona de <strong className="text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded-md font-bold">MESA LE CORRESPONDEN 2 CAMISETAS</strong>.{' '}
-              Los integrantes de <strong className="text-[#B83A24] bg-[#FDF2EE] px-1.5 py-0.5 rounded-md font-bold">GT</strong> y <strong className="text-[#C87F17] bg-[#FEF8EC] px-1.5 py-0.5 rounded-md font-bold">GAP</strong> reciben <strong>1 camiseta</strong>.
+              Los integrantes de <strong className="text-lila-600 bg-lila-50 px-1.5 py-0.5 rounded-md font-bold">GT</strong> y <strong className="text-mostaza-600 bg-mostaza-50 px-1.5 py-0.5 rounded-md font-bold">GAP</strong> reciben <strong>1 camiseta</strong>.
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 text-xs">
             <span className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 border border-purple-200 font-bold font-mono">
               MESA: 2 c/u
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-[#FEF8EC] text-[#B83A24] border border-[#E5A12E]/40 font-bold font-mono">
+            <span className="px-2.5 py-1 rounded-lg bg-mostaza-50 text-lila-600 border border-mostaza-300/40 font-bold font-mono">
               GT & GAP: 1 c/u
             </span>
           </div>
@@ -389,32 +389,32 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
       {/* Tarjetas métricas globales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Camisas Requeridas */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 shadow-xs">
+        <div className="bg-surface border border-tinta-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-tinta-500 uppercase tracking-wider">
               Total Camisetas
             </span>
-            <span className="p-1.5 rounded-lg bg-[#FEF8EC] text-[#C87F17]">
+            <span className="p-1.5 rounded-lg bg-mostaza-50 text-mostaza-600">
               <Shirt className="w-4 h-4" />
             </span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-[#182535] font-mono">
+            <span className="text-3xl font-extrabold text-tinta-900 font-mono">
               {totals.grandTotalRequired}
             </span>
-            <span className="text-xs text-[#64748B]">
+            <span className="text-xs text-tinta-500">
               para {activePeople.length} personas
             </span>
           </div>
-          <p className="text-[11px] text-[#64748B] mt-1">
+          <p className="text-[11px] text-tinta-500 mt-1">
             Incluye 2 por cada MESA y 1 por cada GT/GAP
           </p>
         </div>
 
         {/* Camisas Entregadas */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 shadow-xs">
+        <div className="bg-surface border border-tinta-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-tinta-500 uppercase tracking-wider">
               Entregadas
             </span>
             <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
@@ -425,12 +425,12 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
             <span className="text-3xl font-extrabold text-emerald-700 font-mono">
               {totals.grandTotalDelivered}
             </span>
-            <span className="text-xs text-[#64748B] font-mono">
+            <span className="text-xs text-tinta-500 font-mono">
               / {totals.grandTotalRequired} ({totals.progressPct}%)
             </span>
           </div>
           {/* Barra de progreso */}
-          <div className="w-full bg-[#EADDC7]/40 rounded-full h-2 mt-2 overflow-hidden">
+          <div className="w-full bg-tinta-200/40 rounded-full h-2 mt-2 overflow-hidden">
             <div
               className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
               style={{ width: `${totals.progressPct}%` }}
@@ -439,9 +439,9 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
         </div>
 
         {/* Camisas Pendientes */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 shadow-xs">
+        <div className="bg-surface border border-tinta-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+            <span className="text-xs font-semibold text-tinta-500 uppercase tracking-wider">
               Pendientes
             </span>
             <span className="p-1.5 rounded-lg bg-amber-50 text-amber-700">
@@ -452,9 +452,9 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
             <span className="text-3xl font-extrabold text-amber-800 font-mono">
               {totals.grandTotalPending}
             </span>
-            <span className="text-xs text-[#64748B]">por entregar</span>
+            <span className="text-xs text-tinta-500">por entregar</span>
           </div>
-          <p className="text-[11px] text-[#64748B] mt-1">
+          <p className="text-[11px] text-tinta-500 mt-1">
             {totals.grandTotalPending === 0
               ? '¡Todas las camisetas han sido entregadas!'
               : 'Faltan entregar a los miembros de staff'}
@@ -462,39 +462,39 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
         </div>
 
         {/* Desglose de Grupos */}
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-2xl p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block">
+        <div className="bg-surface border border-tinta-200 rounded-2xl p-4 shadow-xs space-y-1.5">
+          <span className="text-xs font-semibold text-tinta-500 uppercase tracking-wider block">
             Desglose por Estructura
           </span>
           <div className="flex items-center justify-between text-xs pt-1">
             <span className="text-purple-800 font-medium flex items-center gap-1">
               <Shield className="w-3 h-3" /> MESA (x2):
             </span>
-            <span className="font-mono font-bold text-[#182535]">
+            <span className="font-mono font-bold text-tinta-900">
               {totals.mesa.delivered} / {totals.mesa.required}{' '}
-              <span className="text-[10px] text-[#64748B] font-normal">
+              <span className="text-[10px] text-tinta-500 font-normal">
                 ({totals.mesa.peopleCount} pers.)
               </span>
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#B83A24] font-medium flex items-center gap-1">
+            <span className="text-lila-600 font-medium flex items-center gap-1">
               <Users className="w-3 h-3" /> GT (x1):
             </span>
-            <span className="font-mono font-bold text-[#182535]">
+            <span className="font-mono font-bold text-tinta-900">
               {totals.gt.delivered} / {totals.gt.required}{' '}
-              <span className="text-[10px] text-[#64748B] font-normal">
+              <span className="text-[10px] text-tinta-500 font-normal">
                 ({totals.gt.peopleCount} pers.)
               </span>
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#C87F17] font-medium flex items-center gap-1">
+            <span className="text-mostaza-600 font-medium flex items-center gap-1">
               <Users className="w-3 h-3" /> GAP (x1):
             </span>
-            <span className="font-mono font-bold text-[#182535]">
+            <span className="font-mono font-bold text-tinta-900">
               {totals.gap.delivered} / {totals.gap.required}{' '}
-              <span className="text-[10px] text-[#64748B] font-normal">
+              <span className="text-[10px] text-tinta-500 font-normal">
                 ({totals.gap.peopleCount} pers.)
               </span>
             </span>
@@ -503,21 +503,21 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
       </div>
 
       {/* SECCIÓN 2: INVENTARIO POR TALLA ("cuantas de cada una hay") */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EADDC7] pb-3">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tinta-200 pb-3">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-[#182535] flex items-center gap-2 font-dalek">
-              <Shirt className="w-5 h-5 text-[#B83A24]" />
+            <h2 className="text-base sm:text-lg font-bold text-tinta-900 flex items-center gap-2 font-display">
+              <Shirt className="w-5 h-5 text-lila-600" />
               INVENTARIO Y CONTEO POR TALLA
             </h2>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-tinta-500">
               Visualiza cuántas camisetas se necesitan y cuántas van entregadas por cada talla (XS, S, M, L, XL, XXL).
             </p>
           </div>
           {selectedSizeFilter !== 'ALL' && (
             <button
               onClick={() => setSelectedSizeFilter('ALL')}
-              className="text-xs font-semibold text-[#B83A24] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+              className="text-xs font-semibold text-lila-600 hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Limpiar filtro de talla ({selectedSizeFilter})
@@ -541,12 +541,12 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 }
                 className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? 'border-[#B83A24] bg-[#FDF2EE] shadow-sm'
-                    : 'border-[#EADDC7] bg-[#FAF6EC]/60 hover:bg-[#F3EEDC] hover:border-[#D5C2A5]'
+                    ? 'border-lila-600 bg-lila-50 shadow-sm'
+                    : 'border-tinta-200 bg-tinta-50/60 hover:bg-tinta-100 hover:border-tinta-300'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="w-8 h-8 rounded-xl bg-[#FFFDF8] border border-[#EADDC7] flex items-center justify-center font-dalek text-base font-extrabold text-[#182535] shadow-2xs">
+                  <span className="w-8 h-8 rounded-xl bg-surface border border-tinta-200 flex items-center justify-center font-display text-base font-extrabold text-tinta-900 shadow-2xs">
                     {item.size}
                   </span>
                   <span
@@ -555,7 +555,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                         ? 'bg-emerald-100 text-emerald-800'
                         : pct > 0
                         ? 'bg-amber-100 text-amber-800'
-                        : 'bg-[#EADDC7]/60 text-[#64748B]'
+                        : 'bg-tinta-200/60 text-tinta-500'
                     }`}
                   >
                     {pct}%
@@ -563,28 +563,28 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 </div>
 
                 <div className="my-2.5">
-                  <span className="text-2xl font-extrabold font-mono text-[#182535] block">
+                  <span className="text-2xl font-extrabold font-mono text-tinta-900 block">
                     {item.totalShirts}
                   </span>
-                  <span className="text-[11px] text-[#64748B] block">
+                  <span className="text-[11px] text-tinta-500 block">
                     camisetas totales
                   </span>
                 </div>
 
-                <div className="space-y-1 pt-2 border-t border-[#EADDC7]/60 text-[10px] text-[#64748B]">
+                <div className="space-y-1 pt-2 border-t border-tinta-200/60 text-[10px] text-tinta-500">
                   <div className="flex justify-between">
                     <span className="text-purple-800 font-semibold">MESA (x2):</span>
                     <span className="font-mono font-bold">{item.mesaShirts}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#B83A24] font-semibold">GT (x1):</span>
+                    <span className="text-lila-600 font-semibold">GT (x1):</span>
                     <span className="font-mono font-bold">{item.gtShirts}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#C87F17] font-semibold">GAP (x1):</span>
+                    <span className="text-mostaza-600 font-semibold">GAP (x1):</span>
                     <span className="font-mono font-bold">{item.gapShirts}</span>
                   </div>
-                  <div className="flex justify-between pt-1 border-t border-[#EADDC7]/40 text-[#182535]">
+                  <div className="flex justify-between pt-1 border-t border-tinta-200/40 text-tinta-900">
                     <span className="font-medium">Entregadas:</span>
                     <span className="font-mono font-bold text-emerald-700">
                       {item.totalDelivered}
@@ -593,7 +593,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 </div>
 
                 {/* Mini Progress */}
-                <div className="w-full bg-[#EADDC7]/60 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                <div className="w-full bg-tinta-200/60 rounded-full h-1.5 mt-2.5 overflow-hidden">
                   <div
                     className="bg-emerald-600 h-1.5 rounded-full transition-all"
                     style={{ width: `${pct}%` }}
@@ -606,23 +606,23 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
       </div>
 
       {/* SECCIÓN 3: TABLA INTERACTIVA DE ENTREGA PERSONA A PERSONA */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
         {/* Barra de Filtros y Búsqueda */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Búsqueda */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-tinta-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nombre, cédula, @usuario o equipo..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#FAF6EC] border border-[#E2D6BC] text-xs text-[#182535] placeholder-[#94A3B8] focus:outline-hidden focus:border-[#B83A24] transition-all font-montserrat"
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 placeholder-tinta-400 focus:outline-hidden focus:border-lila-600 transition-all font-sans"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#182535] text-xs font-bold"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-tinta-400 hover:text-tinta-900 text-xs font-bold"
               >
                 ✕
               </button>
@@ -632,13 +632,13 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
           {/* Filtros rápidos */}
           <div className="flex items-center gap-2 flex-wrap">
             {/* Filtro Grupo */}
-            <div className="flex items-center bg-[#FAF6EC] border border-[#E2D6BC] rounded-xl p-1 text-xs font-semibold">
+            <div className="flex items-center bg-tinta-50 border border-tinta-300 rounded-xl p-1 text-xs font-semibold">
               <button
                 onClick={() => setSelectedGroupFilter('ALL')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedGroupFilter === 'ALL'
-                    ? 'bg-[#B83A24] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#182535]'
+                    ? 'bg-lila-600 text-white shadow-2xs'
+                    : 'text-tinta-500 hover:text-tinta-900'
                 }`}
               >
                 Todos
@@ -657,8 +657,8 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 onClick={() => setSelectedGroupFilter('GT')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedGroupFilter === 'GT'
-                    ? 'bg-[#B83A24] text-white shadow-2xs'
-                    : 'text-[#B83A24] hover:text-[#8D2513]'
+                    ? 'bg-lila-600 text-white shadow-2xs'
+                    : 'text-lila-600 hover:text-lila-800'
                 }`}
               >
                 GT (1 c/u)
@@ -667,8 +667,8 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 onClick={() => setSelectedGroupFilter('GAP')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedGroupFilter === 'GAP'
-                    ? 'bg-[#C87F17] text-white shadow-2xs'
-                    : 'text-[#C87F17] hover:text-[#9A5F0C]'
+                    ? 'bg-mostaza-600 text-white shadow-2xs'
+                    : 'text-mostaza-600 hover:text-mostaza-700'
                 }`}
               >
                 GAP (1 c/u)
@@ -676,13 +676,13 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
             </div>
 
             {/* Filtro Estado */}
-            <div className="flex items-center bg-[#FAF6EC] border border-[#E2D6BC] rounded-xl p-1 text-xs font-semibold">
+            <div className="flex items-center bg-tinta-50 border border-tinta-300 rounded-xl p-1 text-xs font-semibold">
               <button
                 onClick={() => setSelectedStatusFilter('ALL')}
                 className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedStatusFilter === 'ALL'
-                    ? 'bg-[#182535] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#182535]'
+                    ? 'bg-tinta-900 text-white shadow-2xs'
+                    : 'text-tinta-500 hover:text-tinta-900'
                 }`}
               >
                 Cualquiera
@@ -725,7 +725,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
               <select
                 value={selectedSizeFilter}
                 onChange={(e) => setSelectedSizeFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-[#FAF6EC] border border-[#E2D6BC] text-xs font-semibold text-[#182535] focus:outline-hidden focus:border-[#B83A24] cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-tinta-50 border border-tinta-300 text-xs font-semibold text-tinta-900 focus:outline-hidden focus:border-lila-600 cursor-pointer"
               >
                 <option value="ALL">Todas las tallas</option>
                 {STANDARD_SIZES.map((sz) => (
@@ -740,8 +740,8 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
 
         {/* Acciones masivas cuando hay seleccionados */}
         {selectedPersonIds.size > 0 && (
-          <div className="p-3 rounded-2xl bg-[#FEF8EC] border-2 border-[#E5A12E]/60 flex items-center justify-between gap-3 text-xs flex-wrap animate-fadeIn">
-            <span className="font-semibold text-[#182535]">
+          <div className="p-3 rounded-2xl bg-mostaza-50 border-2 border-mostaza-300/60 flex items-center justify-between gap-3 text-xs flex-wrap animate-fadeIn">
+            <span className="font-semibold text-tinta-900">
               {selectedPersonIds.size} persona(s) seleccionada(s)
             </span>
             <div className="flex items-center gap-2">
@@ -756,14 +756,14 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
               <button
                 disabled={isSaving}
                 onClick={() => handleBatchDeliver(false)}
-                className="px-3 py-1.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-[#182535] font-semibold transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-tinta-900 font-semibold transition-all cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Desmarcar (volver a pendiente)</span>
               </button>
               <button
                 onClick={() => setSelectedPersonIds(new Set())}
-                className="text-[#64748B] hover:text-[#182535] font-medium ml-1"
+                className="text-tinta-500 hover:text-tinta-900 font-medium ml-1"
               >
                 Cancelar
               </button>
@@ -772,13 +772,13 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
         )}
 
         {/* Contador de resultados */}
-        <div className="flex items-center justify-between text-xs text-[#64748B] px-1">
+        <div className="flex items-center justify-between text-xs text-tinta-500 px-1">
           <span>
             Mostrando <strong>{filteredPeople.length}</strong> de {activePeople.length} personas
           </span>
           <button
             onClick={handleSelectAllFiltered}
-            className="font-semibold text-[#B83A24] hover:underline cursor-pointer"
+            className="font-semibold text-lila-600 hover:underline cursor-pointer"
           >
             {selectedPersonIds.size === filteredPeople.length && filteredPeople.length > 0
               ? 'Deseleccionar todos'
@@ -788,12 +788,12 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
 
         {/* Listado de Personas */}
         {filteredPeople.length === 0 ? (
-          <div className="p-10 text-center rounded-2xl bg-[#FAF6EC]/50 border border-[#EADDC7] space-y-2">
-            <AlertCircle className="w-8 h-8 text-[#94A3B8] mx-auto" />
-            <p className="text-sm font-semibold text-[#182535]">
+          <div className="p-10 text-center rounded-2xl bg-tinta-50/50 border border-tinta-200 space-y-2">
+            <AlertCircle className="w-8 h-8 text-tinta-400 mx-auto" />
+            <p className="text-sm font-semibold text-tinta-900">
               No se encontraron personas con los filtros seleccionados
             </p>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-tinta-500">
               Intenta cambiar los términos de búsqueda o limpiar los filtros activos.
             </p>
           </div>
@@ -812,11 +812,11 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                   key={person.id}
                   className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
                     isFull
-                      ? 'bg-[#F0FDF4]/50 border-[#BBF7D0]'
+                      ? 'bg-turquesa-50/50 border-turquesa-200'
                       : isPartial
                       ? 'bg-amber-50/40 border-amber-200'
-                      : 'bg-[#FFFDF8] border-[#EADDC7]'
-                  } hover:border-[#B83A24]/50 shadow-2xs`}
+                      : 'bg-surface border-tinta-200'
+                  } hover:border-lila-600/50 shadow-2xs`}
                 >
                   {/* Columna Izquierda: Checkbox + Datos Personales */}
                   <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -824,27 +824,27 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleSelectPerson(person.id)}
-                      className="mt-1 w-4 h-4 rounded-sm border-[#D5C2A5] text-[#B83A24] focus:ring-[#B83A24] cursor-pointer"
+                      className="mt-1 w-4 h-4 rounded-sm border-tinta-300 text-lila-600 focus:ring-lila-600 cursor-pointer"
                     />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm sm:text-base text-[#182535] truncate">
+                        <span className="font-bold text-sm sm:text-base text-tinta-900 truncate">
                           {person.fullName || person.name}
                         </span>
 
                         {/* Badge de Grupo */}
                         {isMesa ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1 font-montserrat">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1 font-sans">
                             <Shield className="w-3 h-3 text-purple-700" />
                             MESA • 2 CAMISAS
                           </span>
                         ) : person.primaryType === 'GT' ? (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FDF2EE] text-[#B83A24] border border-[#F6C7BA]">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-lila-50 text-lila-600 border border-lila-200">
                             GT • {person.gtSubTeam || person.gtTeams?.[0] || 'Trabajo'} (1 camisa)
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-mostaza-50 text-mostaza-600 border border-mostaza-200">
                             GAP (1 camisa)
                           </span>
                         )}
@@ -861,18 +861,18 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                             Parcial ({deliveredCount}/{quota})
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-tinta-50 text-tinta-500 border border-tinta-200">
                             Pendiente (0/{quota})
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 mt-1 text-xs text-[#64748B] flex-wrap">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-tinta-500 flex-wrap">
                         <span>
-                          Doc: <strong className="font-mono text-[#182535]">{person.documentId}</strong>
+                          Doc: <strong className="font-mono text-tinta-900">{person.documentId}</strong>
                         </span>
                         {person.username && (
-                          <span className="font-mono text-[11px] text-[#94A3B8]">
+                          <span className="font-mono text-[11px] text-tinta-400">
                             @{person.username}
                           </span>
                         )}
@@ -883,7 +883,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                           </span>
                         )}
                         {person.shirtDeliveryNotes && (
-                          <span className="text-[11px] text-[#B83A24] bg-[#FDF2EE] px-1.5 py-0.5 rounded-sm italic">
+                          <span className="text-[11px] text-lila-600 bg-lila-50 px-1.5 py-0.5 rounded-sm italic">
                             «{person.shirtDeliveryNotes}»
                           </span>
                         )}
@@ -894,12 +894,12 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                   {/* Columna Derecha: Talla y Controles de Entrega */}
                   <div className="flex items-center gap-3 shrink-0 flex-wrap justify-between lg:justify-end">
                     {/* Selector de Talla Rápido Inline */}
-                    <div className="flex items-center gap-1.5 bg-[#FAF6EC] border border-[#E2D6BC] px-2.5 py-1.5 rounded-xl">
-                      <span className="text-[11px] font-medium text-[#64748B]">Talla:</span>
+                    <div className="flex items-center gap-1.5 bg-tinta-50 border border-tinta-300 px-2.5 py-1.5 rounded-xl">
+                      <span className="text-[11px] font-medium text-tinta-500">Talla:</span>
                       <select
                         value={(person.shirtSize || 'M').trim().toUpperCase()}
                         onChange={(e) => handleChangeShirtSize(person.id, e.target.value)}
-                        className="bg-transparent font-dalek font-extrabold text-[#182535] text-xs focus:outline-hidden cursor-pointer"
+                        className="bg-transparent font-display font-extrabold text-tinta-900 text-xs focus:outline-hidden cursor-pointer"
                         title="Cambiar talla si el integrante solicita cambio"
                       >
                         {STANDARD_SIZES.map((sz) => (
@@ -925,7 +925,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             deliveredCount >= 1
                               ? 'bg-purple-700 text-white shadow-2xs'
-                              : 'bg-[#FAF6EC] text-[#64748B] hover:bg-purple-100 hover:text-purple-800 border border-[#EADDC7]'
+                              : 'bg-tinta-50 text-tinta-500 hover:bg-purple-100 hover:text-purple-800 border border-tinta-200'
                           }`}
                           title="Marcar / desmarcar Camiseta 1"
                         >
@@ -944,7 +944,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
                             deliveredCount >= 2
                               ? 'bg-purple-700 text-white shadow-2xs'
-                              : 'bg-[#FAF6EC] text-[#64748B] hover:bg-purple-100 hover:text-purple-800 border border-[#EADDC7]'
+                              : 'bg-tinta-50 text-tinta-500 hover:bg-purple-100 hover:text-purple-800 border border-tinta-200'
                           }`}
                           title="Marcar / desmarcar Camiseta 2"
                         >
@@ -965,7 +965,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                         ) : (
                           <button
                             onClick={() => handleSetDeliveredCount(person.id, 0)}
-                            className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#B83A24] hover:bg-[#FDF2EE] transition-all cursor-pointer"
+                            className="p-1.5 rounded-xl text-tinta-400 hover:text-lila-600 hover:bg-lila-50 transition-all cursor-pointer"
                             title="Reiniciar entrega a 0"
                           >
                             <RotateCcw className="w-4 h-4" />
@@ -978,7 +978,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                         {deliveredCount === 0 ? (
                           <button
                             onClick={() => handleSetDeliveredCount(person.id, 1)}
-                            className="px-4 py-1.5 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                            className="px-4 py-1.5 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>Entregar Camiseta</span>
@@ -1004,7 +1004,7 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                         setEditingNotePerson(person);
                         setNoteText(person.shirtDeliveryNotes || '');
                       }}
-                      className="p-2 rounded-xl text-[#64748B] hover:text-[#182535] hover:bg-[#FAF6EC] border border-transparent hover:border-[#EADDC7] transition-all cursor-pointer"
+                      className="p-2 rounded-xl text-tinta-500 hover:text-tinta-900 hover:bg-tinta-50 border border-transparent hover:border-tinta-200 transition-all cursor-pointer"
                       title={person.shirtDeliveryNotes ? 'Editar nota' : 'Agregar nota de entrega'}
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -1020,28 +1020,28 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
       {/* MODAL PARA AGREGAR/EDITAR NOTA DE ENTREGA */}
       {editingNotePerson && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#FFFDF8] border-2 border-[#EADDC7] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#EADDC7] pb-3">
+          <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-tinta-200 pb-3">
               <div className="flex items-center gap-2">
-                <Shirt className="w-5 h-5 text-[#B83A24]" />
-                <h3 className="font-dalek text-lg text-[#182535]">
+                <Shirt className="w-5 h-5 text-lila-600" />
+                <h3 className="font-display text-lg text-tinta-900">
                   NOTA DE ENTREGA DE CAMISETA
                 </h3>
               </div>
               <button
                 onClick={() => setEditingNotePerson(null)}
-                className="p-1 rounded-full text-[#64748B] hover:bg-[#FAF6EC]"
+                className="p-1 rounded-full text-tinta-500 hover:bg-tinta-50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="text-xs text-[#64748B]">
-              Persona: <strong className="text-[#182535]">{editingNotePerson.fullName || editingNotePerson.name}</strong> ({editingNotePerson.primaryType})
+            <div className="text-xs text-tinta-500">
+              Persona: <strong className="text-tinta-900">{editingNotePerson.fullName || editingNotePerson.name}</strong> ({editingNotePerson.primaryType})
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#182535] mb-1">
+              <label className="block text-xs font-semibold text-tinta-900 mb-1">
                 Observaciones (ej. cambio de talla, quién la retiró, etc.):
               </label>
               <textarea
@@ -1049,20 +1049,20 @@ export const ShirtsView: React.FC<ShirtsViewProps> = ({ people }) => {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Escribe aquí cualquier observación relevante..."
-                className="w-full p-3 rounded-xl bg-[#FAF6EC] border border-[#E2D6BC] text-xs text-[#182535] focus:outline-hidden focus:border-[#B83A24] font-montserrat"
+                className="w-full p-3 rounded-xl bg-tinta-50 border border-tinta-300 text-xs text-tinta-900 focus:outline-hidden focus:border-lila-600 font-sans"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditingNotePerson(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-[#FAF6EC]"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-tinta-500 hover:bg-tinta-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveNote}
-                className="px-5 py-2 rounded-xl bg-[#B83A24] hover:bg-[#9E2F1B] text-white text-xs font-bold font-dalek tracking-wider shadow-xs"
+                className="px-5 py-2 rounded-xl bg-lila-600 hover:bg-lila-700 text-white text-xs font-bold font-display tracking-wider shadow-xs"
               >
                 GUARDAR NOTA
               </button>

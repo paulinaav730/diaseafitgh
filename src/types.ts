@@ -107,7 +107,7 @@ export interface Person {
 }
 
 /**
- * Regla oficial DÍAS 2026:
+ * Regla oficial DÍAS 2027:
  * MESA recibe 2 camisetas ("MESA SON DOS")
  * GT y GAP reciben 1 camiseta
  */

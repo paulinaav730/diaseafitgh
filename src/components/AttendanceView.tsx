@@ -81,19 +81,19 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   const pendingCount = shiftAssignments.length - (presentCount + lateCount + earlyCount + absentCount);
 
   return (
-    <div className="space-y-6 text-[#182535]">
+    <div className="space-y-6 text-tinta-900">
       {/* Header */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-5 sm:p-6 shadow-2xs">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#182535] tracking-wide font-dalek">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-2xs">
+        <h2 className="text-xl sm:text-2xl font-bold text-tinta-900 tracking-wide font-display">
           CONTROL DE ASISTENCIA
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-1 font-montserrat">
+        <p className="text-xs sm:text-sm text-tinta-500 mt-1 font-sans">
           Marcación y verificación de asistencia en tiempo real por día y turno.
         </p>
       </div>
 
       {/* Selectors Bar */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl p-4 flex flex-col gap-4 shadow-2xs">
+      <div className="bg-surface border border-tinta-200 rounded-3xl p-4 flex flex-col gap-4 shadow-2xs">
         {/* Days */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {EVENT_SCHEDULE.map((d) => (
@@ -102,8 +102,8 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               onClick={() => handleDaySelect(d.dayId)}
               className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap ${
                 selectedDayId === d.dayId
-                  ? 'bg-[#B83A24] text-white shadow-xs font-dalek'
-                  : 'bg-[#FAF6EC] text-[#64748B] hover:text-[#182535] hover:bg-[#F3EEDC] font-montserrat border border-[#EADDC7]'
+                  ? 'bg-lila-600 text-white shadow-xs font-display'
+                  : 'bg-tinta-50 text-tinta-500 hover:text-tinta-900 hover:bg-tinta-100 font-sans border border-tinta-200'
               }`}
             >
               {d.dayName}
@@ -119,16 +119,16 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               onClick={() => setSelectedShiftId(s.id)}
               className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap ${
                 activeShift?.id === s.id
-                  ? 'bg-[#FDF2EE] text-[#B83A24] border-[#B83A24] font-bold shadow-2xs'
-                  : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7] hover:text-[#182535]'
+                  ? 'bg-lila-50 text-lila-600 border-lila-600 font-bold shadow-2xs'
+                  : 'bg-tinta-50 text-tinta-500 border-tinta-200 hover:text-tinta-900'
               }`}
             >
               {s.category && (
                 <span
                   className={`mr-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
                     s.category === 'GAP'
-                      ? 'bg-[#FEF8EC] text-[#C87F17] border border-[#FDE68A]'
-                      : 'bg-[#182535] text-white'
+                      ? 'bg-mostaza-50 text-mostaza-600 border border-mostaza-200'
+                      : 'bg-tinta-900 text-white'
                   }`}
                 >
                   {s.category}
@@ -142,33 +142,33 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
 
       {/* Summary KPI for this shift */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-[#FFFDF8] border border-[#EADDC7] p-4 rounded-2xl shadow-2xs">
-          <span className="text-[11px] text-[#64748B] uppercase font-semibold">Convocados</span>
-          <div className="text-xl sm:text-2xl font-bold text-[#182535] mt-1 font-mono">{shiftAssignments.length}</div>
+        <div className="bg-surface border border-tinta-200 p-4 rounded-2xl shadow-2xs">
+          <span className="text-[11px] text-tinta-500 uppercase font-semibold">Convocados</span>
+          <div className="text-xl sm:text-2xl font-bold text-tinta-900 mt-1 font-mono">{shiftAssignments.length}</div>
         </div>
-        <div className="bg-[#FFFDF8] border border-[#BBF7D0] p-4 rounded-2xl shadow-2xs">
-          <span className="text-[11px] text-[#16A34A] font-semibold uppercase">Asistió</span>
-          <div className="text-xl sm:text-2xl font-bold text-[#16A34A] mt-1 font-mono">{presentCount}</div>
+        <div className="bg-surface border border-turquesa-200 p-4 rounded-2xl shadow-2xs">
+          <span className="text-[11px] text-turquesa-600 font-semibold uppercase">Asistió</span>
+          <div className="text-xl sm:text-2xl font-bold text-turquesa-600 mt-1 font-mono">{presentCount}</div>
         </div>
-        <div className="bg-[#FFFDF8] border border-[#FDE68A] p-4 rounded-2xl shadow-2xs">
-          <span className="text-[11px] text-[#C87F17] font-semibold uppercase">Llegó Tarde</span>
-          <div className="text-xl sm:text-2xl font-bold text-[#C87F17] mt-1 font-mono">{lateCount}</div>
+        <div className="bg-surface border border-mostaza-200 p-4 rounded-2xl shadow-2xs">
+          <span className="text-[11px] text-mostaza-600 font-semibold uppercase">Llegó Tarde</span>
+          <div className="text-xl sm:text-2xl font-bold text-mostaza-600 mt-1 font-mono">{lateCount}</div>
         </div>
-        <div className="bg-[#FFFDF8] border border-purple-200 p-4 rounded-2xl shadow-2xs">
+        <div className="bg-surface border border-purple-200 p-4 rounded-2xl shadow-2xs">
           <span className="text-[11px] text-purple-600 font-semibold uppercase">Se Retiró Antes</span>
           <div className="text-xl sm:text-2xl font-bold text-purple-700 mt-1 font-mono">{earlyCount}</div>
         </div>
-        <div className="bg-[#FFFDF8] border border-[#F6C7BA] p-4 rounded-2xl shadow-2xs col-span-2 sm:col-span-1">
-          <span className="text-[11px] text-[#B83A24] font-semibold uppercase">Inasistencia</span>
-          <div className="text-xl sm:text-2xl font-bold text-[#B83A24] mt-1 font-mono">{absentCount}</div>
+        <div className="bg-surface border border-lila-200 p-4 rounded-2xl shadow-2xs col-span-2 sm:col-span-1">
+          <span className="text-[11px] text-lila-600 font-semibold uppercase">Inasistencia</span>
+          <div className="text-xl sm:text-2xl font-bold text-lila-600 mt-1 font-mono">{absentCount}</div>
         </div>
       </div>
 
       {/* Attendance List */}
-      <div className="bg-[#FFFDF8] border border-[#EADDC7] rounded-3xl overflow-hidden shadow-2xs">
-        <div className="p-4 sm:p-5 border-b border-[#EADDC7] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-surface border border-tinta-200 rounded-3xl overflow-hidden shadow-2xs">
+        <div className="p-4 sm:p-5 border-b border-tinta-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-1">
-            <h3 className="text-base sm:text-lg font-bold text-[#182535] font-dalek tracking-wide">
+            <h3 className="text-base sm:text-lg font-bold text-tinta-900 font-display tracking-wide">
               {searchTerm.trim() ? (
                 <>RESULTADOS DE BÚSQUEDA ({displayedAssignments.length})</>
               ) : (
@@ -176,7 +176,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               )}
             </h3>
             {!searchTerm.trim() && (
-              <p className="text-xs text-[#64748B] mt-1">
+              <p className="text-xs text-tinta-500 mt-1">
                 {shiftAttendances.length} de {shiftAssignments.length} marcados
               </p>
             )}
@@ -184,19 +184,19 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
 
           <div className="relative w-full sm:w-64 shrink-0">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-[#94A3B8]" />
+              <Search className="h-4 w-4 text-tinta-400" />
             </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar persona en todo el día..."
-              className="block w-full pl-10 pr-10 py-2 text-sm border border-[#EADDC7] rounded-xl focus:ring-[#B83A24] focus:border-[#B83A24] bg-[#FAF6EC] text-[#182535] placeholder-[#94A3B8] transition-colors"
+              className="block w-full pl-10 pr-10 py-2 text-sm border border-tinta-200 rounded-xl focus:ring-lila-600 focus:border-lila-600 bg-tinta-50 text-tinta-900 placeholder-tinta-400 transition-colors"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#182535] transition-colors"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-tinta-400 hover:text-tinta-900 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -205,21 +205,21 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
         </div>
 
         {displayedAssignments.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
-            <Users className="w-10 h-10 text-[#C87F17] mx-auto mb-3" />
+          <div className="p-12 text-center text-xs text-tinta-500">
+            <Users className="w-10 h-10 text-mostaza-600 mx-auto mb-3" />
             {searchTerm.trim() ? (
-              <p className="font-semibold text-[#182535] text-sm font-dalek">No se encontraron personas con "{searchTerm}" en este día.</p>
+              <p className="font-semibold text-tinta-900 text-sm font-display">No se encontraron personas con "{searchTerm}" en este día.</p>
             ) : (
               <>
-                <p className="font-semibold text-[#182535] text-sm font-dalek">0 personas asignadas a este turno</p>
-                <p className="text-xs text-[#94A3B8] mt-1 font-montserrat">
+                <p className="font-semibold text-tinta-900 text-sm font-display">0 personas asignadas a este turno</p>
+                <p className="text-xs text-tinta-400 mt-1 font-sans">
                   Asigne integrantes en la pestaña de Turnos y Bases para habilitar el pase de asistencia.
                 </p>
               </>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-[#EADDC7]">
+          <div className="divide-y divide-tinta-200">
             {displayedAssignments.map((assign) => {
               const person = people.find((p) => p.id === assign.personId);
               
@@ -237,30 +237,30 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               return (
                 <div
                   key={assign.id}
-                  className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-[#FAF6EC]/50 transition-colors"
+                  className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-tinta-50/50 transition-colors"
                 >
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-sm sm:text-base text-[#182535]">{person?.name}</span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-[#FAF6EC] text-[#64748B] border border-[#EADDC7]">
+                      <span className="font-bold text-sm sm:text-base text-tinta-900">{person?.name}</span>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full font-mono bg-tinta-50 text-tinta-500 border border-tinta-200">
                         {person?.documentId}
                       </span>
                       {assign.baseNumber && (
-                        <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-[#FDF2EE] text-[#B83A24] font-bold border border-[#F6C7BA]">
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-lila-50 text-lila-600 font-bold border border-lila-200">
                           {assign.baseName || getBaseDisplayName(assign.baseNumber)}
                         </span>
                       )}
                       <span
                         className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
                           status === 'asistio'
-                            ? 'bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]'
+                            ? 'bg-turquesa-50 text-turquesa-600 border-turquesa-200'
                             : status === 'tarde'
-                            ? 'bg-[#FEF8EC] text-[#C87F17] border-[#FDE68A]'
+                            ? 'bg-mostaza-50 text-mostaza-600 border-mostaza-200'
                             : status === 'retiro_antes'
                             ? 'bg-purple-50 text-purple-700 border-purple-200'
                             : status === 'inasistencia'
-                            ? 'bg-[#FDF2EE] text-[#B83A24] border-[#F6C7BA]'
-                            : 'bg-[#FAF6EC] text-[#64748B] border-[#EADDC7]'
+                            ? 'bg-lila-50 text-lila-600 border-lila-200'
+                            : 'bg-tinta-50 text-tinta-500 border-tinta-200'
                         }`}
                       >
                         {status === 'asistio'
@@ -274,10 +274,10 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                           : 'Pendiente'}
                       </span>
                     </div>
-                    <div className="text-xs text-[#64748B] mt-1 flex flex-wrap items-center gap-2">
+                    <div className="text-xs text-tinta-500 mt-1 flex flex-wrap items-center gap-2">
                       {searchTerm.trim() && assignmentShift && (
                         <>
-                          <span className="font-bold text-[#182535] bg-[#EADDC7] px-2 py-0.5 rounded-md">
+                          <span className="font-bold text-tinta-900 bg-tinta-200 px-2 py-0.5 rounded-md">
                             {assignmentShift.name}
                           </span>
                           <span>•</span>
@@ -289,7 +289,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       {attendance?.checkInTime && (
                         <>
                           <span>•</span>
-                          <span className="text-[#16A34A] font-mono text-xs font-bold">
+                          <span className="text-turquesa-600 font-mono text-xs font-bold">
                             Marcado: {attendance.checkInTime}
                           </span>
                         </>
@@ -303,11 +303,11 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       onClick={() => handleMark(assign.personId, assign.shiftId, 'asistio')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'asistio'
-                          ? 'bg-[#16A34A] text-white shadow-xs'
-                          : 'bg-[#FAF6EC] text-[#334155] border border-[#EADDC7] hover:border-[#16A34A]'
+                          ? 'bg-turquesa-600 text-white shadow-xs'
+                          : 'bg-tinta-50 text-tinta-700 border border-tinta-200 hover:border-turquesa-600'
                       }`}
                     >
-                      <CheckCircle2 className="w-4 h-4 text-[#16A34A] group-hover:text-white" />
+                      <CheckCircle2 className="w-4 h-4 text-turquesa-600 group-hover:text-white" />
                       <span>Asistió</span>
                     </button>
 
@@ -315,11 +315,11 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       onClick={() => handleMark(assign.personId, assign.shiftId, 'tarde')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'tarde'
-                          ? 'bg-[#C87F17] text-white shadow-xs'
-                          : 'bg-[#FAF6EC] text-[#334155] border border-[#EADDC7] hover:border-[#C87F17]'
+                          ? 'bg-mostaza-600 text-white shadow-xs'
+                          : 'bg-tinta-50 text-tinta-700 border border-tinta-200 hover:border-mostaza-600'
                       }`}
                     >
-                      <Clock className="w-4 h-4 text-[#C87F17]" />
+                      <Clock className="w-4 h-4 text-mostaza-600" />
                       <span>Llegó Tarde</span>
                     </button>
 
@@ -328,7 +328,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'retiro_antes'
                           ? 'bg-purple-700 text-white shadow-xs'
-                          : 'bg-[#FAF6EC] text-[#334155] border border-[#EADDC7] hover:border-purple-600'
+                          : 'bg-tinta-50 text-tinta-700 border border-tinta-200 hover:border-purple-600'
                       }`}
                     >
                       <AlertCircle className="w-4 h-4 text-purple-600" />
@@ -339,11 +339,11 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       onClick={() => handleMark(assign.personId, assign.shiftId, 'inasistencia')}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         status === 'inasistencia'
-                          ? 'bg-[#B83A24] text-white shadow-xs'
-                          : 'bg-[#FAF6EC] text-[#334155] border border-[#EADDC7] hover:border-[#B83A24]'
+                          ? 'bg-lila-600 text-white shadow-xs'
+                          : 'bg-tinta-50 text-tinta-700 border border-tinta-200 hover:border-lila-600'
                       }`}
                     >
-                      <XCircle className="w-4 h-4 text-[#B83A24]" />
+                      <XCircle className="w-4 h-4 text-lila-600" />
                       <span>Inasistencia</span>
                     </button>
                   </div>
