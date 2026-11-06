@@ -9,6 +9,7 @@ import { attempt, useBusy } from './league/toast';
 import { QrCode, qrLink } from './league/QrCode';
 import { AssignPointsModal, EditMovementModal, MovementRow } from './LeagueMovements';
 import { STATE_STYLE } from './EventAttendancePanel';
+import { PersonFoodSection } from './PersonFoodSection';
 
 /** Carga el QR personal (el propio o, si es admin, el de cualquier integrante). */
 export function useProfile(personId: string | undefined, asAdmin: boolean) {
@@ -211,6 +212,8 @@ export const PersonProfile: React.FC<Props> = ({ person, people, mode }) => {
           </div>
         )}
       </Section>
+
+      <PersonFoodSection personId={person.id} />
 
       <Section icon={CalendarCheck} title="Historial de asistencia">
         {myAttendance.length === 0 ? (

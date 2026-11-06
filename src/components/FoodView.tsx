@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { FOOD_RULE_SUMMARY, formatWorked, mealsForMinutes, sumShiftMinutes } from '../services/foodRules';
 import { Person, Assignment, ConfigurableShift, AppEvent, GtSubTeam } from '../types';
 import * as XLSX from 'xlsx';
 import { EVENT_SCHEDULE, findShiftById, DEFAULT_INITIAL_SHIFTS } from '../data/eventStructure';
@@ -76,55 +77,24 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
     return Array.from(new Set(dayAssignments.map((a) => a.personId)));
   }, [dayAssignments]);
 
-  // Helper to calculate shift duration in minutes
-  const getShiftDurationMinutes = (startTime: string, endTime: string): number => {
-    const [startH, startM] = (startTime || '00:00').split(':').map(Number);
-    const [endH, endM] = (endTime || '00:00').split(':').map(Number);
-    const startTotal = (startH || 0) * 60 + (startM || 0);
-    const endTotal = (endH || 0) * 60 + (endM || 0);
-    return Math.max(0, endTotal - startTotal);
-  };
-
-  // Calculate meal entitlements strictly based on assigned hours
-  // < 3h: ninguno
-  // 3h a 5h: 1 refrigerio
-  // 6h a 8h: 1 almuerzo + 1 refrigerio
-  // >= 9h: 1 almuerzo + 2 refrigerios
+  // Alimentación según la suma exacta de horas del día (regla en foodRules.ts)
   const allMealEntitlements = useMemo(() => {
     return assignedPersonIds.map((pid) => {
       const person = people.find((p) => p.id === pid);
       const personShifts = dayAssignments.filter((a) => a.personId === pid);
 
-      let totalMinutes = 0;
-      personShifts.forEach((asgn) => {
-        const shiftDef =
-          (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
-          findShiftById(shifts || [], asgn.shiftId) ||
-          findShiftById(currentDay, asgn.shiftId) ||
-          DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId);
-        if (shiftDef) {
-          totalMinutes += getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime);
-        }
-      });
-
-      const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-
-      let lunches = 0;
-      let snacks = 0;
-
-      if (totalHours >= 9) {
-        lunches = 1;
-        snacks = 2;
-      } else if (totalHours >= 6) {
-        lunches = 1;
-        snacks = 1;
-      } else if (totalHours >= 3) {
-        lunches = 0;
-        snacks = 1;
-      } else {
-        lunches = 0;
-        snacks = 0;
-      }
+      const totalMinutes = sumShiftMinutes(
+        personShifts.map(
+          (asgn) =>
+            (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
+            findShiftById(shifts || [], asgn.shiftId) ||
+            findShiftById(currentDay, asgn.shiftId) ||
+            DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId)
+        )
+      );
+      // Sin redondeo: los umbrales se comparan en minutos exactos
+      const totalHours = totalMinutes / 60;
+      const { lunches, snacks } = mealsForMinutes(totalMinutes);
 
       // Determine effective group and subteam
       const primaryType = person?.primaryType || 'GT';
@@ -141,6 +111,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
       return {
         person,
         shifts: personShifts,
+        totalMinutes,
         totalHours,
         lunches,
         snacks,
@@ -354,7 +325,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         .filter(Boolean)
         .join(', ');
       const restr = p?.dietaryRestrictions ? ` [Restricción: ${p.dietaryRestrictions}]` : '';
-      lines.push(`${idx + 1}. ${p?.name || 'S/N'} (${teamLabel}) — ${e.totalHours}h — ${foodText}${restr}`);
+      lines.push(`${idx + 1}. ${p?.name || 'S/N'} (${teamLabel}) — ${formatWorked(e.totalMinutes)} — ${foodText}${restr}`);
     });
 
     navigator.clipboard.writeText(lines.join('\n'));
@@ -411,32 +382,9 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
             };
           });
 
-        let totalHours = 0;
-        personShifts.forEach((s) => {
-          const parseTime = (t) => {
-            if (!t) return 0;
-            const [h, m] = t.split(':').map(Number);
-            return h + (m || 0) / 60;
-          };
-          const start = parseTime(s.startTime);
-          let end = parseTime(s.endTime);
-          if (end < start) end += 24;
-          totalHours += (end - start);
-        });
-
-        let lunches = 0;
-        let snacks = 0;
-
-        if (totalHours >= 9) {
-          lunches = 1;
-          snacks = 2;
-        } else if (totalHours >= 6) {
-          lunches = 1;
-          snacks = 1;
-        } else if (totalHours >= 3) {
-          lunches = 0;
-          snacks = 1;
-        }
+        const { lunches, snacks } = mealsForMinutes(
+          sumShiftMinutes(personShifts.map((s) => ({ id: s.shiftId, startTime: s.startTime, endTime: s.endTime })))
+        );
 
         row.push(lunches);
         row.push(snacks);
@@ -478,7 +426,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
         `"${e.person?.name || ''}"`,
         `"${e.person?.documentId || ''}"`,
         `"${teamLabel}"`,
-        `"${e.totalHours}h"`,
+        `"${formatWorked(e.totalMinutes)}"`,
         `"${e.lunches}"`,
         `"${e.snacks}"`,
         `"${e.person?.dietaryRestrictions || 'Ninguna'}"`,
@@ -509,7 +457,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
             GESTIÓN DE ALIMENTACIÓN
           </h2>
           <p className="text-xs sm:text-sm text-tinta-500 mt-1 font-sans">
-            Cálculo según horas totales asignadas: &lt;3h (ninguno), 3h-5h (1 refrigerio), 6h-8h (1 almuerzo + 1 refrigerio), ≥9h (1 almuerzo + 2 refrigerios).
+            Cálculo según la suma exacta de horas asignadas en el día: {FOOD_RULE_SUMMARY}.
           </p>
         </div>
 
@@ -1009,7 +957,7 @@ export const FoodView: React.FC<FoodViewProps> = ({ people, assignments, shifts,
                       {/* Horas Totales */}
                       <td className="py-3.5 px-4 text-center font-mono font-bold text-tinta-900 text-sm">
                         <span className="px-2 py-0.5 rounded-md bg-tinta-50 border border-tinta-200">
-                          {entry.totalHours}h
+                          {formatWorked(entry.totalMinutes)}
                         </span>
                       </td>
 

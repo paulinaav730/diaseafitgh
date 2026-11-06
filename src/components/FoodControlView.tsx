@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { formatWorked, mealsForMinutes, sumShiftMinutes } from '../services/foodRules';
 import { Person, Assignment, ConfigurableShift, AppEvent, FoodDelivery } from '../types';
 import * as XLSX from 'xlsx';
 import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS } from '../data/eventStructure';
@@ -57,44 +58,17 @@ export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assign
       const person = people.find((p) => p.id === pid);
       const personShifts = dayAssignments.filter((a) => a.personId === pid);
 
-      let totalMinutes = 0;
-      personShifts.forEach((asgn) => {
-        const shiftDef =
-          (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
-          DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId);
-        
-        if (shiftDef) {
-          const parseTime = (t: string) => {
-            if (!t) return 0;
-            const [h, m] = t.split(':').map(Number);
-            return h * 60 + (m || 0);
-          };
-          const start = parseTime(shiftDef.startTime);
-          let end = parseTime(shiftDef.endTime);
-          if (end < start) end += 24 * 60;
-          totalMinutes += (end - start);
-        }
-      });
-
-      const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-
-      let lunches = 0;
-      let snacks = 0;
-
-      if (totalHours >= 9) {
-        lunches = 1;
-        snacks = 2;
-      } else if (totalHours >= 6) {
-        lunches = 1;
-        snacks = 1;
-      } else if (totalHours >= 3) {
-        lunches = 0;
-        snacks = 1;
-      }
+      const totalMinutes = sumShiftMinutes(
+        personShifts.map(
+          (asgn) => (shifts && shifts.find((s) => s.id === asgn.shiftId)) || DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId)
+        )
+      );
+      const { lunches, snacks } = mealsForMinutes(totalMinutes);
 
       return {
         person,
-        totalHours,
+        totalMinutes,
+        totalHours: formatWorked(totalMinutes),
         lunches,
         snacks,
       };
@@ -322,7 +296,7 @@ export const FoodControlView: React.FC<FoodControlViewProps> = ({ people, assign
                         <p className="text-[11px] text-tinta-500 font-mono">{p.documentId}</p>
                         <div className="flex gap-2 flex-wrap mt-1.5">
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-tinta-200 text-tinta-600">
-                            {entry.totalHours}h
+                            {entry.totalHours}
                           </span>
                           {p.dietaryRestrictions && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-coral-50 text-coral-600 border border-coral-200">
