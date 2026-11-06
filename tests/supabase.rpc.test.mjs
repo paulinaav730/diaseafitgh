@@ -311,6 +311,26 @@ ok('Recordatorios guardados en la base de datos, solo del propio integrante');
   assert.ok(auditB.some((x) => x.action === 'actualizar_fecha_nacimiento'));
   ok('El cambio de fecha queda en la auditoría');
 
+  // Carga masiva (Excel)
+  assert.match(await rpcErr('admin_set_birth_dates', { p_session: S, p_items: [] }), /SIN_PERMISO/);
+  const bulk = await rpc('admin_set_birth_dates', {
+    p_session: A,
+    p_items: [
+      { person_id: people[1].id, birth_date: '1999-05-20' },
+      { person_id: people[2].id, birth_date: '2001-12-31' },
+      { person_id: 'no-existe', birth_date: '2000-01-01' },
+      { person_id: people[3].id, birth_date: '2999-01-01' },
+    ],
+  });
+  assert.equal(bulk.saved, 2);
+  assert.deepEqual(bulk.skipped, ['no-existe', people[3].id]);
+  const afterBulk = await rpc('admin_list_birthdays', { p_session: A });
+  assert.equal(afterBulk.find((b) => b.person_id === people[1].id).birth_date, '1999-05-20');
+  assert.ok(!afterBulk.some((b) => b.person_id === 'no-existe' || b.person_id === people[3].id));
+  const { count: ghost } = await db.from('people').select('id', { count: 'exact', head: true }).eq('id', 'no-existe');
+  assert.ok(!ghost, 'no crea personas');
+  ok('Carga masiva: guarda todas las fechas válidas de una vez, ignora personas inexistentes y fechas futuras, no crea integrantes');
+
   // Notificaciones push de la administradora
   assert.match(await rpcErr('save_admin_push_subscription', { p_session: S, p_id: 'x', p_endpoint: 'https://push/x', p_p256dh: 'k', p_auth: 'a', p_user_agent: 't' }), /SIN_PERMISO/);
   assert.equal(await rpc('save_admin_push_subscription', { p_session: A, p_id: `adm_${run}`, p_endpoint: 'https://push/a', p_p256dh: 'k', p_auth: 'a', p_user_agent: 't' }), true);

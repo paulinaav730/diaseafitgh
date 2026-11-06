@@ -574,6 +574,25 @@ export const api = {
     });
   },
 
+  /** Carga masiva (Excel). Devuelve cuántas se guardaron. */
+  async setBirthDates(items: { personId: string; birthDate: string }[]): Promise<{ saved: number; skipped: string[] }> {
+    const valid = items.filter((i) => parseBirthDate(i.birthDate, bogotaToday()));
+    if (remote()) {
+      const r = await call('admin_set_birth_dates', { p_items: valid.map((i) => ({ person_id: i.personId, birth_date: i.birthDate })) });
+      return { saved: r.saved, skipped: r.skipped ?? [] };
+    }
+    return local(() => {
+      const admin = requireAdminLocal();
+      valid.forEach((i) => {
+        const pr = localEnsureProfile(i.personId);
+        if (pr.birthDate === i.birthDate) return;
+        localProfiles.upsert({ ...pr, id: i.personId, birthDate: i.birthDate });
+        audit(admin, 'actualizar_fecha_nacimiento', 'person_profiles', i.personId, { birthDate: pr.birthDate ?? null }, { birthDate: i.birthDate });
+      });
+      return { saved: valid.length, skipped: [] };
+    });
+  },
+
   async listBirthdays(people: Person[]): Promise<BirthdayPerson[]> {
     if (remote()) {
       const rows: any[] = await call('admin_list_birthdays');

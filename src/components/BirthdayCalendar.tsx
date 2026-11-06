@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bell, Cake, IdCard, PartyPopper } from 'lucide-react';
+import { Bell, Cake, Download, IdCard, PartyPopper, Upload } from 'lucide-react';
+import { api, errorMessage } from '../services/leagueApi';
+import { BirthdayImportRow, downloadBirthdayTemplate, ImportRowStatus, readBirthdayFile } from '../services/birthdayImport';
 import { Person } from '../types';
 import {
   addDaysIso,
@@ -170,5 +172,157 @@ export const AdminBirthdayPushBanner: React.FC = () => {
         </button>
       )}
     </div>
+  );
+};
+
+const STATUS_LABEL: Record<ImportRowStatus, { text: string; cls: string }> = {
+  ok: { text: 'Se guarda', cls: 'bg-turquesa-50 text-turquesa-800 border-turquesa-200' },
+  sin_cambio: { text: 'Ya estaba', cls: 'bg-tinta-50 text-tinta-600 border-tinta-200' },
+  sin_persona: { text: 'No está registrado', cls: 'bg-coral-50 text-coral-800 border-coral-200' },
+  fecha_invalida: { text: 'Fecha no válida', cls: 'bg-coral-50 text-coral-800 border-coral-200' },
+  sin_fecha: { text: 'Sin fecha', cls: 'bg-tinta-50 text-tinta-500 border-tinta-200' },
+  repetida: { text: 'Repetida', cls: 'bg-mostaza-50 text-mostaza-800 border-mostaza-200' },
+};
+
+// Primero lo que hay que revisar, luego lo que se guarda
+const ORDER: ImportRowStatus[] = ['sin_persona', 'fecha_invalida', 'repetida', 'ok', 'sin_cambio', 'sin_fecha'];
+
+/**
+ * Cargar todos los cumpleaños de una vez desde Excel o CSV. Cada fila se une
+ * al integrante que ya existe (por cédula o nombre). No crea personas.
+ */
+export const BirthdayImportModal: React.FC<{ people: Person[]; onClose: () => void }> = ({ people, onClose }) => {
+  const current = useCollection(birthdays.subscribe);
+  const [rows, setRows] = useState<BirthdayImportRow[] | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const toSave = (rows || []).filter((r) => r.status === 'ok');
+  const counts = (rows || []).reduce<Record<string, number>>((m, r) => ((m[r.status] = (m[r.status] || 0) + 1), m), {});
+  const missing = people.filter((p) => !current.some((b) => b.personId === p.id) && !toSave.some((r) => r.person?.id === p.id)).length;
+
+  const onFile = async (file?: File) => {
+    if (!file) return;
+    setError(null);
+    setFileName(file.name);
+    try {
+      const r = await readBirthdayFile(file, people, current);
+      if (r.error) {
+        setError(r.error);
+        setRows(null);
+      } else setRows(r.rows);
+    } catch {
+      setError('No se pudo leer el archivo. Usa un Excel (.xlsx) o CSV.');
+    }
+  };
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await api.setBirthDates(toSave.map((x) => ({ personId: x.person!.id, birthDate: x.birthDate! })));
+      await birthdays.refresh();
+      setDone(`Listo: ${r.saved} cumpleaños guardados${r.skipped.length ? ` · ${r.skipped.length} no se pudieron guardar` : ''}. Ya aparecen en el calendario.`);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="Cargar cumpleaños"
+      onClose={onClose}
+      size="lg"
+      footer={
+        done ? (
+          <button className={btnPrimary} onClick={onClose}>
+            Cerrar
+          </button>
+        ) : (
+          <>
+            <button className={btnSecondary} onClick={onClose} disabled={busy}>
+              Cancelar
+            </button>
+            <button className={btnPrimary} onClick={save} disabled={busy || toSave.length === 0}>
+              <Cake className="w-4 h-4" /> {busy ? 'Guardando…' : `Guardar ${toSave.length} cumpleaños`}
+            </button>
+          </>
+        )
+      }
+    >
+      {done ? (
+        <p className="text-sm text-tinta-800 py-2">{done}</p>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-coral-50 border border-coral-200 p-3 text-sm text-tinta-800 space-y-2">
+            <p>
+              <strong>1.</strong> Descarga la plantilla: trae a los {people.length} integrantes con su cédula. Llena la columna{' '}
+              <strong>Fecha de nacimiento</strong> (día/mes/año, por ejemplo 06/11/2003).
+            </p>
+            <p>
+              <strong>2.</strong> Súbela aquí. También sirve tu propio Excel si tiene una columna de cédula (o nombre) y una de fecha de nacimiento.
+            </p>
+            <button className={btnSecondary} onClick={() => downloadBirthdayTemplate(people, current)}>
+              <Download className="w-4 h-4" /> Descargar plantilla
+            </button>
+          </div>
+
+          <label className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-tinta-200 hover:border-lila-400 p-5 cursor-pointer text-center">
+            <Upload className="w-6 h-6 text-tinta-500" />
+            <span className="text-sm font-semibold text-tinta-900">{fileName || 'Elegir archivo (.xlsx o .csv)'}</span>
+            <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+          </label>
+
+          {error && <p className="text-sm text-coral-700">{error}</p>}
+
+          {rows && (
+            <>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {(Object.keys(STATUS_LABEL) as ImportRowStatus[])
+                  .filter((s) => counts[s])
+                  .map((s) => (
+                    <span key={s} className={`px-2 py-0.5 rounded-full border font-semibold ${STATUS_LABEL[s].cls}`}>
+                      {STATUS_LABEL[s].text}: {counts[s]}
+                    </span>
+                  ))}
+              </div>
+              <div className="max-h-72 overflow-auto rounded-2xl border border-tinta-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-tinta-50 text-[11px] text-tinta-500 sticky top-0">
+                    <tr>
+                      <th className="text-left px-3 py-2">Fila</th>
+                      <th className="text-left px-3 py-2">Integrante</th>
+                      <th className="text-left px-3 py-2">Fecha</th>
+                      <th className="text-left px-3 py-2">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-tinta-100">
+                    {[...rows]
+                      .sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || a.row - b.row)
+                      .map((r) => (
+                        <tr key={r.row}>
+                          <td className="px-3 py-1.5 text-tinta-500 tabular-nums">{r.row}</td>
+                          <td className="px-3 py-1.5">{r.label}</td>
+                          <td className="px-3 py-1.5 tabular-nums">{r.birthDate ? r.birthDate.split('-').reverse().join('/') : r.rawDate || '—'}</td>
+                          <td className="px-3 py-1.5">
+                            <span className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${STATUS_LABEL[r.status].cls}`}>
+                              {STATUS_LABEL[r.status].text}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[11px] text-tinta-500">
+                Solo se guardan las filas "Se guarda". No se crean integrantes nuevos. Después de esta carga, quedarían {missing} integrante(s) sin fecha.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </Modal>
   );
 };

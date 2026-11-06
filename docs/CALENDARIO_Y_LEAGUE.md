@@ -90,8 +90,12 @@ las notificaciones web requieren agregar DÍAS a la pantalla de inicio.
   privada: la clave pública no puede leerla y solo una sesión de administración
   la consulta (`admin_list_birthdays`) o la cambia (`admin_set_birth_date`, con
   auditoría). El integrante no ve su fecha ni su edad.
-- **Cómo se registra:** Perfil DÍAS → *Fecha de nacimiento* → Agregar/Editar
-  (solo administración). Sin fecha registrada no se muestra ningún cumpleaños.
+- **Cómo se registra:** de una vez desde Calendario → *🎂 Cargar cumpleaños*
+  (descargar la plantilla con todos los integrantes, llenar *Fecha de
+  nacimiento* y subirla; también sirve cualquier Excel/CSV con cédula o nombre
+  y fecha). Cada fila se une al integrante existente; no se crean personas.
+  También se puede editar una por una en Perfil DÍAS → *Fecha de nacimiento*.
+  Sin fecha registrada no se muestra ningún cumpleaños.
 - **Calendario:** la administración ve `🎂 CUMPLEAÑOS — Nombre` con color propio,
   la edad que cumple y el GT; al tocarlo abre el cumpleaños y el Perfil DÍAS.
   No se crean eventos: se calculan cada año a partir de la fecha, así que se
