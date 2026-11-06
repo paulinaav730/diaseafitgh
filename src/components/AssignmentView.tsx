@@ -227,22 +227,15 @@ export const getCarnivalGapTurnNumber = (shift: ConfigurableShift | Shift): numb
 export const getOfficialCarnivalGapShifts = (
   allShifts?: ConfigurableShift[]
 ): (ConfigurableShift | Shift)[] => {
-  const source = allShifts && allShifts.length > 0 ? allShifts : DEFAULT_INITIAL_SHIFTS;
+  // Solo los turnos configurados: si se eliminaron, no se inventan los oficiales
+  const source = allShifts || [];
   const gapShifts = source.filter(
     (s) => s.dayId === 'miercoles' && (s.category === 'GAP' || s.hasBases)
   );
 
-  const t1 =
-    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 1) ||
-    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t1')!;
-  const t2 =
-    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 2) ||
-    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t2')!;
-  const t3 =
-    gapShifts.find((s) => getCarnivalGapTurnNumber(s) === 3) ||
-    DEFAULT_INITIAL_SHIFTS.find((s) => s.id === 'miercoles-gap-t3')!;
-
-  return [t1, t2, t3];
+  return [1, 2, 3]
+    .map((n) => gapShifts.find((s) => getCarnivalGapTurnNumber(s) === n))
+    .filter((s): s is ConfigurableShift | Shift => !!s);
 };
 
 export const AssignmentView: React.FC<AssignmentViewProps> = ({
@@ -317,14 +310,9 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
   // All active shifts for this day
   const allShiftsInDay = useMemo(() => {
-    if (shifts && shifts.length > 0) {
-      const activeInDay = shifts.filter((s) => s.dayId === selectedDayId && s.isActive !== false);
-      if (activeInDay.length > 0) return activeInDay;
-    }
-    if (isDivided) {
-      return isCarnival ? [...CARNIVAL_GT_SHIFTS, ...CARNIVAL_GAP_SHIFTS, ...(CARNIVAL_MESA_SHIFTS || [])] : currentDay.shifts;
-    }
-    return currentDay.shifts;
+    // Solo lo configurado en "Configurar Turnos/Bases". Antes, si un día no
+    // tenía turnos, se mostraban los oficiales aunque se hubieran eliminado.
+    return (shifts || []).filter((s) => s.dayId === selectedDayId && s.isActive !== false);
   }, [shifts, selectedDayId, isCarnival, isDivided, currentDay]);
 
   const gtShiftsInDay = useMemo(() => {
@@ -408,7 +396,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     setSelectedDayId(dayId);
     setSelectedBaseNumber(null);
     setModalBase(null);
-    const dayShifts = (shifts && shifts.length > 0 ? shifts : EVENT_SCHEDULE.find((d) => d.dayId === dayId)?.shifts || [])
+    const dayShifts = (shifts || [])
       .filter((s) => s.dayId === dayId && s.isActive !== false);
 
     if (dayShifts.length > 0) {
@@ -459,7 +447,14 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
   const physicalBases: PhysicalBase[] = useMemo(() => {
     if (selectedDayId === 'miercoles') {
       // Carnival ALWAYS has exactly 22 physical bases: BASE 1 to BASE 19, and BASE TORO (20), BASE SPEED (21), BASE ARCADE (22)
-      return CARNIVAL_PHYSICAL_BASES.map((cb) => {
+      return CARNIVAL_PHYSICAL_BASES.filter((cb) =>
+        (bases || []).some(
+          (b) =>
+            b.isActive !== false &&
+            (b.eventId === 'carnival' || b.dayId === 'miercoles') &&
+            (String(b.id) === `carnival_${cb.id}` || String(b.baseNumber) === String(cb.id) || b.name.toLowerCase() === cb.name.toLowerCase())
+        )
+      ).map((cb) => {
         const custom = (bases || []).find(
           (b) =>
             b.isActive &&
@@ -485,7 +480,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     }
 
     if (selectedDayId === 'jueves') {
-      return THE_GAMES_JUEVES_BASES.map((b) => {
+      // Solo las bases que siguen configuradas (las eliminadas no se muestran)
+      return THE_GAMES_JUEVES_BASES.filter((b) =>
+        (bases || []).some(
+          (c) => c.isActive !== false && (String(c.id) === String(b.id) || (c.dayId === b.dayId && String(c.baseNumber) === String(b.baseNumber)))
+        )).map((b) => {
         return {
           id: b.id,
           baseNumber: b.baseNumber || b.id,
@@ -501,7 +500,10 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     }
 
     if (selectedDayId === 'viernes') {
-      return THE_GAMES_VIERNES_BASES.map((b) => {
+      return THE_GAMES_VIERNES_BASES.filter((b) =>
+        (bases || []).some(
+          (c) => c.isActive !== false && (String(c.id) === String(b.id) || (c.dayId === b.dayId && String(c.baseNumber) === String(b.baseNumber)))
+        )).map((b) => {
         return {
           id: b.id,
           baseNumber: b.baseNumber || b.id,
@@ -970,7 +972,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
             ) {
               return false;
             }
-            const allKnown = shifts && shifts.length > 0 ? shifts : currentDay.shifts;
+            const allKnown = shifts || [];
             const otherShift = findShiftById(allKnown, a.shiftId);
             return otherShift ? doShiftsOverlap(otherShift, activeShift) : false;
           });
@@ -988,7 +990,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         } else {
           // Check Miércoles (Carnival) aliases & time window matching
           if (selectedDayId === 'miercoles') {
-            const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+            const allKnownShifts = shifts || [];
             const activeWin = getCarnivalWindow(
               activeShift.id,
               activeShift.name,
@@ -1051,7 +1053,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
 
           // Time & Turno matching
           if (!isAvailableInShift) {
-            const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+            const allKnownShifts = shifts || [];
 
             const timeToMinutes = (t?: string) => {
               if (!t) return null;
@@ -1479,7 +1481,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (availRecord.shiftIds.includes(postShift.id)) {
         hasShiftAvailability = true;
       } else {
-        const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+        const allKnownShifts = shifts || [];
         const targetWin = getCarnivalWindow(
           postShift.id,
           postShift.name,
@@ -1558,7 +1560,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         ) !== postTurnNumber
     );
 
-    const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+    const allKnownShifts = shifts || [];
     for (const other of otherDayAssignments) {
       const otherShift = findShiftById(allKnownShifts, other.shiftId);
       if (otherShift) {
@@ -1676,7 +1678,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
       if (availRecord.shiftIds.includes(postShift.id)) {
         hasShiftAvailability = true;
       } else {
-        const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+        const allKnownShifts = shifts || [];
         for (const regId of availRecord.shiftIds) {
           if (regId === postShift.id) {
             hasShiftAvailability = true;
@@ -1723,7 +1725,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
     const otherDayAssignments = assignments.filter(
       (a) => a.personId === person.id && a.dayId === selectedDayId && a.shiftId !== postShift.id
     );
-    const allKnownShifts = shifts && shifts.length > 0 ? shifts : DEFAULT_INITIAL_SHIFTS;
+    const allKnownShifts = shifts || [];
     for (const other of otherDayAssignments) {
       const otherShift = findShiftById(allKnownShifts, other.shiftId);
       if (otherShift && doShiftsOverlap(otherShift, postShift as Shift)) {
@@ -2339,6 +2341,11 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         )}
 
         {/* Turnos pills */}
+        {availableShifts.length === 0 && (
+          <p className="rounded-2xl border border-dashed border-tinta-200 bg-tinta-50 px-4 py-6 text-center text-sm text-tinta-600">
+            No hay turnos configurados para este día. Créalos en <strong>Configurar Turnos/Bases</strong>.
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           {availableShifts.map((shift) => {
             const isSelected = shift.id === activeShift.id;
@@ -2397,6 +2404,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
         </div>
       </div>
 
+      {availableShifts.length > 0 && (<>
       {/* SECTION: GESTIÓN DE CUPOS Y FUNCIONES POR TURNO (NUEVA LÓGICA) */}
       <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-5 sm:p-6 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-tinta-200">
@@ -3152,6 +3160,7 @@ export const AssignmentView: React.FC<AssignmentViewProps> = ({
           </>
         )}
       </div>
+      </>)}
 
       {/* MODAL 1: DEFINIR NECESIDAD DE CUPO (REQUERIMIENTO POR GT) */}
       {isReqModalOpen && (
