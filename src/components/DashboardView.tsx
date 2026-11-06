@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { mealsForMinutes, sumShiftMinutes } from '../services/foodRules';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
 import {
   EVENT_SCHEDULE,
@@ -83,31 +84,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   let totalSnacks = 0;
 
   // Group assignments by person and day
-  const personDayHours = new Map<string, number>();
+  const personDayShifts = new Map<string, any[]>();
   assignments.forEach((asgn) => {
     const key = `${asgn.personId}_${asgn.dayId}`;
-    const curr = personDayHours.get(key) || 0;
     const shiftDef =
       (shifts && shifts.find((s) => s.id === asgn.shiftId)) ||
       findShiftById(shifts || [], asgn.shiftId) ||
       findShiftById(asgn.dayId, asgn.shiftId) ||
       DEFAULT_INITIAL_SHIFTS.find((s) => s.id === asgn.shiftId);
-    const durationHours = shiftDef
-      ? getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime) / 60
-      : 3.5;
-    personDayHours.set(key, curr + durationHours);
+    personDayShifts.set(key, [...(personDayShifts.get(key) || []), shiftDef]);
   });
 
-  personDayHours.forEach((hours) => {
-    if (hours >= 9) {
-      totalLunches += 1;
-      totalSnacks += 2;
-    } else if (hours >= 6) {
-      totalLunches += 1;
-      totalSnacks += 1;
-    } else if (hours >= 3) {
-      totalSnacks += 1;
-    }
+  // Misma regla que la vista de alimentación (foodRules.ts)
+  personDayShifts.forEach((list) => {
+    const meals = mealsForMinutes(sumShiftMinutes(list));
+    totalLunches += meals.lunches;
+    totalSnacks += meals.snacks;
   });
 
   const totalMeals = totalLunches + totalSnacks;

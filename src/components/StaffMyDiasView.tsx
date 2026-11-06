@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatWorked, mealsForMinutes, sumShiftMinutes } from '../services/foodRules';
 import {
   Person,
   Assignment,
@@ -152,46 +153,13 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
     return undefined;
   };
 
-  // Helper to calculate shift duration in minutes
-  const getShiftDurationMinutes = (startTime: string, endTime: string): number => {
-    if (!startTime || !endTime) return 0;
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
-    if (isNaN(startH) || isNaN(endH)) return 0;
-    const startTotal = startH * 60 + (startM || 0);
-    const endTotal = endH * 60 + (endM || 0);
-    return Math.max(0, endTotal - startTotal);
-  };
-
   // Compute daily totals and food entitlements for this person
   const getDailySummary = (dayId: string) => {
     const dayDef = EVENT_SCHEDULE.find((d) => d.dayId === dayId);
     const dayAssignments = myAssignments.filter((a) => a.dayId === dayId);
-    let totalMinutes = 0;
-
-    dayAssignments.forEach((asgn) => {
-      const shiftDef = resolveShift(asgn.shiftId, dayId);
-      if (shiftDef && shiftDef.startTime && shiftDef.endTime) {
-        totalMinutes += getShiftDurationMinutes(shiftDef.startTime, shiftDef.endTime);
-      }
-    });
-
-    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-    let lunches = 0;
-    let snacks = 0;
-
-    if (totalHours >= 9) {
-      lunches = 1;
-      snacks = 2;
-    } else if (totalHours >= 6) {
-      lunches = 1;
-      snacks = 1;
-    } else if (totalHours >= 3) {
-      lunches = 0;
-      snacks = 1;
-    }
-
-    return { totalHours, lunches, snacks, dayAssignments, dayDef };
+    const totalMinutes = sumShiftMinutes(dayAssignments.map((asgn) => resolveShift(asgn.shiftId, dayId)));
+    const { lunches, snacks } = mealsForMinutes(totalMinutes);
+    return { totalMinutes, totalHours: formatWorked(totalMinutes), lunches, snacks, dayAssignments, dayDef };
   };
 
   const currentDaySummary = getDailySummary(activeDayId);
@@ -316,7 +284,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
             >
               <span className="uppercase tracking-wider">{day.dayName}</span>
               <span className="text-[10px] font-normal opacity-85 font-mono">
-                {hasTurnos ? `${summary.dayAssignments.length} turno(s) • ${summary.totalHours}h` : 'Libre'}
+                {hasTurnos ? `${summary.dayAssignments.length} turno(s) • ${summary.totalHours}` : 'Libre'}
               </span>
             </button>
           );
@@ -370,7 +338,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
 
             <div className="bg-tinta-50 border border-tinta-300 px-3.5 py-2 rounded-2xl text-xs">
               <span className="text-tinta-500 text-[10px] block font-semibold font-sans">Horas totales:</span>
-              <span className="font-mono font-bold text-tinta-900 text-xs">{currentDaySummary.totalHours} Horas</span>
+              <span className="font-mono font-bold text-tinta-900 text-xs">{currentDaySummary.totalHours}</span>
             </div>
           </div>
         </div>

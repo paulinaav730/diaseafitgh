@@ -55,6 +55,78 @@ const STORAGE_KEYS = {
   BASES: 'dias_eafit_bases',
 };
 
+// ----------------- REGISTROS ELIMINADOS -----------------
+// La app vuelve a crear turnos y bases oficiales al cargar (migraciones de
+// horarios). Sin esta lista, todo lo que se elimina reaparecía al recargar o
+// al sincronizar. Guardamos el id y la hora del borrado: si el mismo id se
+// vuelve a guardar después (p. ej. "Restaurar horario"), vuelve a ser válido.
+type DeletedKind = 'shifts' | 'bases';
+const DELETED_KEY = 'dias_eafit_deleted_records';
+type DeletedMap = Record<DeletedKind, Record<string, string>>;
+
+function readDeleted(): DeletedMap {
+  try {
+    const raw = JSON.parse(localStorage.getItem(DELETED_KEY) || '{}');
+    return { shifts: raw.shifts || {}, bases: raw.bases || {} };
+  } catch {
+    return { shifts: {}, bases: {} };
+  }
+}
+function writeDeleted(map: DeletedMap) {
+  try {
+    localStorage.setItem(DELETED_KEY, JSON.stringify(map));
+  } catch {
+    /* sin almacenamiento: solo se pierde la memoria de borrados */
+  }
+}
+function markDeleted(kind: DeletedKind, ids: (string | number)[]) {
+  if (ids.length === 0) return;
+  const map = readDeleted();
+  const now = new Date().toISOString();
+  ids.forEach((id) => (map[kind][String(id)] = now));
+  writeDeleted(map);
+}
+function unmarkDeleted(kind: DeletedKind, ids: (string | number)[] | 'all') {
+  const map = readDeleted();
+  if (ids === 'all') map[kind] = {};
+  else ids.forEach((id) => delete map[kind][String(id)]);
+  writeDeleted(map);
+}
+/** Quita de la lista lo eliminado en este dispositivo. */
+function withoutDeleted<T extends { id: string | number }>(kind: DeletedKind, list: T[]): T[] {
+  const del = readDeleted()[kind];
+  if (Object.keys(del).length === 0) return list;
+  return list.filter((x) => !del[String(x.id)]);
+}
+/**
+ * Para datos que llegan de la nube: descarta lo eliminado aquí, salvo que la
+ * nube lo tenga guardado DESPUÉS del borrado (alguien lo volvió a crear).
+ * Devuelve los ids que siguen en la nube aunque se eliminaron, para reintentar.
+ */
+function filterCloudDeleted<T extends { id: string | number; updatedAt?: string }>(
+  kind: DeletedKind,
+  list: T[]
+): { kept: T[]; stale: string[] } {
+  const map = readDeleted();
+  const del = map[kind];
+  if (Object.keys(del).length === 0) return { kept: list, stale: [] };
+  const stale: string[] = [];
+  let revived = false;
+  const kept = list.filter((x) => {
+    const at = del[String(x.id)];
+    if (!at) return true;
+    if (x.updatedAt && new Date(x.updatedAt).getTime() > new Date(at).getTime()) {
+      delete del[String(x.id)];
+      revived = true;
+      return true;
+    }
+    stale.push(String(x.id));
+    return false;
+  });
+  if (revived) writeDeleted(map);
+  return { kept, stale };
+}
+
 // Listeners for reactive updates
 type Listener<T> = (data: T) => void;
 const peopleListeners = new Set<Listener<Person[]>>();
@@ -530,6 +602,7 @@ export function initializeStorage(): void {
       }
     });
 
+    shiftsCache = withoutDeleted('shifts', shiftsCache);
     localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
 
     // Migrate any availabilities referencing old shift IDs
@@ -566,8 +639,10 @@ export function initializeStorage(): void {
       (b) => b.eventId !== 'carnival' && !String(b.id).startsWith('carnival_') && !(b.dayId === 'miercoles' && !b.eventId)
     );
 
+    const deletedBases = readDeleted().bases;
+    const expectedCarnival = CARNIVAL_PHYSICAL_BASES.filter((cb) => !deletedBases['carnival_' + cb.id]);
     const needsCarnivalUpdate =
-      carnivalBasesInCache.length !== 22 ||
+      carnivalBasesInCache.length !== expectedCarnival.length ||
       carnivalBasesInCache.some((b) => {
         const num = Number(String(b.id).replace('carnival_', '')) || Number(b.baseNumber);
         const conf = CARNIVAL_PHYSICAL_BASES.find((cb) => cb.id === num);
@@ -605,7 +680,7 @@ export function initializeStorage(): void {
         'arcade': { newId: 'carnival_22', newBaseNumber: '22', newName: 'BASE ARCADE' },
       };
 
-      const newCarnivalBases: ConfigurableBase[] = CARNIVAL_PHYSICAL_BASES.map((b) => ({
+      const newCarnivalBases: ConfigurableBase[] = expectedCarnival.map((b) => ({
         id: 'carnival_' + b.id,
         name: b.name,
         baseNumber: String(b.id),
@@ -652,9 +727,9 @@ export function initializeStorage(): void {
     const gamesBasesInCache = basesCache.filter(
       (b) => b.eventId === 'the-games' || String(b.id).startsWith('games_') || b.dayId === 'jueves' || b.dayId === 'viernes'
     );
-    const expectedGamesBases = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES];
+    const expectedGamesBases = withoutDeleted('bases', [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES]);
     const needsTheGamesUpdate =
-      gamesBasesInCache.length !== 30 ||
+      gamesBasesInCache.length !== expectedGamesBases.length ||
       gamesBasesInCache.some((b) => {
         const expected = expectedGamesBases.find((eb) => eb.id === b.id);
         return (
@@ -672,8 +747,14 @@ export function initializeStorage(): void {
       );
       basesCache = [...nonGamesBases, ...expectedGamesBases];
       localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
-      pushBasesToSupabase(basesCache).catch(() => {});
+      // Solo local: si hay nube, la sincronización aplica lo mismo sin
+      // volver a subir bases que alguien eliminó.
+      if (!isSupabaseConfigured()) pushBasesToSupabase(basesCache).catch(() => {});
     }
+
+    const basesBefore = basesCache.length;
+    basesCache = withoutDeleted('bases', basesCache);
+    if (basesCache.length !== basesBefore) localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
 
     // Ensure Jueves & Viernes The Games shifts have hasBases: true and capacities 63 & 73
     let shiftsModified = false;
@@ -713,7 +794,6 @@ export function initializeStorage(): void {
     });
     if (shiftsModified) {
       localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
-      pushShiftsToSupabase(shiftsCache).catch(() => {});
     }
     
     // Initialize Realtime
@@ -723,12 +803,9 @@ export function initializeStorage(): void {
       });
     });
 
-    // Ensure all local shifts are synced to Supabase shifts table in the background
-    if (isSupabaseConfigured() && shiftsCache.length > 0) {
-      pushShiftsToSupabase(shiftsCache).catch((err) =>
-        console.warn('Background sync of shifts to Supabase:', err)
-      );
-    }
+    // Antes aquí se subían TODOS los turnos locales a la nube en cada carga,
+    // lo que revivía los turnos eliminados. Ahora la nube es la fuente de
+    // verdad: se descarga en syncAllFromSupabase y solo se sube lo que se edita.
   } catch (error) {
     console.error('Error loading data from storage:', error);
     peopleCache = [];
@@ -2043,6 +2120,7 @@ export async function saveShift(
     shiftData.id ||
     `shift_${shiftData.dayId}_${shiftData.category.toLowerCase()}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 5)}`;
 
+  unmarkDeleted('shifts', [id]);
   const label =
     formatTimeRangeLabel(shiftData.startTime, shiftData.endTime);
 
@@ -2158,6 +2236,7 @@ export async function deleteShift(
   }
 
   shiftsCache = shiftsCache.filter((s) => s.id !== id);
+  markDeleted('shifts', [id]);
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
   shiftListeners.forEach((fn) => fn([...shiftsCache]));
 
@@ -2268,6 +2347,7 @@ export async function saveBase(
     eventId: baseData.eventId,
     notes: baseData.notes || '',
     createdAt: existingIdx >= 0 ? basesCache[existingIdx].createdAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   if (existingIdx >= 0) {
@@ -2275,9 +2355,13 @@ export async function saveBase(
   } else {
     basesCache.push(newBase);
   }
+  unmarkDeleted('bases', [id]);
 
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
+  // Antes las bases solo se subían a la nube al cargar la app; ahora que la
+  // nube manda, cada base guardada se sube en el momento.
+  if (isSupabaseConfigured()) pushBasesToSupabase([newBase]).catch(() => {});
   return newBase;
 }
 
@@ -2296,6 +2380,7 @@ export async function deleteBase(
   }
 
   basesCache = basesCache.filter((b) => String(b.id) !== String(id));
+  markDeleted('bases', [id]);
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
   // Antes solo se borraba en el navegador y la base reaparecía al sincronizar
@@ -2343,6 +2428,7 @@ export async function deleteShiftsBatch(ids: string[]): Promise<{ shifts: number
   const removedAssignments = assignmentCache.filter((a) => set.has(a.shiftId));
 
   shiftsCache = shiftsCache.filter((s) => !set.has(s.id));
+  markDeleted('shifts', ids);
   assignmentCache = assignmentCache.filter((a) => !set.has(a.shiftId));
   attendanceCache = attendanceCache.filter((a) => !set.has(a.shiftId));
   requirementCache = requirementCache.filter((r) => !set.has(r.shiftId));
@@ -2384,6 +2470,7 @@ export async function deleteBasesBatch(ids: (string | number)[]): Promise<{ base
     affected.has(a.id) ? { ...a, baseId: undefined, baseNumber: undefined, baseName: undefined, updatedAt: now } : a
   );
   basesCache = basesCache.filter((b) => !set.has(String(b.id)));
+  markDeleted('bases', ids);
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
   notifyAll();
@@ -2409,9 +2496,18 @@ export async function deleteBasesBatch(ids: (string | number)[]): Promise<{ base
 
 export async function restoreDefaultSchedule(): Promise<void> {
   initializeStorage();
+  const now = new Date().toISOString();
   eventsCache = [...DEFAULT_INITIAL_EVENTS];
-  shiftsCache = [...DEFAULT_INITIAL_SHIFTS];
-  basesCache = [...DEFAULT_INITIAL_BASES];
+  shiftsCache = DEFAULT_INITIAL_SHIFTS.map((s) => ({ ...s, updatedAt: now }));
+  basesCache = DEFAULT_INITIAL_BASES.map((b) => ({ ...b, updatedAt: now }));
+  unmarkDeleted('shifts', 'all');
+  unmarkDeleted('bases', 'all');
+  // La nube es la fuente de verdad: si no se sube, el horario restaurado
+  // desaparecería en la siguiente sincronización.
+  if (isSupabaseConfigured()) {
+    await pushShiftsToSupabase(shiftsCache).catch(() => {});
+    await pushBasesToSupabase(basesCache).catch(() => {});
+  }
 
   localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
   localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
@@ -2528,8 +2624,17 @@ export function replaceAllAvailabilitiesFromCloud(newAvail: AvailabilityRecord[]
   availabilityListeners.forEach((fn) => fn([...availabilityCache]));
 }
 
-export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
-  if (!newBases || newBases.length === 0) return;
+function deleteRecordsFromCloud(table: 'shifts' | 'bases', ids: string[]) {
+  if (!isSupabaseConfigured()) return;
+  import('./supabaseSync').then((sync) => sync.deleteRecordsFromSupabase(table, ids)).catch(() => {});
+}
+
+export function replaceAllBasesFromCloud(cloudBases: PhysicalBase[]): void {
+  if (!cloudBases) return;
+  // La nube manda (aunque venga vacía). Solo se descarta lo eliminado aquí que
+  // la nube todavía no alcanzó a borrar, y se reintenta ese borrado.
+  const { kept: newBases, stale } = filterCloudDeleted('bases', cloudBases);
+  if (stale.length) deleteRecordsFromCloud('bases', stale);
   const expectedGames = [...THE_GAMES_JUEVES_BASES, ...THE_GAMES_VIERNES_BASES];
   const merged = newBases.map((b) => {
     const eg = expectedGames.find(
@@ -2550,23 +2655,20 @@ export function replaceAllBasesFromCloud(newBases: PhysicalBase[]): void {
     return b;
   });
 
-  // Make sure all expected The Games bases are present in basesCache
-  for (const eg of expectedGames) {
-    if (!merged.some((b) => b.id === eg.id || (b.dayId === eg.dayId && String(b.baseNumber) === String(eg.baseNumber)))) {
-      merged.push({ ...eg });
-    }
-  }
-
+  // Antes aquí se volvían a agregar las bases de The Games que faltaran, y
+  // por eso las bases eliminadas reaparecían.
   basesCache = merged;
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
 }
 
-export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void {
-  if (!newShifts || newShifts.length === 0) return;
+export function replaceAllShiftsFromCloud(cloudShifts: ConfigurableShift[]): void {
+  if (!cloudShifts) return;
+  // La nube manda (aunque venga vacía): antes se mezclaban los turnos
+  // predeterminados y los del navegador, y lo eliminado reaparecía.
+  const { kept: newShifts, stale } = filterCloudDeleted('shifts', cloudShifts);
+  if (stale.length) deleteRecordsFromCloud('shifts', stale);
   const shiftMap = new Map<string, ConfigurableShift>();
-  DEFAULT_INITIAL_SHIFTS.forEach((ds) => shiftMap.set(ds.id, { ...ds }));
-  shiftsCache.forEach((cs) => shiftMap.set(cs.id, cs));
 
   const officialJuevesShifts = DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves');
   const officialJuevesIds = new Set(officialJuevesShifts.map((s) => s.id));
@@ -2606,12 +2708,11 @@ export function replaceAllShiftsFromCloud(newShifts: ConfigurableShift[]): void 
     }
   });
 
-  // Ensure all 5 official Thursday shifts exist in shiftMap without wiping user-configured hours/details
+  // Completa los datos de los turnos oficiales del jueves que estén en la nube
+  // (ya no se crean si alguien los eliminó).
   officialJuevesShifts.forEach((js) => {
     const existing = shiftMap.get(js.id);
-    if (!existing) {
-      shiftMap.set(js.id, { ...js });
-    } else {
+    if (existing) {
       shiftMap.set(js.id, {
         ...js,
         ...existing,
@@ -2650,8 +2751,12 @@ export function recreateThursdayShifts(syncToSupabase = true): { count: number; 
   if (!isInitialized && !isInitializing) {
     initializeStorage();
   }
-  const officialJueves = DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves');
+  const officialJueves = DEFAULT_INITIAL_SHIFTS.filter((s) => s.dayId === 'jueves').map((s) => ({
+    ...s,
+    updatedAt: new Date().toISOString(),
+  }));
   const officialJuevesIds = new Set(officialJueves.map((s) => s.id));
+  unmarkDeleted('shifts', [...officialJuevesIds]);
 
   // 1. Purge all non-official Thursday shifts from shiftsCache and insert the 5 official ones
   shiftsCache = shiftsCache
