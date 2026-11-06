@@ -17,11 +17,14 @@ import {
   XCircle,
   RotateCcw,
   LayoutGrid,
+  Tags,
 } from 'lucide-react';
 import {
   CalendarEvent,
   LEAGUE_GTS,
   Person,
+  BUILTIN_EVENT_TYPES,
+  CustomEventType,
   ReminderOffset,
   REMINDER_OFFSETS,
   TrainingMode,
@@ -30,15 +33,13 @@ import {
 import {
   audienceLabel,
   calendarEvents,
-  deleteCalendarEvent,
   eventEnd,
   formatDateLong,
   formatTime12,
   isPersonInAudience,
   reminderId,
   reminderPreferences,
-  saveReminderPreference,
-  setCalendarEventStatus,
+  customEventTypes,
   todayIso,
 } from '../services/calendarService';
 import { conectadosClosures } from '../services/leagueService';
@@ -65,6 +66,10 @@ import {
   useCollection,
 } from './league/ui';
 import { EventFormModal } from './EventFormModal';
+import { EventTypesModal } from './EventTypesModal';
+import { EventQrPanel } from './EventQrPanel';
+import { api } from '../services/leagueApi';
+import { attempt, useBusy } from './league/toast';
 
 // ----------------------------------------------------------------------------
 // Utilidades de fecha (todo en cadenas YYYY-MM-DD para evitar líos de zona horaria)
@@ -88,20 +93,22 @@ const shortDay = (iso: string) =>
 type CalView = 'mes' | 'semana' | 'lista';
 
 /** Tipos para filtrar y leyenda: la capacitación se separa en abierta y por invitación. */
-const LEGEND: { type: CalendarEvent['type']; trainingMode?: TrainingMode }[] = [
-  { type: 'conectados' },
-  { type: 'capacitacion', trainingMode: 'invitacion' },
-  { type: 'capacitacion', trainingMode: 'abierta' },
-  { type: 'reto' },
-  { type: 'semana_dias' },
-  { type: 'otro' },
-];
+type LegendItem = { type: string; trainingMode?: TrainingMode };
+function buildLegend(custom: CustomEventType[]): LegendItem[] {
+  return [
+    ...BUILTIN_EVENT_TYPES.flatMap((t): LegendItem[] =>
+      t === 'capacitacion'
+        ? [
+            { type: t, trainingMode: 'invitacion' },
+            { type: t, trainingMode: 'abierta' },
+          ]
+        : [{ type: t }]
+    ),
+    ...custom.map((c) => ({ type: c.id })),
+  ];
+}
 const typeFilterKey = (e: Pick<CalendarEvent, 'type' | 'trainingMode'>) =>
   e.type === 'capacitacion' ? `capacitacion:${e.trainingMode ?? 'invitacion'}` : e.type;
-const TYPE_FILTERS = [
-  { id: 'all', label: 'Todos los tipos' },
-  ...LEGEND.map((l) => ({ id: typeFilterKey(l), label: eventTypeLabel(l.type, l.trainingMode) })),
-];
 
 interface CalendarViewProps {
   mode: 'admin' | 'staff';
@@ -114,6 +121,13 @@ interface CalendarViewProps {
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person, author, onOpenConectados }) => {
   const isAdmin = mode === 'admin';
+  const customTypes = useCollection(customEventTypes.subscribe);
+  const legend = useMemo(() => buildLegend(customTypes), [customTypes]);
+  const typeFilters = useMemo(
+    () => [{ id: 'all', label: 'Todos los tipos' }, ...legend.map((l) => ({ id: typeFilterKey(l), label: eventTypeLabel(l.type, l.trainingMode) }))],
+    [legend]
+  );
+  const [managingTypes, setManagingTypes] = useState(false);
   const allEvents = useCollection(calendarEvents.subscribe);
   const prefs = useCollection(reminderPreferences.subscribe);
   const closures = useCollection(conectadosClosures.subscribe);
@@ -362,15 +376,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
         }
         actions={
           isAdmin && (
-            <button
-              className={btnPrimary}
-              onClick={() => {
-                setNewDate(undefined);
-                setEditing('new');
-              }}
-            >
-              <CalendarPlus className="w-4 h-4" /> Nuevo evento
-            </button>
+            <>
+              <button className={btnSecondary} onClick={() => setManagingTypes(true)}>
+                <Tags className="w-4 h-4" /> Tipos de evento
+              </button>
+              <button
+                className={btnPrimary}
+                onClick={() => {
+                  setNewDate(undefined);
+                  setEditing('new');
+                }}
+              >
+                <CalendarPlus className="w-4 h-4" /> Nuevo evento
+              </button>
+            </>
           )
         }
       />
@@ -448,7 +467,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
               aria-label="Filtrar por tipo"
             >
               <option value="all">Todos los tipos</option>
-              {TYPE_FILTERS.map((f) => (
+              {typeFilters.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.label}
                 </option>
@@ -490,7 +509,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
 
         {/* Leyenda */}
         <div className="px-4 py-3 border-t border-tinta-200 flex flex-wrap gap-2">
-          {LEGEND.map((l) => (
+          {legend.map((l) => (
             <EventTypeChip key={l.type + (l.trainingMode || '')} type={l.type} trainingMode={l.trainingMode} />
           ))}
           {isAdmin && view === 'mes' && (
@@ -521,6 +540,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
           }
         />
       )}
+
+      {managingTypes && <EventTypesModal onClose={() => setManagingTypes(false)} />}
 
       {editing && (
         <EventFormModal
@@ -583,6 +604,7 @@ const EventDetailModal: React.FC<{
   onOpenConectados?: () => void;
 }> = ({ event: e, people, isAdmin, person, isClosed, onClose, onEdit, onOpenConectados }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, run] = useBusy();
   const invited = useMemo(() => people.filter((p) => p.isActive !== false && isPersonInAudience(p, e.audience)).length, [people, e.audience]);
 
   return (
@@ -603,10 +625,12 @@ const EventDetailModal: React.FC<{
                 {!isClosed && (
                   <button
                     className={btnDanger}
-                    onClick={() => {
-                      deleteCalendarEvent(e.id);
-                      onClose();
-                    }}
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        if (await attempt(() => api.deleteEvent(e.id), 'Evento eliminado')) onClose();
+                      })
+                    }
                   >
                     Sí, eliminar
                   </button>
@@ -619,7 +643,15 @@ const EventDetailModal: React.FC<{
                 </button>
                 <button
                   className={btnSecondary}
-                  onClick={() => setCalendarEventStatus(e.id, e.status === 'activo' ? 'cancelado' : 'activo')}
+                  disabled={busy}
+                  onClick={() =>
+                    run(() =>
+                      attempt(
+                        () => api.setEventStatus(e, e.status === 'activo' ? 'cancelado' : 'activo'),
+                        e.status === 'activo' ? 'Evento cancelado' : 'Evento reactivado'
+                      )
+                    )
+                  }
                 >
                   {e.status === 'activo' ? (
                     <>
@@ -698,9 +730,11 @@ const EventDetailModal: React.FC<{
           </details>
         )}
 
-        {isAdmin && e.type === 'conectados' && onOpenConectados && (
+        {isAdmin && e.attendanceEnabled && e.status === 'activo' && <EventQrPanel event={e} isClosed={isClosed} />}
+
+        {isAdmin && (e.type === 'conectados' || e.attendanceEnabled) && onOpenConectados && (
           <button className={`${btnSecondary} w-full`} onClick={onOpenConectados}>
-            <ClipboardCheck className="w-4 h-4" /> {isClosed ? 'Ver asistencia y puntos' : 'Tomar asistencia (DÍAS League)'}
+            <ClipboardCheck className="w-4 h-4" /> {isClosed ? 'Ver asistencia y puntos' : 'Panel de asistencia'}
           </button>
         )}
 
@@ -725,7 +759,7 @@ const ReminderEditor: React.FC<{ eventId: string; personId: string }> = ({ event
       if (fromSwitch) offs = [60];
       else en = false;
     }
-    saveReminderPreference(eventId, personId, en, offs);
+    if (!(await attempt(() => api.saveReminder(eventId, en, offs)))) return;
     if (en && perm === 'default') setPerm(await enablePushNotifications(personId));
   };
 

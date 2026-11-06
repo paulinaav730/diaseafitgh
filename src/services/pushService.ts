@@ -62,7 +62,7 @@ async function hashId(text: string): Promise<string> {
  * Pide permiso de notificaciones y, si es posible, registra la suscripción
  * push en el servidor para recibir avisos con la app cerrada.
  */
-export async function enablePushNotifications(personId: string): Promise<PushPermission> {
+export async function enablePushNotifications(_personId?: string): Promise<PushPermission> {
   if (!isPushSupported()) return 'unsupported';
   const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
   if (permission !== 'granted') return permission;
@@ -77,19 +77,15 @@ export async function enablePushNotifications(personId: string): Promise<PushPer
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
         }));
       const json = sub.toJSON();
-      const client = getSupabase();
-      await client?.from('push_subscriptions').upsert(
-        {
-          id: await hashId(sub.endpoint),
-          person_id: personId,
-          endpoint: sub.endpoint,
-          p256dh: json.keys?.p256dh,
-          auth: json.keys?.auth,
-          user_agent: navigator.userAgent.slice(0, 250),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      );
+      // Se guarda con la sesión del integrante (función segura del servidor)
+      const { api } = await import('./leagueApi');
+      await api.savePushSubscription({
+        id: await hashId(sub.endpoint),
+        endpoint: sub.endpoint,
+        p256dh: json.keys?.p256dh || '',
+        auth: json.keys?.auth || '',
+        userAgent: navigator.userAgent.slice(0, 250),
+      });
     } catch (err) {
       console.warn('No se pudo registrar la suscripción push:', err);
     }

@@ -1,34 +1,64 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { CalendarEventType, CALENDAR_EVENT_TYPE_LABELS, TrainingMode, TRAINING_MODE_LABELS } from '../../types';
+import { BuiltinEventType, CalendarEventType, EventTypeColor, TrainingMode, TRAINING_MODE_LABELS } from '../../types';
+import { customEventTypes, eventTypeName, isBuiltinType } from '../../services/calendarService';
 
-/** Colores por tipo de evento (paleta de marca). El texto siempre acompaña al color. */
-export const EVENT_TYPE_STYLES: Record<CalendarEventType, { chip: string; dot: string; bar: string }> = {
-  conectados: { chip: 'bg-lila-100 text-lila-800 border-lila-200', dot: 'bg-lila-500', bar: 'border-l-lila-500' },
-  capacitacion: { chip: 'bg-turquesa-100 text-turquesa-800 border-turquesa-200', dot: 'bg-turquesa-500', bar: 'border-l-turquesa-500' },
-  reto: { chip: 'bg-coral-100 text-coral-800 border-coral-200', dot: 'bg-coral-400', bar: 'border-l-coral-400' },
-  semana_dias: { chip: 'bg-mostaza-100 text-mostaza-800 border-mostaza-200', dot: 'bg-mostaza-400', bar: 'border-l-mostaza-400' },
-  otro: { chip: 'bg-tinta-100 text-tinta-700 border-tinta-200', dot: 'bg-tinta-400', bar: 'border-l-tinta-400' },
+type TypeStyle = { chip: string; dot: string; bar: string; swatch: string };
+
+/** Estilos por color de marca (clases completas para que Tailwind las genere). */
+export const COLOR_STYLES: Record<EventTypeColor, TypeStyle> = {
+  lila: { chip: 'bg-lila-100 text-lila-800 border-lila-200', dot: 'bg-lila-500', bar: 'border-l-lila-500', swatch: 'bg-lila-300' },
+  turquesa: { chip: 'bg-turquesa-100 text-turquesa-800 border-turquesa-200', dot: 'bg-turquesa-500', bar: 'border-l-turquesa-500', swatch: 'bg-turquesa-300' },
+  coral: { chip: 'bg-coral-100 text-coral-800 border-coral-200', dot: 'bg-coral-400', bar: 'border-l-coral-400', swatch: 'bg-coral-300' },
+  mostaza: { chip: 'bg-mostaza-100 text-mostaza-800 border-mostaza-200', dot: 'bg-mostaza-400', bar: 'border-l-mostaza-400', swatch: 'bg-mostaza-300' },
+  lima: { chip: 'bg-lima-100 text-lima-800 border-lima-200', dot: 'bg-lima-500', bar: 'border-l-lima-500', swatch: 'bg-lima-300' },
+  tinta: { chip: 'bg-tinta-100 text-tinta-700 border-tinta-200', dot: 'bg-tinta-500', bar: 'border-l-tinta-500', swatch: 'bg-tinta-400' },
 };
+
+/** Color de cada tipo predefinido. Los días de la Semana de DÍAS comparten mostaza. */
+export const BUILTIN_TYPE_COLORS: Record<BuiltinEventType, EventTypeColor> = {
+  conectados: 'lila',
+  expectadias: 'lima',
+  decoracion: 'coral',
+  the_show: 'mostaza',
+  the_zone: 'mostaza',
+  carnival: 'mostaza',
+  the_challenge_games: 'mostaza',
+  the_games: 'mostaza',
+  capacitacion: 'turquesa',
+  reto: 'coral',
+  otro: 'tinta',
+};
+
+export function typeColor(type: CalendarEventType): EventTypeColor {
+  if (isBuiltinType(type)) return BUILTIN_TYPE_COLORS[type];
+  return customEventTypes.getAll().find((c) => c.id === type)?.color ?? 'tinta';
+}
+
+/** Compatibilidad: EVENT_TYPE_STYLES[type] */
+export const EVENT_TYPE_STYLES = new Proxy({} as Record<string, TypeStyle>, {
+  get: (_t, type: string) => COLOR_STYLES[typeColor(type)],
+});
 
 /** Nombre visible del tipo; las capacitaciones dicen si son abiertas o por invitación. */
 export function eventTypeLabel(type: CalendarEventType, trainingMode?: TrainingMode): string {
   if (type === 'capacitacion' && trainingMode) return TRAINING_MODE_LABELS[trainingMode];
-  return CALENDAR_EVENT_TYPE_LABELS[type];
+  return eventTypeName(type);
 }
 
 export const EventTypeChip: React.FC<{ type: CalendarEventType; trainingMode?: TrainingMode; className?: string }> = ({
   type,
   trainingMode,
   className = '',
-}) => (
-  <span
-    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-semibold ${EVENT_TYPE_STYLES[type].chip} ${className}`}
-  >
-    <span className={`w-1.5 h-1.5 rounded-full ${EVENT_TYPE_STYLES[type].dot}`} />
-    {eventTypeLabel(type, trainingMode)}
-  </span>
-);
+}) => {
+  const st = COLOR_STYLES[typeColor(type)];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-semibold ${st.chip} ${className}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+      {eventTypeLabel(type, trainingMode)}
+    </span>
+  );
+};
 
 export const formatPoints = (n: number) =>
   n.toLocaleString('es-CO', { maximumFractionDigits: 2, minimumFractionDigits: Number.isInteger(n) ? 0 : 1 });

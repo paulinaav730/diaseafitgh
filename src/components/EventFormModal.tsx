@@ -1,19 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import {
+  BUILTIN_EVENT_TYPES,
+  BUILTIN_EVENT_TYPE_LABELS,
   CalendarAudience,
   CalendarEvent,
   CalendarEventType,
-  CALENDAR_EVENT_TYPES,
-  CALENDAR_EVENT_TYPE_LABELS,
   ConectadosScoring,
   LEAGUE_GTS,
   Person,
   TrainingMode,
 } from '../types';
-import { EMPTY_AUDIENCE, isPersonInAudience, personGts, saveCalendarEvent, todayIso } from '../services/calendarService';
+import { customEventTypes, EMPTY_AUDIENCE, isPersonInAudience, personGts, todayIso } from '../services/calendarService';
 import { getClosure, getDefaultScoring } from '../services/leagueService';
-import { btnPrimary, btnSecondary, CheckList, Field, inputCls, Modal } from './league/ui';
+import { api, errorMessage } from '../services/leagueApi';
+import { btnPrimary, btnSecondary, CheckList, Field, inputCls, Modal, useCollection } from './league/ui';
+import { notify, useBusy } from './league/toast';
 
 interface Props {
   initial?: CalendarEvent;
@@ -37,6 +39,11 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
   const [scoring, setScoring] = useState<ConectadosScoring>(initial?.scoring ?? getDefaultScoring());
   const [personQuery, setPersonQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [attendanceEnabled, setAttendanceEnabled] = useState<boolean>(initial?.attendanceEnabled ?? (initial ? false : true));
+  const [checkinOpens, setCheckinOpens] = useState(initial?.checkinOpensMinutes ?? 30);
+  const [lateAfter, setLateAfter] = useState(initial?.lateAfterMinutes ?? 15);
+  const customTypes = useCollection(customEventTypes.subscribe);
+  const [busy, run] = useBusy();
 
   const isClosed = !!(initial && getClosure(initial.id));
   const isTraining = type === 'capacitacion';
@@ -68,7 +75,7 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
 
   const setA = (patch: Partial<CalendarAudience>) => setAudience((a) => ({ ...a, ...patch }));
 
-  const submit = () => {
+  const submit = async () => {
     if (!title.trim()) return setError('Escribe el nombre del evento.');
     if (!date) return setError('Elige la fecha.');
     if (!startTime || !endTime || endTime <= startTime) return setError('La hora de finalización debe ser posterior a la de inicio.');
@@ -78,8 +85,8 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
       return setError('Elige al menos un grupo destinatario.');
     }
     if (type === 'conectados' && !(scoring.maxGtPoints >= 0)) return setError('Los puntos máximos deben ser un número válido.');
-    const ev = saveCalendarEvent(
-      {
+    setError(null);
+    const data = {
         id: initial?.id,
         title: title.trim(),
         description: description.trim() || undefined,
@@ -92,11 +99,22 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         audience: a,
         status: initial?.status ?? 'activo',
         scoring: type === 'conectados' ? scoring : undefined,
-      },
-      author
-    );
-    onSaved(ev);
+        attendanceEnabled,
+        checkinOpensMinutes: checkinOpens,
+        lateAfterMinutes: lateAfter,
+    };
+    // Solo se cierra el formulario cuando el servidor confirma que se guardó
+    await run(async () => {
+      try {
+        const ev = await api.saveEvent(data);
+        notify.ok(initial ? 'Evento actualizado' : 'Evento creado');
+        onSaved(ev);
+      } catch (e) {
+        setError(errorMessage(e));
+      }
+    });
   };
+  void author;
 
   const num = (v: string) => (v === '' ? 0 : Number(v));
 
@@ -111,8 +129,8 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
           <button className={btnSecondary} onClick={onClose}>
             Cancelar
           </button>
-          <button className={btnPrimary} onClick={submit}>
-            {initial ? 'Guardar cambios' : 'Crear evento'}
+          <button className={btnPrimary} onClick={submit} disabled={busy}>
+            {busy ? 'Guardando…' : initial ? 'Guardar cambios' : 'Crear evento'}
           </button>
         </>
       }
@@ -123,11 +141,22 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         </Field>
         <Field label="Tipo de actividad">
           <select className={inputCls} value={type} onChange={(e) => setType(e.target.value as CalendarEventType)}>
-            {CALENDAR_EVENT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {CALENDAR_EVENT_TYPE_LABELS[t]}
-              </option>
-            ))}
+            <optgroup label="Tipos de DÍAS">
+              {BUILTIN_EVENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {BUILTIN_EVENT_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </optgroup>
+            {customTypes.length > 0 && (
+              <optgroup label="Tipos creados">
+                {customTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </Field>
         <Field label="Lugar">
@@ -353,6 +382,34 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         </div>
 
         )}
+
+        {/* Control de asistencia por QR */}
+        <div className="sm:col-span-2 rounded-2xl border border-tinta-200 p-4 space-y-3">
+          <label className="flex items-start justify-between gap-3 cursor-pointer">
+            <span>
+              <span className="block text-sm font-semibold text-tinta-900">QR de asistencia</span>
+              <span className="block text-[11px] text-tinta-600 mt-0.5">
+                Los invitados escanean el código del evento con su sesión iniciada y su asistencia queda registrada sola.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              className="accent-lila-600 w-5 h-5 mt-0.5"
+              checked={attendanceEnabled}
+              onChange={(e) => setAttendanceEnabled(e.target.checked)}
+            />
+          </label>
+          {attendanceEnabled && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Se puede escanear desde" hint="Minutos antes del inicio">
+                <input type="number" min={0} className={inputCls} value={checkinOpens} onChange={(e) => setCheckinOpens(Math.max(0, Number(e.target.value)))} />
+              </Field>
+              <Field label="Cuenta como “llegó tarde” después de" hint="Minutos desde el inicio">
+                <input type="number" min={0} className={inputCls} value={lateAfter} onChange={(e) => setLateAfter(Math.max(0, Number(e.target.value)))} />
+              </Field>
+            </div>
+          )}
+        </div>
 
         {/* Puntuación de CONECTADOS */}
         {type === 'conectados' && (

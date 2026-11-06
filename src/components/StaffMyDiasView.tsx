@@ -11,6 +11,8 @@ import {
   isPersonShirtFullyDelivered,
 } from '../types';
 import { DiasLogo } from './DiasLogo';
+import { useProfile, PersonalQrModal } from './PersonProfile';
+import { QrCode, qrLink } from './league/QrCode';
 import { EVENT_SCHEDULE, DEFAULT_INITIAL_SHIFTS, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import {
   User,
@@ -199,14 +201,15 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
       {/* Top Welcome Card */}
       <div className="bg-surface border-2 border-tinta-200 rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden text-tinta-900">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start gap-4">
-            <DiasLogo variant="mark" className="h-10 sm:h-12 w-auto shrink-0 hidden sm:block mt-1" />
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mostaza-50 border border-mostaza-300/40 text-mostaza-600 text-xs font-bold uppercase tracking-wider font-sans">
+          <div className="flex items-start gap-4 min-w-0">
+            {/* Logo DÍAS con el QR personal debajo */}
+            <StaffLogoQr name={person.name} />
+            <div className="space-y-2 min-w-0">
+              <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-mostaza-50 border border-mostaza-300/40 text-mostaza-600 text-xs font-bold uppercase tracking-wider font-sans">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Portal de Staff • DÍAS EAFIT</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-tinta-900 font-display tracking-wider">
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-tinta-900 font-display tracking-wider break-words [overflow-wrap:anywhere]">
                 HOLA, {person.name.toUpperCase()}
               </h1>
               <p className="text-xs sm:text-sm text-tinta-500 font-sans">
@@ -487,6 +490,26 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+/** Logo DÍAS y, debajo, el QR personal del integrante (toca para verlo en grande). */
+const StaffLogoQr: React.FC<{ name: string }> = ({ name }) => {
+  const { profile } = useProfile('me', false);
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex flex-col items-center gap-2 shrink-0">
+      <DiasLogo variant="mark" className="h-10 sm:h-12 w-auto" />
+      {profile ? (
+        <button onClick={() => setOpen(true)} className="flex flex-col items-center gap-1" title="Ver mi QR en grande">
+          <QrCode value={qrLink('P', profile.qrToken)} size={92} label="Mi QR DÍAS" className="border border-tinta-200" />
+          <span className="text-[10px] font-semibold text-tinta-600">Mi QR</span>
+        </button>
+      ) : (
+        <div className="w-[92px] h-[92px] rounded-xl bg-tinta-100 animate-pulse" aria-label="Cargando QR" />
+      )}
+      {open && profile && <PersonalQrModal name={name} token={profile.qrToken} onClose={() => setOpen(false)} />}
     </div>
   );
 };

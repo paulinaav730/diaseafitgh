@@ -68,6 +68,9 @@ export interface AdminUser {
 
 export interface CurrentUser {
   role: UserRole;
+  /** Sesión emitida por el servidor (Supabase). Sin ella no se pueden hacer acciones protegidas. */
+  sessionToken?: string;
+  sessionExpiresAt?: string;
   adminData?: AdminUser;
   staffData?: Person;
 }
@@ -283,17 +286,49 @@ export interface FoodDelivery {
 // CALENDARIO DÍAS
 // =====================================================================
 
-export type CalendarEventType = 'conectados' | 'capacitacion' | 'reto' | 'semana_dias' | 'otro';
+/** Tipos de actividad predefinidos. El administrador puede crear más (CustomEventType). */
+export const BUILTIN_EVENT_TYPES = [
+  'conectados',
+  'expectadias',
+  'decoracion',
+  'the_show',
+  'the_zone',
+  'carnival',
+  'the_challenge_games',
+  'the_games',
+  'capacitacion',
+  'reto',
+  'otro',
+] as const;
+export type BuiltinEventType = (typeof BUILTIN_EVENT_TYPES)[number];
+/** Id de un tipo predefinido o de uno creado por el administrador */
+export type CalendarEventType = string;
 
-export const CALENDAR_EVENT_TYPES: CalendarEventType[] = ['conectados', 'capacitacion', 'reto', 'semana_dias', 'otro'];
-
-export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
+export const BUILTIN_EVENT_TYPE_LABELS: Record<BuiltinEventType, string> = {
   conectados: 'Conectados',
+  expectadias: 'Expectadías',
+  decoracion: 'Decoración',
+  the_show: 'THE SHOW',
+  the_zone: 'THE ZONE',
+  carnival: 'CARNIVAL',
+  the_challenge_games: 'THE CHALLENGE & THE GAMES',
+  the_games: 'THE GAMES',
   capacitacion: 'Capacitación',
   reto: 'Reto',
-  semana_dias: 'Semana de DÍAS',
-  otro: 'Otro',
+  otro: 'Otras actividades',
 };
+
+/** Colores de marca disponibles para tipos personalizados */
+export const EVENT_TYPE_COLORS = ['lila', 'turquesa', 'coral', 'mostaza', 'lima', 'tinta'] as const;
+export type EventTypeColor = (typeof EVENT_TYPE_COLORS)[number];
+
+export interface CustomEventType {
+  id: string;
+  name: string;
+  color: EventTypeColor;
+  createdBy?: string;
+  createdAt?: string;
+}
 
 /**
  * Las capacitaciones son de dos clases:
@@ -343,6 +378,12 @@ export interface CalendarEvent {
   audience: CalendarAudience;
   status: 'activo' | 'cancelado';
   scoring?: ConectadosScoring; // Solo CONECTADOS
+  /** Control de asistencia por QR */
+  attendanceEnabled?: boolean;
+  /** Minutos antes del inicio en que se abre el registro por QR */
+  checkinOpensMinutes?: number;
+  /** Tolerancia: después de estos minutos desde el inicio se registra "llegó tarde" */
+  lateAfterMinutes?: number;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -382,24 +423,37 @@ export const LEAGUE_GTS: GtSubTeam[] = [
   'The Games',
 ];
 
-export type ConectadosStatus = 'asistio' | 'tarde' | 'excusa' | 'ausente' | 'no_aplica';
+/** Estados de asistencia a un evento. Mientras el evento está abierto, quien no ha llegado está PENDIENTE. */
+export type AttendanceState = 'pendiente' | 'llego' | 'llego_tarde' | 'excusa' | 'no_asistio' | 'no_aplica';
+/** @deprecated usar AttendanceState */
+export type ConectadosStatus = AttendanceState;
 
-export const CONECTADOS_STATUS_LABELS: Record<ConectadosStatus, string> = {
-  asistio: 'Asistió',
-  tarde: 'Llegó tarde',
-  excusa: 'Excusa válida',
-  ausente: 'No asistió',
-  no_aplica: 'No habilitado',
+export const ATTENDANCE_STATE_LABELS: Record<AttendanceState, string> = {
+  pendiente: 'PENDIENTE',
+  llego: 'LLEGÓ',
+  llego_tarde: 'LLEGÓ TARDE',
+  excusa: 'EXCUSA VÁLIDA',
+  no_asistio: 'NO ASISTIÓ',
+  no_aplica: 'NO HABILITADO',
 };
+/** @deprecated usar ATTENDANCE_STATE_LABELS */
+export const CONECTADOS_STATUS_LABELS = ATTENDANCE_STATE_LABELS;
 
-/** Asistencia de una persona a un CONECTADOS (o cualquier evento del calendario) */
+/** Asistencia de una persona a un evento del calendario */
 export interface EventAttendance {
   id: string; // `${eventId}__${personId}`
   eventId: string;
   personId: string;
-  status: ConectadosStatus;
+  status: AttendanceState;
+  source: 'qr' | 'manual';
+  /** Hora exacta del escaneo o del registro manual de llegada */
+  checkedInAt?: string;
+  observation?: string;
   excuseReason?: string;
-  registeredBy?: string;
+  excuseEvidenceUrl?: string;
+  excuseApprovedBy?: string;
+  excuseApprovedAt?: string;
+  updatedBy?: string;
   updatedAt: string;
 }
 
@@ -411,6 +465,7 @@ export interface ConectadosGtResult {
   late: number;
   excused: number;
   absent: number;
+  pending?: number; // Solo en la vista previa (antes de cerrar)
   denominator: number; // Denominador realmente usado tras aplicar el criterio de excusas
   effectiveAttendance: number; // Numerador (asistencias + tardes ponderadas + excusas si cuentan)
   percentage: number; // 0..100
@@ -420,7 +475,7 @@ export interface ConectadosGtResult {
 export interface ConectadosClosure {
   id: string; // = eventId
   eventId: string;
-  scoring: ConectadosScoring;
+  scoring?: ConectadosScoring;
   results: ConectadosGtResult[];
   status: 'cerrado' | 'reabierto';
   closedAt: string;
@@ -469,16 +524,47 @@ export interface Challenge {
   updatedAt: string;
 }
 
-export type PointCategory = 'reto' | 'conectados' | 'manual' | 'correccion';
+/** Actividad que entrega DÍAS POINTS por QR */
+export interface PointActivity {
+  id: string;
+  name: string;
+  description?: string;
+  challengeId?: string;
+  /** Puntos individuales para cada participante */
+  individualPoints: number;
+  /** Puntos que suma al GT del participante, por cada participante */
+  gtPoints: number;
+  /** Quién puede recibir los puntos */
+  eligibility: CalendarAudience;
+  /** qr_actividad: el integrante escanea el QR de la actividad · qr_personal: el admin escanea el QR del integrante */
+  mechanism: 'qr_actividad' | 'qr_personal' | 'ambos';
+  status: 'activa' | 'cerrada';
+  date: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PointActivityClaim {
+  id: string; // `${activityId}__${personId}`
+  activityId: string;
+  personId: string;
+  source: 'qr_actividad' | 'qr_personal' | 'manual';
+  registeredBy: string;
+  claimedAt: string;
+}
+
+export type PointCategory = 'reto' | 'conectados' | 'actividad' | 'manual' | 'correccion';
 
 export const POINT_CATEGORY_LABELS: Record<PointCategory, string> = {
   reto: 'Reto',
   conectados: 'Conectados',
+  actividad: 'Actividad (QR)',
   manual: 'Manual',
   correccion: 'Corrección',
 };
 
-/** Movimiento del libro de DÍAS POINTS. Nunca se borra: se anula dejando trazabilidad. */
+/** Movimiento del libro de DÍAS POINTS. Nunca se borra: se anula o se corrige dejando trazabilidad. */
 export interface PointMovement {
   id: string;
   date: string; // Fecha de la actividad (YYYY-MM-DD)
@@ -487,11 +573,16 @@ export interface PointMovement {
   personId?: string;
   points: number; // Puede ser negativo en correcciones
   category: PointCategory;
-  sourceType?: 'conectados' | 'reto' | 'manual';
+  sourceType?: 'conectados' | 'reto' | 'actividad' | 'manual';
   sourceId?: string;
   activityName: string;
   reason?: string;
+  observation?: string;
   evidenceUrl?: string;
+  /** Si corrige otro movimiento: cuál, y su valor anterior y nuevo */
+  correctsId?: string;
+  previousPoints?: number;
+  newPoints?: number;
   registeredBy: string;
   createdAt: string;
   voided?: boolean;
@@ -504,4 +595,24 @@ export interface LeagueSettings {
   id: 'default';
   defaultConectadosScoring: ConectadosScoring;
   updatedAt: string;
+}
+
+/** Datos privados del Perfil DÍAS (solo con sesión) */
+export interface PersonProfileData {
+  personId: string;
+  qrToken: string;
+  photoUrl?: string;
+  qrRenewedAt?: string;
+}
+
+export interface AuditEntry {
+  id: number | string;
+  at: string;
+  adminName: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  before?: unknown;
+  after?: unknown;
+  reason?: string;
 }

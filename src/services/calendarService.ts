@@ -1,7 +1,10 @@
 import {
+  BUILTIN_EVENT_TYPES,
+  BUILTIN_EVENT_TYPE_LABELS,
+  BuiltinEventType,
   CalendarAudience,
   CalendarEvent,
-  CALENDAR_EVENT_TYPES,
+  CustomEventType,
   EventReminderPreference,
   Person,
   ReminderOffset,
@@ -9,36 +12,33 @@ import {
   getEffectivePersonType,
 } from '../types';
 import { createSyncedCollection, newId } from './syncedCollection';
+import { getSupabase } from './supabaseClient';
+import { getSessionToken, getCurrentSession } from './session';
 
 /** DÍAS EAFIT opera en Medellín: todas las fechas/horas del calendario son hora de Colombia (UTC-5, sin horario de verano). */
 export const EVENT_TZ_OFFSET = '-05:00';
 
+/** Lee una función privada con la sesión actual; null si no hay sesión o falla. */
+export async function privateRead(fn: string, args: Record<string, unknown> = {}, role?: 'admin' | 'staff'): Promise<any[] | null> {
+  const token = getSessionToken();
+  const s = getCurrentSession();
+  if (!token || (role && s?.role !== role)) return [];
+  const client = getSupabase();
+  if (!client) return null;
+  const { data, error } = await client.rpc(fn, { p_session: token, ...args });
+  if (error) {
+    console.warn(`${fn}:`, error.message);
+    return null;
+  }
+  return (data as any[]) || [];
+}
+
 // ----------------------------------------------------------------------------
-// Colecciones
+// Conversión desde la base de datos
 // ----------------------------------------------------------------------------
 
-export const calendarEvents = createSyncedCollection<CalendarEvent>({
-  storageKey: 'dias_eafit_calendar_events',
-  table: 'calendar_events',
-  toRow: (e) => ({
-    id: e.id,
-    title: e.title,
-    description: e.description ?? null,
-    event_date: e.date,
-    start_time: e.startTime,
-    end_time: e.endTime,
-    location: e.location ?? null,
-    type: e.type,
-    training_mode: e.type === 'capacitacion' ? e.trainingMode ?? 'invitacion' : null,
-    audience: e.audience,
-    status: e.status,
-    scoring: e.scoring ?? null,
-    starts_at: eventStart(e).toISOString(),
-    created_by: e.createdBy ?? null,
-    created_at: e.createdAt,
-    updated_at: e.updatedAt,
-  }),
-  fromRow: (r) => ({
+export function eventFromRow(r: any): CalendarEvent {
+  return {
     id: r.id,
     title: r.title,
     description: r.description ?? undefined,
@@ -51,35 +51,77 @@ export const calendarEvents = createSyncedCollection<CalendarEvent>({
     audience: normalizeAudience(r.audience),
     status: r.status,
     scoring: r.scoring ?? undefined,
+    attendanceEnabled: !!r.attendance_enabled,
+    checkinOpensMinutes: r.checkin_opens_minutes ?? 30,
+    lateAfterMinutes: r.late_after_minutes ?? 15,
     createdBy: r.created_by ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
-  }),
-});
+  };
+}
 
-export const reminderPreferences = createSyncedCollection<EventReminderPreference>({
-  storageKey: 'dias_eafit_event_reminders',
-  table: 'calendar_reminders',
-  toRow: (p) => ({
-    id: p.id,
-    event_id: p.eventId,
-    person_id: p.personId,
-    enabled: p.enabled,
-    offsets: p.offsets,
-    updated_at: p.updatedAt,
-  }),
-  fromRow: (r) => ({
+export function reminderFromRow(r: any): EventReminderPreference {
+  return {
     id: r.id,
     eventId: r.event_id,
     personId: r.person_id,
     enabled: !!r.enabled,
     offsets: (r.offsets || []).filter((o: number) => (REMINDER_OFFSETS as readonly number[]).includes(o)),
     updatedAt: r.updated_at,
-  }),
+  };
+}
+
+// ----------------------------------------------------------------------------
+// Colecciones
+// ----------------------------------------------------------------------------
+
+export const calendarEvents = createSyncedCollection<CalendarEvent>({
+  storageKey: 'dias_eafit_calendar_events',
+  table: 'calendar_events',
+  fromRow: eventFromRow,
+});
+
+export const customEventTypes = createSyncedCollection<CustomEventType>({
+  storageKey: 'dias_eafit_event_types',
+  table: 'calendar_event_types',
+  fromRow: (r) => ({ id: r.id, name: r.name, color: r.color, createdBy: r.created_by ?? undefined, createdAt: r.created_at }),
+});
+
+/** Preferencias de recordatorio: privadas, cada integrante solo ve las suyas. */
+export const reminderPreferences = createSyncedCollection<EventReminderPreference>({
+  storageKey: 'dias_eafit_event_reminders',
+  table: 'calendar_reminders',
+  fromRow: reminderFromRow,
+  loader: () => privateRead('my_reminders', {}, 'staff'),
 });
 
 // ----------------------------------------------------------------------------
-// Helpers
+// Tipos de evento
+// ----------------------------------------------------------------------------
+
+const LEGACY_TYPES: Record<string, BuiltinEventType> = {
+  semana_dias: 'otro',
+  reunion_gt: 'otro',
+  reunion_general: 'otro',
+  institucional: 'otro',
+};
+
+/** Tipos anteriores se muestran como "Otras actividades"; los personalizados se respetan. */
+export function normalizeEventType(t: string): string {
+  return LEGACY_TYPES[t] ?? t ?? 'otro';
+}
+
+export function isBuiltinType(t: string): t is BuiltinEventType {
+  return (BUILTIN_EVENT_TYPES as readonly string[]).includes(t);
+}
+
+export function eventTypeName(t: string, custom: CustomEventType[] = customEventTypes.getAll()): string {
+  if (isBuiltinType(t)) return BUILTIN_EVENT_TYPE_LABELS[t];
+  return custom.find((c) => c.id === t)?.name ?? 'Otras actividades';
+}
+
+// ----------------------------------------------------------------------------
+// Destinatarios y personas
 // ----------------------------------------------------------------------------
 
 export const EMPTY_AUDIENCE: CalendarAudience = {
@@ -89,11 +131,6 @@ export const EMPTY_AUDIENCE: CalendarAudience = {
   includeMesa: false,
   personIds: [],
 };
-
-/** Tipos anteriores (reuniones, institucional) se muestran como "Otro". */
-export function normalizeEventType(t: string): CalendarEvent['type'] {
-  return (CALENDAR_EVENT_TYPES as string[]).includes(t) ? (t as CalendarEvent['type']) : 'otro';
-}
 
 export function normalizeAudience(a: Partial<CalendarAudience> | null | undefined): CalendarAudience {
   return {
@@ -135,17 +172,17 @@ export function audienceLabel(a: CalendarAudience, people: Person[] = []): strin
   if (a.includeGap) parts.push('GAP');
   if (a.includeMesa) parts.push('MESA');
   if (a.personIds.length) {
-    const names = a.personIds
-      .map((id) => people.find((p) => p.id === id)?.name)
-      .filter(Boolean) as string[];
+    const names = a.personIds.map((id) => people.find((p) => p.id === id)?.name).filter(Boolean) as string[];
     parts.push(
-      names.length && names.length <= 3
-        ? names.join(', ')
-        : `${a.personIds.length} persona${a.personIds.length === 1 ? '' : 's'}`
+      names.length && names.length <= 3 ? names.join(', ') : `${a.personIds.length} persona${a.personIds.length === 1 ? '' : 's'}`
     );
   }
   return parts.join(' · ') || 'Sin destinatarios';
 }
+
+// ----------------------------------------------------------------------------
+// Fechas
+// ----------------------------------------------------------------------------
 
 export function eventStart(e: Pick<CalendarEvent, 'date' | 'startTime'>): Date {
   return new Date(`${e.date}T${e.startTime || '00:00'}:00${EVENT_TZ_OFFSET}`);
@@ -170,6 +207,12 @@ export function formatTime12(t: string): string {
   return `${h12}:${m} ${suffix}`;
 }
 
+/** Hora (12 h, Colombia) de una marca de tiempo ISO */
+export function formatClock(iso?: string): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' });
+}
+
 export function formatDateLong(iso: string): string {
   const d = new Date(`${iso}T12:00:00${EVENT_TZ_OFFSET}`);
   return d.toLocaleDateString('es-CO', {
@@ -181,11 +224,19 @@ export function formatDateLong(iso: string): string {
   });
 }
 
+/** ¿Se puede registrar asistencia por QR ahora? */
+export function checkinWindow(e: CalendarEvent, now: Date = new Date()): 'antes' | 'abierta' | 'terminada' {
+  const opens = eventStart(e).getTime() - (e.checkinOpensMinutes ?? 30) * 60_000;
+  if (now.getTime() < opens) return 'antes';
+  if (now.getTime() > eventEnd(e).getTime()) return 'terminada';
+  return 'abierta';
+}
+
 // ----------------------------------------------------------------------------
-// Acciones
+// Implementación local (demo / sin Supabase). En producción lo hace el servidor.
 // ----------------------------------------------------------------------------
 
-export function saveCalendarEvent(
+export function localSaveCalendarEvent(
   data: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'> & { id?: string },
   author: string
 ): CalendarEvent {
@@ -202,30 +253,11 @@ export function saveCalendarEvent(
   return ev;
 }
 
-export function setCalendarEventStatus(id: string, status: CalendarEvent['status']) {
-  const ev = calendarEvents.get(id);
-  if (!ev) return;
-  calendarEvents.upsert({ ...ev, status, updatedAt: new Date().toISOString() });
-}
-
-export function deleteCalendarEvent(id: string) {
-  calendarEvents.remove(id);
-  reminderPreferences
-    .getAll()
-    .filter((r) => r.eventId === id)
-    .forEach((r) => reminderPreferences.remove(r.id));
-}
-
 export function reminderId(eventId: string, personId: string) {
   return `${eventId}__${personId}`;
 }
 
-export function saveReminderPreference(
-  eventId: string,
-  personId: string,
-  enabled: boolean,
-  offsets: ReminderOffset[]
-): EventReminderPreference {
+export function localSaveReminder(eventId: string, personId: string, enabled: boolean, offsets: ReminderOffset[]): EventReminderPreference {
   const pref: EventReminderPreference = {
     id: reminderId(eventId, personId),
     eventId,

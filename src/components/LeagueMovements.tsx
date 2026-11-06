@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { Ban, Link2, Plus, ScrollText, Search } from 'lucide-react';
+import { Ban, Link2, Pencil, Plus, ScrollText, Search } from 'lucide-react';
 import { LEAGUE_GTS, Person, PointCategory, PointMovement, POINT_CATEGORY_LABELS } from '../types';
-import { addManualMovement, pointMovements, voidMovement } from '../services/leagueService';
-import { todayIso } from '../services/calendarService';
+import { challenges, pointActivities, pointMovements } from '../services/leagueService';
+import { calendarEvents, todayIso } from '../services/calendarService';
+import { api, errorMessage } from '../services/leagueApi';
 import { btnDanger, btnPrimary, btnSecondary, Card, EmptyState, Field, formatPoints, inputCls, Modal, Segmented, useCollection } from './league/ui';
+import { notify, useBusy } from './league/toast';
 
-export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = ({ people, author }) => {
+export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = ({ people }) => {
   const movements = useCollection(pointMovements.subscribe);
   const [target, setTarget] = useState<'all' | 'gt' | 'person'>('all');
   const [gt, setGt] = useState('');
@@ -13,7 +15,7 @@ export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = (
   const [showVoided, setShowVoided] = useState(true);
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
-  const [voiding, setVoiding] = useState<PointMovement | null>(null);
+  const [editing, setEditing] = useState<{ m: PointMovement; mode: 'corregir' | 'anular' } | null>(null);
   const [limit, setLimit] = useState(100);
 
   const nameOf = (id?: string) => (id ? people.find((p) => p.id === id)?.name ?? 'Persona eliminada' : '');
@@ -25,13 +27,7 @@ export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = (
       .filter((m) => !gt || m.gt === gt)
       .filter((m) => !category || m.category === category)
       .filter((m) => showVoided || !m.voided)
-      .filter(
-        (m) =>
-          !q ||
-          m.activityName.toLowerCase().includes(q) ||
-          (m.reason || '').toLowerCase().includes(q) ||
-          nameOf(m.personId).toLowerCase().includes(q)
-      )
+      .filter((m) => !q || m.activityName.toLowerCase().includes(q) || (m.reason || '').toLowerCase().includes(q) || nameOf(m.personId).toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movements, target, gt, category, showVoided, query, people]);
@@ -75,7 +71,7 @@ export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = (
           </label>
         </div>
         <button className={btnPrimary} onClick={() => setAdding(true)}>
-          <Plus className="w-4 h-4" /> Asignar puntos
+          <Plus className="w-4 h-4" /> Asignar DÍAS POINTS
         </button>
       </div>
 
@@ -99,51 +95,7 @@ export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = (
               </thead>
               <tbody className="divide-y divide-tinta-100">
                 {rows.slice(0, limit).map((m) => (
-                  <tr key={m.id} className={m.voided ? 'opacity-55' : ''}>
-                    <td className="px-4 py-2.5 whitespace-nowrap tabular-nums text-tinta-600">{m.date}</td>
-                    <td className="px-2 py-2.5 font-semibold text-tinta-900">
-                      {m.activityName}
-                      {m.evidenceUrl && (
-                        <a href={m.evidenceUrl} target="_blank" rel="noreferrer" className="ml-1.5 inline-flex text-lila-700" title="Evidencia">
-                          <Link2 className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </td>
-                    <td className="px-2 py-2.5 text-tinta-700">
-                      {m.target === 'gt' ? (
-                        <span>GT {m.gt}</span>
-                      ) : (
-                        <span>
-                          {nameOf(m.personId)}
-                          {m.gt && <span className="text-tinta-500"> · {m.gt}</span>}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 py-2.5 text-tinta-600">{POINT_CATEGORY_LABELS[m.category]}</td>
-                    <td className={`px-2 py-2.5 text-right tabular-nums font-bold ${m.voided ? 'line-through' : ''} ${m.points < 0 ? 'text-coral-700' : 'text-tinta-900'}`}>
-                      {m.points > 0 ? '+' : ''}
-                      {formatPoints(m.points)}
-                    </td>
-                    <td className="px-2 py-2.5 text-xs text-tinta-600 max-w-[260px]">
-                      {m.reason}
-                      {m.voided && (
-                        <span className="block text-coral-700 font-semibold">
-                          Anulado por {m.voidedBy}: {m.voidReason}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 py-2.5 text-xs text-tinta-500 whitespace-nowrap">
-                      {m.registeredBy}
-                      <span className="block">{new Date(m.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      {!m.voided && (
-                        <button onClick={() => setVoiding(m)} className="inline-flex items-center gap-1 text-xs font-semibold text-coral-700 hover:underline">
-                          <Ban className="w-3.5 h-3.5" /> Anular
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <MovementRow key={m.id} m={m} recipient={m.target === 'gt' ? `GT ${m.gt}` : nameOf(m.personId)} onEdit={(mode) => setEditing({ m, mode })} />
                 ))}
               </tbody>
             </table>
@@ -158,24 +110,105 @@ export const LeagueMovements: React.FC<{ people: Person[]; author: string }> = (
         )}
       </Card>
 
-      {adding && <ManualPointsForm people={people} author={author} onClose={() => setAdding(false)} />}
-      {voiding && <VoidForm movement={voiding} author={author} label={voiding.target === 'gt' ? `GT ${voiding.gt}` : nameOf(voiding.personId)} onClose={() => setVoiding(null)} />}
+      {adding && <AssignPointsModal people={people} onClose={() => setAdding(false)} />}
+      {editing && (
+        <EditMovementModal
+          movement={editing.m}
+          mode={editing.mode}
+          label={editing.m.target === 'gt' ? `GT ${editing.m.gt}` : nameOf(editing.m.personId)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 };
 
-const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: () => void }> = ({ people, author, onClose }) => {
-  const [target, setTarget] = useState<'gt' | 'person'>('gt');
+export const MovementRow: React.FC<{ m: PointMovement; recipient: string; onEdit?: (mode: 'corregir' | 'anular') => void }> = ({ m, recipient, onEdit }) => (
+  <tr className={m.voided ? 'opacity-55' : ''}>
+    <td className="px-4 py-2.5 whitespace-nowrap tabular-nums text-tinta-600">{m.date}</td>
+    <td className="px-2 py-2.5 font-semibold text-tinta-900">
+      {m.activityName}
+      {m.evidenceUrl && (
+        <a href={m.evidenceUrl} target="_blank" rel="noreferrer" className="ml-1.5 inline-flex text-lila-700" title="Evidencia">
+          <Link2 className="w-3.5 h-3.5" />
+        </a>
+      )}
+    </td>
+    <td className="px-2 py-2.5 text-tinta-700">
+      {recipient}
+      {m.target === 'person' && m.gt && <span className="text-tinta-500"> · {m.gt}</span>}
+    </td>
+    <td className="px-2 py-2.5 text-tinta-600">{POINT_CATEGORY_LABELS[m.category] ?? m.category}</td>
+    <td className={`px-2 py-2.5 text-right tabular-nums font-bold ${m.voided ? 'line-through' : ''} ${m.points < 0 ? 'text-coral-700' : 'text-tinta-900'}`}>
+      {m.points > 0 ? '+' : ''}
+      {formatPoints(m.points)}
+      {m.previousPoints !== undefined && (
+        <span className="block text-[10px] font-semibold text-mostaza-700 no-underline">antes {formatPoints(m.previousPoints)}</span>
+      )}
+    </td>
+    <td className="px-2 py-2.5 text-xs text-tinta-600 max-w-[260px]">
+      {m.reason}
+      {m.observation && <span className="block text-tinta-500">Obs.: {m.observation}</span>}
+      {m.voided && (
+        <span className="block text-coral-700 font-semibold">
+          Anulado por {m.voidedBy}: {m.voidReason}
+        </span>
+      )}
+    </td>
+    <td className="px-2 py-2.5 text-xs text-tinta-500 whitespace-nowrap">
+      {m.registeredBy}
+      <span className="block">{new Date(m.createdAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Bogota' })}</span>
+    </td>
+    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+      {!m.voided && onEdit && (
+        <span className="inline-flex gap-3">
+          <button onClick={() => onEdit('corregir')} className="inline-flex items-center gap-1 text-xs font-semibold text-lila-700 hover:underline">
+            <Pencil className="w-3.5 h-3.5" /> Corregir
+          </button>
+          <button onClick={() => onEdit('anular')} className="inline-flex items-center gap-1 text-xs font-semibold text-coral-700 hover:underline">
+            <Ban className="w-3.5 h-3.5" /> Anular
+          </button>
+        </span>
+      )}
+    </td>
+  </tr>
+);
+
+/**
+ * ASIGNAR DÍAS POINTS: a un GT o a una persona (opcionalmente ya elegida, desde su perfil).
+ * Negativo para restar. Queda quién, cuándo, la actividad, el motivo y la observación.
+ */
+export const AssignPointsModal: React.FC<{ people: Person[]; person?: Person; onClose: () => void }> = ({ people, person: fixedPerson, onClose }) => {
+  const [target, setTarget] = useState<'gt' | 'person'>(fixedPerson ? 'person' : 'gt');
   const [gt, setGt] = useState<string>(LEAGUE_GTS[0]);
-  const [person, setPerson] = useState<Person | null>(null);
+  const [person, setPerson] = useState<Person | null>(fixedPerson ?? null);
   const [query, setQuery] = useState('');
   const [points, setPoints] = useState('10');
+  const [activity, setActivity] = useState('');
   const [activityName, setActivityName] = useState('');
   const [reason, setReason] = useState('');
+  const [observation, setObservation] = useState('');
   const [date, setDate] = useState(todayIso());
   const [evidenceUrl, setEvidenceUrl] = useState('');
   const [category, setCategory] = useState<'manual' | 'correccion'>('manual');
   const [error, setError] = useState<string | null>(null);
+  const [busy, run] = useBusy();
+  const retos = useCollection(challenges.subscribe);
+  const acts = useCollection(pointActivities.subscribe);
+  const events = useCollection(calendarEvents.subscribe);
+
+  const activityOptions = useMemo(
+    () => [
+      ...retos.map((r) => ({ id: `reto:${r.id}`, label: `Reto · ${r.name}`, name: r.name })),
+      ...acts.map((a) => ({ id: `act:${a.id}`, label: `Actividad · ${a.name}`, name: a.name })),
+      ...events
+        .filter((e) => e.status === 'activo')
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 30)
+        .map((e) => ({ id: `evt:${e.id}`, label: `Evento · ${e.title} (${e.date})`, name: e.title })),
+    ],
+    [retos, acts, events]
+  );
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -187,27 +220,36 @@ const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: ()
     const n = Number(points);
     if (!Number.isFinite(n) || n === 0) return setError('Los puntos deben ser un número distinto de cero.');
     if (target === 'person' && !person) return setError('Elige la persona.');
-    if (!activityName.trim()) return setError('Escribe la actividad.');
+    const name = activity === 'otra' || !activity ? activityName.trim() : activityOptions.find((o) => o.id === activity)?.name ?? '';
+    if (!name) return setError('Elige o escribe la actividad que genera los puntos.');
     if (!reason.trim()) return setError('El motivo es obligatorio.');
-    addManualMovement({
-      target,
-      gt,
-      person: person ?? undefined,
-      points: n,
-      activityName: activityName.trim(),
-      reason: reason.trim(),
-      date,
-      evidenceUrl: evidenceUrl.trim(),
-      category,
-      author,
+    setError(null);
+    return run(async () => {
+      try {
+        await api.addPoints({
+          target,
+          gt,
+          person: person ?? undefined,
+          points: n,
+          activityName: name,
+          reason: reason.trim(),
+          observation: observation.trim() || undefined,
+          date,
+          evidenceUrl: evidenceUrl.trim() || undefined,
+          category,
+        });
+        notify.ok(`${n > 0 ? '+' : ''}${formatPoints(n)} DÍAS POINTS registrados`);
+        onClose();
+      } catch (e) {
+        setError(errorMessage(e));
+      }
     });
-    onClose();
   };
 
   return (
     <Modal
       title="Asignar DÍAS POINTS"
-      subtitle="Usa puntos negativos para descontar. Queda registrado quién lo hizo y por qué."
+      subtitle={fixedPerson ? `${fixedPerson.name}. Usa puntos negativos para restar.` : 'Usa puntos negativos para restar. Queda registrado quién lo hizo y por qué.'}
       onClose={onClose}
       footer={
         <>
@@ -215,21 +257,23 @@ const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: ()
           <button className={btnSecondary} onClick={onClose}>
             Cancelar
           </button>
-          <button className={btnPrimary} onClick={submit}>
-            Registrar
+          <button className={btnPrimary} onClick={submit} disabled={busy}>
+            {busy ? 'Registrando…' : 'Registrar'}
           </button>
         </>
       }
     >
       <div className="space-y-4">
-        <Segmented
-          value={target}
-          onChange={setTarget}
-          options={[
-            { id: 'gt', label: 'A un GT' },
-            { id: 'person', label: 'A una persona' },
-          ]}
-        />
+        {!fixedPerson && (
+          <Segmented
+            value={target}
+            onChange={setTarget}
+            options={[
+              { id: 'gt', label: 'A un GT' },
+              { id: 'person', label: 'A una persona' },
+            ]}
+          />
+        )}
         {target === 'gt' ? (
           <Field label="GT">
             <select className={inputCls} value={gt} onChange={(e) => setGt(e.target.value)}>
@@ -245,9 +289,11 @@ const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: ()
             <span className="text-sm font-semibold">
               {person.name} <span className="text-tinta-500 font-normal">· {person.gtSubTeam || person.primaryType}</span>
             </span>
-            <button className="text-xs font-semibold text-lila-700 hover:underline" onClick={() => setPerson(null)}>
-              Cambiar
-            </button>
+            {!fixedPerson && (
+              <button className="text-xs font-semibold text-lila-700 hover:underline" onClick={() => setPerson(null)}>
+                Cambiar
+              </button>
+            )}
           </div>
         ) : (
           <Field label="Persona">
@@ -275,11 +321,27 @@ const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: ()
               <option value="correccion">Corrección</option>
             </select>
           </Field>
-          <Field label="Actividad" className="col-span-2">
-            <input className={inputCls} value={activityName} onChange={(e) => setActivityName(e.target.value)} placeholder="Ej: Mejor decoración de stand" />
+          <Field label="Actividad que genera los puntos" className="col-span-2">
+            <select className={inputCls} value={activity} onChange={(e) => setActivity(e.target.value)}>
+              <option value="">Elige una actividad…</option>
+              {activityOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+              <option value="otra">Otra (escribir)</option>
+            </select>
           </Field>
+          {(activity === 'otra' || activity === '') && (
+            <Field label="Nombre de la actividad" className="col-span-2">
+              <input className={inputCls} value={activityName} onChange={(e) => setActivityName(e.target.value)} placeholder="Ej: Mejor decoración de stand" />
+            </Field>
+          )}
           <Field label="Motivo" className="col-span-2">
             <input className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+          <Field label="Observación (opcional)" className="col-span-2">
+            <input className={inputCls} value={observation} onChange={(e) => setObservation(e.target.value)} />
           </Field>
           <Field label="Fecha">
             <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
@@ -293,17 +355,40 @@ const ManualPointsForm: React.FC<{ people: Person[]; author: string; onClose: ()
   );
 };
 
-const VoidForm: React.FC<{ movement: PointMovement; author: string; label: string; onClose: () => void }> = ({
+/** Corregir (nuevo valor) o anular un movimiento. Siempre con motivo; nada se borra. */
+export const EditMovementModal: React.FC<{ movement: PointMovement; mode: 'corregir' | 'anular'; label: string; onClose: () => void }> = ({
   movement: m,
-  author,
+  mode,
   label,
   onClose,
 }) => {
   const [reason, setReason] = useState('');
+  const [value, setValue] = useState(String(m.points));
+  const [busy, run] = useBusy();
+  const correcting = mode === 'corregir';
+  const save = () =>
+    run(async () => {
+      try {
+        if (correcting) {
+          await api.correctPoints(m.id, Number(value), reason.trim());
+          notify.ok(`Corregido de ${formatPoints(m.points)} a ${formatPoints(Number(value))}`);
+        } else {
+          await api.voidPoints(m.id, reason.trim());
+          notify.ok('Movimiento anulado');
+        }
+        onClose();
+      } catch (e) {
+        notify.error(e);
+      }
+    });
   return (
     <Modal
-      title="Anular movimiento"
-      subtitle="El movimiento no se borra: queda en el historial marcado como anulado y deja de sumar."
+      title={correcting ? 'Corregir puntos' : 'Anular movimiento'}
+      subtitle={
+        correcting
+          ? 'El movimiento original queda anulado y se crea uno nuevo con el valor anterior y el nuevo.'
+          : 'El movimiento no se borra: queda en el historial marcado como anulado y deja de sumar.'
+      }
       onClose={onClose}
       footer={
         <>
@@ -311,14 +396,11 @@ const VoidForm: React.FC<{ movement: PointMovement; author: string; label: strin
             Volver
           </button>
           <button
-            className={btnDanger}
-            disabled={!reason.trim()}
-            onClick={() => {
-              voidMovement(m.id, author, reason.trim());
-              onClose();
-            }}
+            className={correcting ? btnPrimary : btnDanger}
+            disabled={busy || !reason.trim() || (correcting && (!Number.isFinite(Number(value)) || Number(value) === m.points))}
+            onClick={save}
           >
-            Anular
+            {correcting ? 'Guardar corrección' : 'Anular'}
           </button>
         </>
       }
@@ -327,8 +409,13 @@ const VoidForm: React.FC<{ movement: PointMovement; author: string; label: strin
         <p className="text-sm text-tinta-700">
           <b>{formatPoints(m.points)} pts</b> · {label} · {m.activityName} ({m.date})
         </p>
-        <Field label="Motivo de la anulación (obligatorio)">
-          <input className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+        {correcting && (
+          <Field label="Valor nuevo" hint={`Valor anterior: ${formatPoints(m.points)}. Pon 0 para dejarlo sin puntos.`}>
+            <input type="number" className={inputCls} value={value} onChange={(e) => setValue(e.target.value)} autoFocus />
+          </Field>
+        )}
+        <Field label="Motivo (obligatorio)">
+          <input className={inputCls} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus={!correcting} />
         </Field>
       </div>
     </Modal>

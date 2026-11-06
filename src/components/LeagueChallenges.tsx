@@ -9,7 +9,9 @@ import {
   LEAGUE_GTS,
   Person,
 } from '../types';
-import { challenges as challengesCol, registerChallengeResults, saveChallenge } from '../services/leagueService';
+import { challenges as challengesCol } from '../services/leagueService';
+import { api, errorMessage } from '../services/leagueApi';
+import { notify, useBusy } from './league/toast';
 import { todayIso } from '../services/calendarService';
 import { btnPrimary, btnSecondary, Card, CheckList, EmptyState, Field, formatPoints, inputCls, Modal, useCollection } from './league/ui';
 
@@ -159,12 +161,13 @@ const ChallengeForm: React.FC<{ initial?: Challenge; onClose: () => void }> = ({
   const [status, setStatus] = useState<ChallengeStatus>(initial?.status ?? 'pendiente');
   const [evidences, setEvidences] = useState<ChallengeEvidence[]>(initial?.evidences ?? []);
   const [error, setError] = useState<string | null>(null);
+  const [busy, run] = useBusy();
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim()) return setError('Escribe el nombre del reto.');
     if (endDate < startDate) return setError('La fecha de finalización no puede ser anterior al inicio.');
     if (gtTeams.length === 0) return setError('Elige al menos un GT participante.');
-    saveChallenge({
+    const data = {
       id: initial?.id,
       name: name.trim(),
       description: description.trim() || undefined,
@@ -175,8 +178,16 @@ const ChallengeForm: React.FC<{ initial?: Challenge; onClose: () => void }> = ({
       placements: placements.filter((p) => p.position > 0).map((p, i) => ({ position: i + 1, points: p.points })),
       status,
       evidences: evidences.filter((e) => e.url.trim()),
+    };
+    await run(async () => {
+      try {
+        await api.saveChallenge(data);
+        notify.ok('Reto guardado');
+        onClose();
+      } catch (e) {
+        setError(errorMessage(e));
+      }
     });
-    onClose();
   };
 
   return (
@@ -190,8 +201,8 @@ const ChallengeForm: React.FC<{ initial?: Challenge; onClose: () => void }> = ({
           <button className={btnSecondary} onClick={onClose}>
             Cancelar
           </button>
-          <button className={btnPrimary} onClick={submit}>
-            Guardar reto
+          <button className={btnPrimary} onClick={submit} disabled={busy}>
+            {busy ? 'Guardando…' : 'Guardar reto'}
           </button>
         </>
       }
@@ -298,6 +309,8 @@ const ResultsForm: React.FC<{ challenge: Challenge; people: Person[]; author: st
   const [date, setDate] = useState(c.endDate <= todayIso() ? c.endDate : todayIso());
   const [query, setQuery] = useState('');
   const maxPos = Math.max(c.placements.length, 3);
+  const [busy, run] = useBusy();
+  void author;
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -326,19 +339,26 @@ const ResultsForm: React.FC<{ challenge: Challenge; people: Person[]; author: st
           </button>
           <button
             className={btnPrimary}
-            onClick={() => {
-              registerChallengeResults(
-                c.id,
-                rows.map((r) => ({ ...r, points: Number(r.points) || 0 })),
-                awards.filter((a) => a.points),
-                people,
-                author,
-                date
-              );
-              onClose();
-            }}
+            disabled={busy}
+            onClick={() =>
+              run(async () => {
+                try {
+                  await api.registerChallengeResults(
+                    c.id,
+                    rows.map((r) => ({ ...r, points: Number(r.points) || 0 })),
+                    awards.filter((a) => a.points),
+                    people,
+                    date
+                  );
+                  notify.ok('Resultados registrados: el ranking ya se actualizó');
+                  onClose();
+                } catch (e) {
+                  notify.error(e);
+                }
+              })
+            }
           >
-            Registrar puntos
+            {busy ? 'Registrando…' : 'Registrar puntos'}
           </button>
         </>
       }

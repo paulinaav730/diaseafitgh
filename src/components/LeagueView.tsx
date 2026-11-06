@@ -10,6 +10,10 @@ import {
   Medal,
   User,
   ChevronRight,
+  Zap,
+  IdCard,
+  Search,
+  ScanLine,
 } from 'lucide-react';
 import { ConectadosScoring, LEAGUE_GTS, Person, PointMovement, POINT_CATEGORY_LABELS } from '../types';
 import {
@@ -19,7 +23,6 @@ import {
   getDefaultScoring,
   leagueSettings,
   pointMovements,
-  saveDefaultScoring,
   GtStanding,
   PersonStanding,
 } from '../services/leagueService';
@@ -37,11 +40,17 @@ import {
   Segmented,
   useCollection,
 } from './league/ui';
-import { LeagueConectados } from './LeagueConectados';
+import { EventAttendancePanel } from './EventAttendancePanel';
+import { LeagueActivities } from './LeagueActivities';
+import { PersonProfile } from './PersonProfile';
+import { api } from '../services/leagueApi';
+import { attempt, notify, useBusy } from './league/toast';
+import { QrScanner } from './league/QrScanner';
+import { emitQr } from './league/QrCode';
 import { LeagueChallenges } from './LeagueChallenges';
 import { LeagueMovements } from './LeagueMovements';
 
-type LeagueTab = 'ranking' | 'individual' | 'conectados' | 'retos' | 'movimientos' | 'config';
+type LeagueTab = 'ranking' | 'individual' | 'conectados' | 'retos' | 'actividades' | 'perfiles' | 'movimientos' | 'config';
 
 interface LeagueViewProps {
   mode: 'admin' | 'staff';
@@ -64,14 +73,17 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
   }, [focusConectadosId]);
 
   const standings = useMemo(() => computeGtStandings(movements), [movements]);
+  const [scanning, setScanning] = useState(false);
 
   const tabs: { id: LeagueTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'ranking', label: 'Ranking GT', icon: Trophy },
     { id: 'individual', label: isAdmin ? 'Ranking individual' : 'Individual', icon: Users },
     ...(isAdmin
       ? ([
-          { id: 'conectados', label: 'Conectados', icon: ClipboardCheck },
+          { id: 'conectados', label: 'Asistencia', icon: ClipboardCheck },
           { id: 'retos', label: 'Retos', icon: Swords },
+          { id: 'actividades', label: 'Puntos por QR', icon: Zap },
+          { id: 'perfiles', label: 'Perfiles DÍAS', icon: IdCard },
           { id: 'movimientos', label: 'Historial y puntos', icon: ScrollText },
           { id: 'config', label: 'Configuración', icon: Settings2 },
         ] as const)
@@ -86,9 +98,14 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
         description="La competencia entre los nueve Grupos de Trabajo: retos, Conectados y reconocimientos individuales durante todo el año."
         actions={
           isAdmin && (
-            <button className={btnSecondary} onClick={() => exportLeagueReport(people, events)}>
-              <Download className="w-4 h-4" /> Exportar reporte
-            </button>
+            <>
+              <button className={btnSecondary} onClick={() => setScanning(true)}>
+                <ScanLine className="w-4 h-4" /> Escanear QR
+              </button>
+              <button className={btnSecondary} onClick={() => exportLeagueReport(people, events)}>
+                <Download className="w-4 h-4" /> Exportar reporte
+              </button>
+            </>
           )
         }
       />
@@ -100,13 +117,26 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
       </div>
 
       {tab === 'ranking' && <GtRanking standings={standings} movements={movements} highlightGt={person ? personPrimaryGt(person) : undefined} />}
-      {tab === 'individual' && <PersonRanking movements={movements} people={people} highlightId={person?.id} />}
+      {tab === 'individual' && <PersonRanking movements={movements} people={people} highlightId={person?.id} isAdmin={isAdmin} />}
       {isAdmin && tab === 'conectados' && (
-        <LeagueConectados people={people} author={author} focusEventId={focusConectadosId} onFocusHandled={onFocusHandled} />
+        <EventAttendancePanel people={people} author={author} focusEventId={focusConectadosId} onFocusHandled={onFocusHandled} />
       )}
+      {isAdmin && tab === 'actividades' && <LeagueActivities people={people} />}
+      {isAdmin && tab === 'perfiles' && <ProfilesBrowser people={people} />}
       {isAdmin && tab === 'retos' && <LeagueChallenges people={people} author={author} />}
       {isAdmin && tab === 'movimientos' && <LeagueMovements people={people} author={author} />}
       {isAdmin && tab === 'config' && <LeagueSettingsPanel />}
+      {scanning && (
+        <QrScanner
+          title="Escanear QR personal"
+          subtitle="Identifica al integrante para registrar su participación o asignarle DÍAS POINTS."
+          onClose={() => setScanning(false)}
+          onResult={(text) => {
+            if (emitQr(text)) setScanning(false);
+            else notify.error(new Error('Ese código no es un QR de DÍAS.'));
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -249,10 +279,11 @@ export const MovementList: React.FC<{ movements: PointMovement[]; people?: Perso
 // Ranking individual
 // ----------------------------------------------------------------------------
 
-const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; highlightId?: string }> = ({
+const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; highlightId?: string; isAdmin?: boolean }> = ({
   movements,
   people,
   highlightId,
+  isAdmin,
 }) => {
   const [gt, setGt] = useState('');
   const [from, setFrom] = useState('');
@@ -298,7 +329,8 @@ const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; hi
                 <th className="text-left px-4 py-2.5 w-14">Puesto</th>
                 <th className="text-left px-2 py-2.5">Nombre</th>
                 <th className="text-left px-2 py-2.5">GT</th>
-                <th className="text-right px-2 py-2.5">Actividades</th>
+                <th className="text-right px-2 py-2.5">Retos completados</th>
+                <th className="text-right px-2 py-2.5">Asistencias</th>
                 <th className="text-right px-4 py-2.5">DÍAS POINTS</th>
               </tr>
             </thead>
@@ -315,7 +347,8 @@ const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; hi
                     {r.personId === highlightId && <span className="ml-2 text-[11px] font-semibold text-lila-700">Tú</span>}
                   </td>
                   <td className="px-2 py-2.5 text-tinta-600">{r.gt || '—'}</td>
-                  <td className="px-2 py-2.5 text-right tabular-nums text-tinta-600">{r.activities}</td>
+                  <td className="px-2 py-2.5 text-right tabular-nums text-tinta-600">{r.challengesCompleted}</td>
+                  <td className="px-2 py-2.5 text-right tabular-nums text-tinta-600">{r.attendances}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums font-bold text-tinta-900">{formatPoints(r.total)}</td>
                 </tr>
               ))}
@@ -323,10 +356,16 @@ const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; hi
           </table>
         </div>
       )}
-      {detail && (
-        <Modal title={detail.name} subtitle={`${detail.gt || 'Sin GT'} · ${formatPoints(detail.total)} DÍAS POINTS`} onClose={() => setDetail(null)} size="lg">
-          <MovementList movements={detail.movements} />
+      {detail && isAdmin && people.find((p) => p.id === detail.personId) ? (
+        <Modal title="Perfil DÍAS" onClose={() => setDetail(null)} size="xl">
+          <PersonProfile person={people.find((p) => p.id === detail.personId)!} people={people} mode="admin" />
         </Modal>
+      ) : (
+        detail && (
+          <Modal title={detail.name} subtitle={`${detail.gt || 'Sin GT'} · ${formatPoints(detail.total)} DÍAS POINTS`} onClose={() => setDetail(null)} size="lg">
+            <MovementList movements={detail.movements} />
+          </Modal>
+        )
       )}
     </Card>
   );
@@ -386,6 +425,7 @@ const LeagueSettingsPanel: React.FC = () => {
   useCollection(leagueSettings.subscribe);
   const [s, setS] = useState<ConectadosScoring>(getDefaultScoring());
   const [saved, setSaved] = useState(false);
+  const [busy, run] = useBusy();
   const num = (v: string) => (v === '' ? 0 : Number(v));
   const set = (patch: Partial<ConectadosScoring>) => {
     setSaved(false);
@@ -440,15 +480,77 @@ const LeagueSettingsPanel: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           className={btnPrimary}
-          onClick={() => {
-            saveDefaultScoring(s);
-            setSaved(true);
-          }}
+          disabled={busy}
+          onClick={() =>
+            run(async () => {
+              if (await attempt(() => api.saveDefaultScoring(s), 'Configuración guardada')) setSaved(true);
+            })
+          }
         >
-          Guardar configuración
+          {busy ? 'Guardando…' : 'Guardar configuración'}
         </button>
         {saved && <span className="text-xs font-semibold text-turquesa-700">Guardado</span>}
       </div>
+    </Card>
+  );
+};
+
+// ----------------------------------------------------------------------------
+// Perfiles DÍAS (administración): buscar a cualquier integrante
+// ----------------------------------------------------------------------------
+const ProfilesBrowser: React.FC<{ people: Person[] }> = ({ people }) => {
+  const [query, setQuery] = useState('');
+  const [gt, setGt] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return people
+      .filter((p) => !gt || personPrimaryGt(p) === gt)
+      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.documentId.includes(q) || (p.username || '').toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 200);
+  }, [people, query, gt]);
+  const open = people.find((p) => p.id === openId);
+  return (
+    <Card className="overflow-hidden">
+      <div className="p-3 sm:p-4 border-b border-tinta-200 flex flex-wrap gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 text-tinta-400 absolute left-3 top-2.5" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, cédula o usuario" />
+        </div>
+        <select className={`${inputCls} !w-auto text-xs`} value={gt} onChange={(e) => setGt(e.target.value)} aria-label="GT">
+          <option value="">Todos los GT</option>
+          {LEAGUE_GTS.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+      </div>
+      {rows.length === 0 ? (
+        <EmptyState icon={User} title="No hay integrantes con ese filtro" />
+      ) : (
+        <ul className="divide-y divide-tinta-100 max-h-[65vh] overflow-y-auto">
+          {rows.map((p) => (
+            <li key={p.id}>
+              <button onClick={() => setOpenId(p.id)} className="w-full text-left px-4 py-2.5 hover:bg-tinta-50 flex items-center justify-between gap-3">
+                <span>
+                  <span className="text-sm font-semibold text-tinta-900">{p.name}</span>
+                  <span className="block text-[11px] text-tinta-500">
+                    {personPrimaryGt(p) || p.primaryType} · CC {p.documentId}
+                  </span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-tinta-400" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && (
+        <Modal title="Perfil DÍAS" onClose={() => setOpenId(null)} size="xl">
+          <PersonProfile person={open} people={people} mode="admin" />
+        </Modal>
+      )}
     </Card>
   );
 };
