@@ -73,6 +73,7 @@ import { attempt, useBusy } from './league/toast';
 import {
   AdminBirthdayPushBanner,
   BirthdayDot,
+  BirthdayImportModal,
   BirthdayListItem,
   BirthdayModal,
   BirthdayPill,
@@ -157,6 +158,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
   const [listTo, setListTo] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedBirthday, setSelectedBirthday] = useState<BirthdayOccurrence | null>(null);
+  const [importingBirthdays, setImportingBirthdays] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | 'new' | null>(null);
   const [newDate, setNewDate] = useState<string | undefined>();
 
@@ -414,6 +416,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
         actions={
           isAdmin && (
             <>
+              <button className={btnSecondary} onClick={() => setImportingBirthdays(true)}>
+                🎂 Cargar cumpleaños
+              </button>
               <button className={btnSecondary} onClick={() => setManagingTypes(true)}>
                 <Tags className="w-4 h-4" /> Tipos de evento
               </button>
@@ -586,6 +591,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
         />
       )}
 
+      {importingBirthdays && <BirthdayImportModal people={people} onClose={() => setImportingBirthdays(false)} />}
       {selectedBirthday && <BirthdayModal o={selectedBirthday} people={people} onClose={() => setSelectedBirthday(null)} />}
 
       {managingTypes && <EventTypesModal onClose={() => setManagingTypes(false)} />}

@@ -572,6 +572,39 @@ BEGIN
 END;
 $$;
 
+-- Carga masiva de fechas de nacimiento (Excel). Solo actualiza integrantes
+-- existentes; los ids que no existan se ignoran y se informan.
+CREATE OR REPLACE FUNCTION public.admin_set_birth_dates(p_session TEXT, p_items JSONB) RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE adm TEXT := _require_admin(p_session); it JSONB; v_date DATE; before public.person_profiles;
+        saved INTEGER := 0; skipped JSONB := '[]';
+        today DATE := (now() AT TIME ZONE 'America/Bogota')::date;
+BEGIN
+  IF jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) > 5000 THEN
+    PERFORM _fail('DATOS_INVALIDOS', 'La lista de cumpleaños no es válida.');
+  END IF;
+  FOR it IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    BEGIN
+      v_date := (it->>'birth_date')::date;
+    EXCEPTION WHEN others THEN v_date := NULL;
+    END;
+    IF NOT EXISTS (SELECT 1 FROM people WHERE id = it->>'person_id') OR v_date IS NULL
+       OR v_date > today OR v_date < DATE '1900-01-01' THEN
+      skipped := skipped || jsonb_build_array(it->>'person_id');
+      CONTINUE;
+    END IF;
+    before := _ensure_profile(it->>'person_id');
+    IF before.birth_date IS DISTINCT FROM v_date THEN
+      UPDATE person_profiles SET birth_date = v_date, updated_at = now() WHERE person_id = it->>'person_id';
+      PERFORM _audit(adm, 'actualizar_fecha_nacimiento', 'person_profiles', it->>'person_id',
+                     jsonb_build_object('birth_date', before.birth_date), jsonb_build_object('birth_date', v_date), 'Carga masiva');
+    END IF;
+    saved := saved + 1;
+  END LOOP;
+  RETURN jsonb_build_object('saved', saved, 'skipped', skipped);
+END;
+$$;
+
 -- Cumpleaños para el calendario de la administración. Solo personas con fecha registrada.
 CREATE OR REPLACE FUNCTION public.admin_list_birthdays(p_session TEXT) RETURNS JSONB
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$

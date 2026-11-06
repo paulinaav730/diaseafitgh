@@ -86,3 +86,51 @@ assert.deepEqual(dueBirthdayReminders([enero], at('2026-12-25T17:00:00Z')).map((
 ok('Aviso de 7 días que cae en el año anterior (1 de enero)');
 
 console.log('\nCumpleaños OK.');
+
+// ---------------------------------------------------------------------------
+// Carga masiva desde Excel
+// ---------------------------------------------------------------------------
+const { toBirthDate, parseBirthdayRows } = await import('../src/services/birthdayImport');
+assert.equal(toBirthDate('06/11/2003'), '2003-11-06');
+assert.equal(toBirthDate('6-11-2003'), '2003-11-06');
+assert.equal(toBirthDate('2003-11-06'), '2003-11-06');
+assert.equal(toBirthDate('6 de noviembre de 2003'), '2003-11-06');
+assert.equal(toBirthDate('6 nov 2003'), '2003-11-06');
+assert.equal(toBirthDate(37931), '2003-11-06'); // número de serie de Excel
+assert.equal(toBirthDate('06/11/03'), '2003-11-06');
+assert.equal(toBirthDate('31/02/2003'), null);
+assert.equal(toBirthDate('01/01/2099'), null);
+assert.equal(toBirthDate(''), null);
+ok('Fechas de Excel: día/mes/año, AAAA-MM-DD, "6 de noviembre de 2003", número de serie; imposibles o futuras se rechazan');
+
+const gente: any[] = [
+  { id: 'a', name: 'Paulina', documentId: '1017123456' },
+  { id: 'b', name: 'Juan Pérez', documentId: '1020304050' },
+  { id: 'c', name: 'Ana', documentId: '43111222' },
+];
+const { rows, error } = parseBirthdayRows(
+  [
+    { 'Cédula': '1.017.123.456', Nombre: 'Paulina', 'Fecha de nacimiento': '06/11/2003' },
+    { 'Cédula': '', Nombre: 'Juan Pérez', 'Fecha de nacimiento': 35000 },
+    { 'Cédula': '999', Nombre: 'No existe', 'Fecha de nacimiento': '01/01/2000' },
+    { 'Cédula': '43111222', Nombre: 'Ana', 'Fecha de nacimiento': '30/02/2001' },
+    { 'Cédula': '1017123456', Nombre: 'Paulina otra vez', 'Fecha de nacimiento': '07/11/2003' },
+    { 'Cédula': '', Nombre: '', 'Fecha de nacimiento': '' },
+  ],
+  gente,
+  []
+);
+assert.equal(error, undefined);
+assert.deepEqual(rows.map((r) => [r.status, r.person?.id ?? null, r.birthDate ?? null]), [
+  ['ok', 'a', '2003-11-06'],
+  ['ok', 'b', '1995-10-28'],
+  ['sin_persona', null, null],
+  ['fecha_invalida', 'c', null],
+  ['repetida', 'a', '2003-11-07'],
+]);
+ok('Une cada fila con el integrante que ya existe (cédula con puntos o nombre); no inventa personas ni repite');
+const again = parseBirthdayRows([{ 'Cédula': '1017123456', 'Fecha de nacimiento': '06/11/2003' }], gente, [{ personId: 'a', name: 'Paulina', birthDate: '2003-11-06' }]);
+assert.equal(again.rows[0].status, 'sin_cambio');
+assert.match(parseBirthdayRows([{ Cédula: '1', Otra: 'x' }], gente, []).error!, /Fecha de nacimiento/);
+ok('Si la fecha ya estaba, no cambia nada; si falta la columna, lo explica');
+console.log('\nCarga masiva OK.');
