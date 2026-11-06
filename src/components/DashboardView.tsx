@@ -9,7 +9,7 @@ import {
   DEFAULT_INITIAL_SHIFTS,
   getShiftDurationMinutes,
 } from '../data/eventStructure';
-import { ConfigurableShift } from '../types';
+import { ConfigurableBase, ConfigurableShift } from '../types';
 import {
   Users,
   Calendar,
@@ -37,6 +37,7 @@ interface DashboardViewProps {
   availabilities: AvailabilityRecord[];
   attendances: AttendanceRecord[];
   shifts?: ConfigurableShift[];
+  bases?: ConfigurableBase[];
   onNavigate: (tab: TabType) => void;
   onOpenAddPerson: () => void;
   onOpenExcelImport?: () => void;
@@ -48,6 +49,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   availabilities,
   attendances,
   shifts = [],
+  bases = [],
   onNavigate,
   onOpenAddPerson,
   onOpenExcelImport,
@@ -69,7 +71,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Miercoles: GT (5 shifts * 25 = 125) + GAP (3 shifts * 30 bases * 2 = 180) = 305
   // Jueves: 2 shifts + 15 bases * 2 = 60
   // Viernes: 2 shifts + 15 bases * 2 = 60
-  const totalSlotsNeeded = 381;
+  // Antes eran números fijos (17 turnos, 188 cupos GT, 45 bases, 381 cupos).
+  // Ahora salen de lo configurado en "Configurar Turnos/Bases".
+  const activeShifts = shifts.filter((s) => s.isActive !== false);
+  const slotsOf = (list: ConfigurableShift[]) => list.reduce((sum, s) => sum + (Number(s.capacity) || 0), 0);
+  const isMesaShift = (s: ConfigurableShift) => s.category === 'MESA' || s.name.toUpperCase().includes('MESA');
+  const gtSlotsNeeded = slotsOf(activeShifts.filter((s) => s.category === 'GT' && !isMesaShift(s)));
+  const totalSlotsNeeded = slotsOf(activeShifts.filter((s) => !isMesaShift(s)));
+  const activeBases = bases.filter((b) => b.isActive !== false);
+  const carnivalBaseCount = activeBases.filter((b) => b.eventId === 'carnival' || b.dayId === 'miercoles' || String(b.id).startsWith('carnival_')).length;
+  const gamesBaseCount = activeBases.filter((b) => b.eventId === 'the-games' || b.dayId === 'jueves' || b.dayId === 'viernes' || String(b.id).startsWith('games_')).length;
   // Cupos operativos (GT + GAP): MESA no llena el cupo operativo ("solo al GT")
   const totalAssigned = assignments.filter((a) => a.assignedType !== 'MESA').length;
   const coveragePct = Math.min(100, Math.round((totalAssigned / (totalSlotsNeeded || 1)) * 100));
@@ -181,10 +192,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Calendar className="w-4 h-4 text-mostaza-600 group-hover:scale-110 transition-transform" />
           </div>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
-            17
+            {activeShifts.length}
           </div>
           <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
-            {gtAssignedCount} / 188 cupos GT
+            {gtAssignedCount} / {gtSlotsNeeded} cupos GT
           </div>
         </div>
 
@@ -200,10 +211,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <MapPin className="w-4 h-4 text-lila-600 group-hover:scale-110 transition-transform" />
           </div>
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-tinta-900 font-sans">
-            45
+            {activeBases.length}
           </div>
           <div className="mt-2 text-[11px] text-tinta-500 font-sans truncate">
-            30 Carnival + 15 Games
+            {carnivalBaseCount} Carnival + {gamesBaseCount} Games
           </div>
         </div>
 
