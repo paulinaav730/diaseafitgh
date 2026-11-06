@@ -371,6 +371,7 @@ export default function App() {
 
             {currentTab === 'attendance' && (
               <AttendanceView
+                shifts={shifts}
                 people={people}
                 assignments={assignments}
                 attendances={attendances}

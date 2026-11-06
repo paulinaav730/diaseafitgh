@@ -108,26 +108,29 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
         s.isActive !== false &&
         (s.category === 'MESA' || s.name.toUpperCase().includes('MESA'))
     );
-    if (configuredMesa.length > 0) {
-      return configuredMesa;
-    }
-    return CARNIVAL_GT_SHIFTS.map((s) => ({
-      ...s,
-      category: 'MESA' as const,
-      forTypes: ['MESA' as const],
-    }));
+    return configuredMesa;
   }, [shifts]);
+
+  // Turnos GT y GAP de Carnival tal como están configurados (sin los oficiales eliminados)
+  const carnivalGtShifts = useMemo(
+    () =>
+      (shifts || []).filter(
+        (s) => s.dayId === 'miercoles' && s.isActive !== false && s.category === 'GT' && !s.name.toUpperCase().includes('MESA')
+      ),
+    [shifts]
+  );
+  const carnivalGapShifts = useMemo(
+    () => (shifts || []).filter((s) => s.dayId === 'miercoles' && s.isActive !== false && (s.category === 'GAP' || s.hasBases)),
+    [shifts]
+  );
 
   // Non-Carnival day shifts
   const currentDayShifts = useMemo(() => {
     const configured = (shifts || []).filter(
       (s) => s.dayId === selectedDayId && s.isActive !== false
     );
-    if (configured.length > 0) {
-      return configured;
-    }
-    return currentDay.shifts;
-  }, [shifts, selectedDayId, currentDay]);
+    return configured;
+  }, [shifts, selectedDayId]);
 
   // Helper to look up shift details across configured, defaults, GT, and GAP
   const lookupShift = (shiftId: string) => {
@@ -586,7 +589,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const gapIds = CARNIVAL_GAP_SHIFTS.map((s) => s.id);
+                          const gapIds = carnivalGapShifts.map((s) => s.id);
                           const remaining = selectedShifts.filter((id) => !gapIds.includes(id));
                           setSelectedShifts([...remaining, ...gapIds]);
                         }}
@@ -598,7 +601,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {CARNIVAL_GAP_SHIFTS.map((shift) => {
+                    {carnivalGapShifts.map((shift) => {
                       const isChecked = selectedShifts.includes(shift.id);
                       return (
                         <div
@@ -657,7 +660,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const gtIds = CARNIVAL_GT_SHIFTS.map((s) => s.id);
+                          const gtIds = carnivalGtShifts.map((s) => s.id);
                           const remaining = selectedShifts.filter((id) => !gtIds.includes(id));
                           setSelectedShifts([...remaining, ...gtIds]);
                         }}
@@ -669,7 +672,7 @@ export const AvailabilityView: React.FC<AvailabilityViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {CARNIVAL_GT_SHIFTS.map((shift) => {
+                    {carnivalGtShifts.map((shift) => {
                       const isChecked = selectedShifts.includes(shift.id);
                       return (
                         <div

@@ -450,7 +450,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Shifts and bases summary for this day */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {currentDay.shifts.map((shift) => {
+            {(shifts || []).filter((s) => s.dayId === currentDay.dayId && s.isActive !== false).map((shift) => {
               const shiftAssignments = assignments.filter(
                 (a) => a.dayId === currentDay.dayId && a.shiftId === shift.id
               );

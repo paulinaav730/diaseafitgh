@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Person, Assignment, AttendanceRecord, AttendanceStatus } from '../types';
+import { Person, Assignment, AttendanceRecord, AttendanceStatus, ConfigurableShift } from '../types';
 import { EVENT_SCHEDULE, getBaseDisplayName, findShiftById } from '../data/eventStructure';
 import { recordAttendance } from '../services/storageService';
 import { CheckCircle2, XCircle, Clock, AlertCircle, Calendar, Users, Filter, Search, X } from 'lucide-react';
 
 interface AttendanceViewProps {
+  shifts?: ConfigurableShift[];
   people: Person[];
   assignments: Assignment[];
   attendances: AttendanceRecord[];
 }
 
 export const AttendanceView: React.FC<AttendanceViewProps> = ({
+  shifts,
   people,
   assignments,
   attendances,
@@ -33,8 +35,9 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
 
   const currentDay = EVENT_SCHEDULE.find((d) => d.dayId === selectedDayId) || EVENT_SCHEDULE[0];
-  const activeShift =
-    currentDay.shifts.find((s) => s.id === selectedShiftId) || currentDay.shifts[0];
+  // Turnos configurados del día (no la lista oficial fija)
+  const dayShifts = (shifts || []).filter((s) => s.dayId === currentDay.dayId && s.isActive !== false);
+  const activeShift = dayShifts.find((s) => s.id === selectedShiftId) || dayShifts[0];
 
   const handleDaySelect = (dayId: string) => {
     setSelectedDayId(dayId);
@@ -113,7 +116,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
 
         {/* Shifts */}
         <div className="flex items-center gap-2 flex-wrap">
-          {currentDay.shifts.map((s) => (
+          {dayShifts.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelectedShiftId(s.id)}
@@ -224,7 +227,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               const person = people.find((p) => p.id === assign.personId);
               
               // We need the actual shift of this assignment
-              const assignmentShift = currentDay.shifts.find(s => s.id === assign.shiftId);
+              const assignmentShift = dayShifts.find(s => s.id === assign.shiftId);
               
               const attendance = attendances.find(
                 (at) =>
