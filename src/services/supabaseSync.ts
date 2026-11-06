@@ -387,6 +387,7 @@ export async function pullBasesFromSupabase(): Promise<any[] | null> {
         defaultCapacity: gapCap,
         suggestedCapacity: gapCap,
         isSpecial: isSpec,
+        updatedAt: r.updated_at || undefined,
       };
     });
   } catch (err) {
@@ -620,7 +621,9 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     }
 
     const cloudShifts = await pullShiftsFromSupabase();
-    if (cloudShifts && cloudShifts.length > 0) {
+    // La nube manda: si la consulta funcionó, se reemplaza aunque venga vacía
+    // (así lo eliminado en otro dispositivo también desaparece aquí).
+    if (cloudShifts !== null) {
       const { replaceAllShiftsFromCloud } = await import('./storageService');
       replaceAllShiftsFromCloud(cloudShifts);
     }
@@ -636,7 +639,7 @@ export async function syncAllFromSupabase(): Promise<{ success: boolean; message
     const foodDeliveries = await pullFoodDeliveriesFromSupabase();
     // @ts-ignore
     const attendances = await pullAttendancesFromSupabase();
-    if (bases && bases.length > 0) {
+    if (bases !== null) {
       const { replaceAllBasesFromCloud } = await import('./storageService');
       replaceAllBasesFromCloud(bases);
     }
