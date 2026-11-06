@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Person, CurrentUser } from '../types';
 import { DiasLogo } from './DiasLogo';
+import { api, errorMessage as apiErrorMessage } from '../services/leagueApi';
 import { ShieldCheck, User, Lock, Key, AlertCircle, ArrowRight, X, AlertTriangle, Users, CheckCircle2 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -32,42 +33,49 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [rememberMe, setRememberMe] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
+  const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-
-    const cleanUser = adminUser.trim().toUpperCase();
-    const cleanPass = adminPass.trim();
-
-    // Required Admin: DIAS2026 / 2580DIAS (also accepting DIAS / 2580DIAS)
-    if (
-      (cleanUser === 'DIAS2026' && cleanPass === '2580DIAS') ||
-      (cleanUser === 'DIAS' && cleanPass === '2580DIAS')
-    ) {
-      onLoginSuccess(
-        {
-          role: 'admin',
-          adminData: {
-            id: 'admin_master',
-            username: cleanUser,
-            name: 'Dirección General DÍAS EAFIT',
-            role: 'admin',
-          },
-        },
-        rememberMe
-      );
+    if (!adminUser.trim() || !adminPass.trim()) {
+      setErrorMessage('Escribe el usuario y la contraseña de administrador.');
       return;
     }
-
-    setErrorMessage('Credenciales de Administrador incorrectas. Usuario: DIAS2026 / Contraseña requerida.');
+    setSubmitting(true);
+    try {
+      // Con Supabase la contraseña se valida en el servidor; la app no la conoce.
+      const user = await api.loginAdmin(adminUser, adminPass);
+      onLoginSuccess(user, rememberMe);
+    } catch (err) {
+      setErrorMessage(apiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleStaffSubmit = (e: React.FormEvent) => {
+  const handleStaffSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (api.isRemote()) {
+      // Producción: el servidor busca a la persona, valida la cédula y entrega la sesión
+      if (!staffUsername.trim() || !staffPassword.trim()) {
+        setErrorMessage('Por favor ingresa tu usuario (o cédula/correo) y tu contraseña (cédula).');
+        return;
+      }
+      setSubmitting(true);
+      try {
+        onLoginSuccess(await api.loginStaffRemote(staffUsername, staffPassword), rememberMe);
+      } catch (err) {
+        setErrorMessage(apiErrorMessage(err));
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     if (people.length === 0) {
       setErrorMessage(
@@ -169,6 +177,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     onLoginSuccess(
       {
         role: 'staff',
+        sessionToken: 'local-' + candidate.id + '-' + Date.now().toString(36),
         staffData: candidate,
       },
       rememberMe
@@ -337,7 +346,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
             <button
               type="submit"
-              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs sm:text-sm font-display tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              disabled={submitting}
+              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-lila-600 hover:bg-lila-700 disabled:opacity-60 disabled:cursor-wait text-white font-bold text-xs sm:text-sm font-display tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               <span>INGRESAR A MI DÍAS</span>
               <ArrowRight className="w-4 h-4" />
@@ -397,7 +407,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
             <button
               type="submit"
-              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-lila-600 hover:bg-lila-700 text-white font-bold text-xs sm:text-sm font-display tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+              disabled={submitting}
+              className="w-full min-h-[44px] mt-2 py-3 rounded-2xl bg-lila-600 hover:bg-lila-700 disabled:opacity-60 disabled:cursor-wait text-white font-bold text-xs sm:text-sm font-display tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               <span>INGRESAR COMO ADMINISTRADOR</span>
               <ArrowRight className="w-4 h-4" />

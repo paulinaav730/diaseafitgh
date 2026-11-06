@@ -442,9 +442,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {currentDay.eventName}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-tinta-900 font-display tracking-wide mt-1">
+              <p className="text-sm sm:text-base text-tinta-700 font-sans leading-relaxed mt-2 max-w-2xl">
                 {currentDay.description}
-              </h3>
+              </p>
             </div>
 
             <button

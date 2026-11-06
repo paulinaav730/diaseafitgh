@@ -39,6 +39,17 @@ import { SettingsModal } from './components/SettingsModal';
 import { StaffMyDiasView } from './components/StaffMyDiasView';
 import { LoginModal } from './components/LoginModal';
 import { ExcelImportModal } from './components/ExcelImportModal';
+import { CalendarView } from './components/CalendarView';
+import { LeagueView } from './components/LeagueView';
+import { StaffShell } from './components/StaffShell';
+import { registerServiceWorker } from './services/pushService';
+import { setCurrentSession } from './services/session';
+import { api } from './services/leagueApi';
+import { eventAttendances } from './services/leagueService';
+import { reminderPreferences } from './services/calendarService';
+import { Toaster } from './components/league/toast';
+import { QrActionModal } from './components/QrActionModal';
+import { clearPendingQr, onQr, takeQrFromUrl, QrKind } from './components/league/QrCode';
 import { UserCheck } from 'lucide-react';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { syncAllFromSupabase } from './services/supabaseSync';
@@ -87,6 +98,9 @@ export default function App() {
     return null;
   });
 
+  // Sesión para las acciones protegidas (se registra antes del primer render)
+  setCurrentSession(currentUser);
+
   // Automatically show login modal if no active session is found
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
     try {
@@ -101,6 +115,15 @@ export default function App() {
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [focusConectadosId, setFocusConectadosId] = useState<string | null>(null);
+  // QR escaneado (enlace abierto con la cámara o lector de la app)
+  const [qrAction, setQrAction] = useState<{ kind: QrKind; token: string } | null>(() => takeQrFromUrl());
+  useEffect(() => onQr(setQrAction), []);
+
+  // Service worker para notificaciones push del calendario
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     const unsubPeople = subscribeToPeople(setPeople);
@@ -125,6 +148,26 @@ export default function App() {
       unsubBases();
     };
   }, []);
+
+  // Cada cambio de sesión recarga los datos privados (asistencias, recordatorios)
+  useEffect(() => {
+    setCurrentSession(currentUser);
+    void eventAttendances.pull();
+    void reminderPreferences.pull();
+  }, [currentUser?.sessionToken, currentUser?.role]);
+
+  // Con Supabase: la sesión debe existir y seguir vigente en el servidor
+  useEffect(() => {
+    if (!currentUser || !api.isRemote()) return;
+    if (!currentUser.sessionToken || currentUser.sessionToken.startsWith('local-')) {
+      handleLogout();
+      return;
+    }
+    api.validateSession().then((valid) => {
+      if (!valid) handleLogout();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.sessionToken]);
 
   // Automatic cloud sync on app start if Supabase is configured
   useEffect(() => {
@@ -179,6 +222,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    void api.logout();
+    setCurrentSession(null);
     setCurrentUser(null);
     try {
       localStorage.removeItem(INITIAL_USER_STORAGE_KEY);
@@ -216,15 +261,17 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 lg:pb-10">
         {/* If user is Staff: Strict Isolation: Only render MI DÍAS */}
         {currentUser?.role === 'staff' && currentUser.staffData ? (
-          <StaffMyDiasView
-            person={currentUser.staffData}
-            assignments={assignments}
-            attendances={attendances}
-            shifts={shifts}
-            events={events}
-            bases={bases}
-            onLogout={handleLogout}
-          />
+          <StaffShell person={currentUser.staffData} people={people}>
+            <StaffMyDiasView
+              person={currentUser.staffData}
+              assignments={assignments}
+              attendances={attendances}
+              shifts={shifts}
+              events={events}
+              bases={bases}
+              onLogout={handleLogout}
+            />
+          </StaffShell>
         ) : currentUser?.role === 'admin' ? (
           <>
             {currentTab === 'dashboard' && (
@@ -240,6 +287,28 @@ export default function App() {
                   setIsAddPersonModalOpen(true);
                 }}
                 onOpenExcelImport={() => setIsExcelModalOpen(true)}
+              />
+            )}
+
+            {currentTab === 'calendar' && (
+              <CalendarView
+                mode="admin"
+                people={people}
+                author={currentUser.adminData?.name || 'Administrador'}
+                onOpenConectados={(id) => {
+                  setFocusConectadosId(id);
+                  setCurrentTab('league');
+                }}
+              />
+            )}
+
+            {currentTab === 'league' && (
+              <LeagueView
+                mode="admin"
+                people={people}
+                author={currentUser.adminData?.name || 'Administrador'}
+                focusConectadosId={focusConectadosId}
+                onFocusHandled={() => setFocusConectadosId(null)}
               />
             )}
 
@@ -375,6 +444,22 @@ export default function App() {
           </span>
         </div>
       </footer>
+
+      <Toaster />
+
+      {qrAction && currentUser && (
+        <QrActionModal
+          key={qrAction.kind + qrAction.token}
+          kind={qrAction.kind}
+          token={qrAction.token}
+          user={currentUser}
+          people={people}
+          onClose={() => {
+            clearPendingQr();
+            setQrAction(null);
+          }}
+        />
+      )}
 
       {/* Global Modals */}
       <SettingsModal

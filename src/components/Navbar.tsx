@@ -22,12 +22,16 @@ import {
   Tag,
   Layers,
   Shirt,
+  CalendarDays,
+  Trophy,
 } from 'lucide-react';
 import { CurrentUser } from '../types';
 import { DiasLogo } from './DiasLogo';
 
 export type TabType =
   | 'dashboard'
+  | 'calendar'
+  | 'league'
   | 'people'
   | 'config'
   | 'assignments'
@@ -78,6 +82,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const tabs: NavTabItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: Calendar },
+    { id: 'calendar', label: 'Calendario', icon: CalendarDays },
+    { id: 'league', label: 'DÍAS League', icon: Trophy },
     { id: 'people', label: 'Personas', icon: Users, badge: peopleCount },
     { id: 'assignments', label: 'Turnos y Bases', icon: Grid },
     ...(isAdmin

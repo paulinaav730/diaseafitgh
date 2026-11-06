@@ -210,11 +210,11 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.attendances;
 
 -- 1. Insertar Eventos Oficiales de la Semana
 INSERT INTO public.app_events (id, name, day_id, day_name, description, notes, is_active, is_carnival, order_num) VALUES
-('the-show', 'THE SHOW', 'lunes', 'Lunes', 'Apertura y gran inauguración de Días EAFIT. Coordinación y soporte con equipo GRUPO DE TRABAJO (GT).', '5 turnos programados para GRUPO DE TRABAJO (GT).', true, false, 1),
-('the-zone', 'THE ZONE', 'martes', 'Martes', 'Zona de interacción, actividades interactivas en campus con equipo GRUPO DE TRABAJO (GT).', '4 turnos programados para GRUPO DE TRABAJO (GT).', true, false, 2),
-('carnival', 'CARNIVAL', 'miercoles', 'Miércoles', 'Día de actividades simultáneas. Estructura diferenciada: GRUPO DE TRABAJO (GT) con 5 turnos y GRUPO DE APOYO (GAP) con 3 turnos en 30 bases físicas únicas.', 'CARNIVAL GT: 5 turnos. CARNIVAL GAP: 3 turnos con 30 bases físicas.', true, true, 3),
-('the-challenge', 'THE CHALLENGE & THE GAMES', 'jueves', 'Jueves', 'Mañana: The Challenge (GRUPO DE TRABAJO). Tarde: The Games con 15 bases físicas GRUPO DE APOYO (GAP).', 'Turno T1: The Challenge (GT). Turno T2: The Games con 15 bases físicas GAP.', true, false, 4),
-('the-games', 'THE GAMES', 'viernes', 'Viernes', 'Gran final de competencias. Equipo GRUPO DE TRABAJO (GT) todo el día y 15 bases físicas GRUPO DE APOYO (GAP).', 'GAP opera en 15 bases físicas. GT da soporte de 6:00 AM a 9:30 PM.', true, false, 5)
+('the-show', 'THE SHOW', 'lunes', 'Lunes', 'Es el día de los espectáculos, las presentaciones y las experiencias que buscan sorprender y entretener a los estudiantes.', '5 turnos programados para GRUPO DE TRABAJO (GT).', true, false, 1),
+('the-zone', 'THE ZONE', 'martes', 'Martes', 'Es el día de la Feria de Marca, un espacio en el que diferentes marcas, emprendimientos y aliados presentan sus productos y servicios, generando experiencias e interacción con la comunidad universitaria.', '4 turnos programados para GRUPO DE TRABAJO (GT).', true, false, 2),
+('carnival', 'CARNIVAL', 'miercoles', 'Miércoles', 'Es el día de la feria tipo americana, que cuenta con diferentes bases y actividades recreativas para que los estudiantes disfruten de una experiencia llena de energía, diversión y entretenimiento.', 'CARNIVAL GT: 5 turnos. CARNIVAL GAP: 3 turnos con 30 bases físicas.', true, true, 3),
+('the-challenge', 'THE CHALLENGE & THE GAMES', 'jueves', 'Jueves', 'Es el día de los juegos, retos y competencias. Los participantes se enfrentan a diferentes pruebas y actividades recreativas que ponen a prueba sus habilidades, creatividad y trabajo en equipo.', 'Turno T1: The Challenge (GT). Turno T2: The Games con 15 bases físicas GAP.', true, false, 4),
+('the-games', 'THE GAMES', 'viernes', 'Viernes', 'Es la continuación de la jornada de juegos y competencias. Se mantienen las diferentes actividades, retos y experiencias para que los estudiantes disfruten y participen en el cierre de la semana de DÍAS.', 'GAP opera en 15 bases físicas. GT da soporte de 6:00 AM a 9:30 PM.', true, false, 5)
 ON CONFLICT (id) DO NOTHING;
 
 -- 2. Insertar Turnos Oficiales de la Semana (21 Turnos)

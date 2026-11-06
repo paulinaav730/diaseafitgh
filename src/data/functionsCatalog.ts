@@ -2,6 +2,7 @@ import { GroupFunction, GtSubTeam, PersonType } from '../types';
 
 export const GT_SUBTEAMS: GtSubTeam[] = [
   'Generales',
+  'Finanzas',
   'Logística',
   'RRPP',
   'GH',
