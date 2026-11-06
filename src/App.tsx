@@ -53,6 +53,7 @@ import { clearPendingQr, onQr, takeQrFromUrl, QrKind } from './components/league
 import { UserCheck } from 'lucide-react';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { syncAllFromSupabase } from './services/supabaseSync';
+import { birthdays, startBirthdayReminders } from './services/birthdayService';
 
 const INITIAL_USER_STORAGE_KEY = 'dias_eafit_current_user';
 
@@ -177,6 +178,19 @@ export default function App() {
       });
     }
   }, []);
+
+  // Cumpleaños (solo administración): carga la lista privada y muestra los
+  // recordatorios mientras la app está abierta. Con la app cerrada los envía
+  // la función programada del servidor.
+  useEffect(() => {
+    if (currentUser?.role !== 'admin') {
+      birthdays.clear();
+      return;
+    }
+    void birthdays.refresh(people);
+    return startBirthdayReminders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.role, currentUser?.sessionToken, people.length]);
 
   // Keep staff data synchronized if database updates in real-time
   useEffect(() => {

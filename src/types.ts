@@ -603,6 +603,8 @@ export interface PersonProfileData {
   qrToken: string;
   photoUrl?: string;
   qrRenewedAt?: string;
+  /** AAAA-MM-DD. Privada: solo la ve y la edita la administración. */
+  birthDate?: string;
 }
 
 export interface AuditEntry {

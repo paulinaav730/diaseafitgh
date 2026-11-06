@@ -83,9 +83,32 @@ o nada.
 Sin esto, los recordatorios funcionan mientras la app esté abierta. En iPhone
 las notificaciones web requieren agregar DÍAS a la pantalla de inicio.
 
+## Cumpleaños de los integrantes
+
+- **Dónde se guarda:** la fecha de nacimiento va en el Perfil DÍAS del integrante
+  existente (`person_profiles.birth_date`), no en `people` ni como evento. Es
+  privada: la clave pública no puede leerla y solo una sesión de administración
+  la consulta (`admin_list_birthdays`) o la cambia (`admin_set_birth_date`, con
+  auditoría). El integrante no ve su fecha ni su edad.
+- **Cómo se registra:** Perfil DÍAS → *Fecha de nacimiento* → Agregar/Editar
+  (solo administración). Sin fecha registrada no se muestra ningún cumpleaños.
+- **Calendario:** la administración ve `🎂 CUMPLEAÑOS — Nombre` con color propio,
+  la edad que cumple y el GT; al tocarlo abre el cumpleaños y el Perfil DÍAS.
+  No se crean eventos: se calculan cada año a partir de la fecha, así que se
+  repiten solos y la edad se actualiza sola. Quien nació el 29 de febrero lo
+  celebra el 28 en años no bisiestos.
+- **Recordatorios:** 7 días antes, 1 día antes y el mismo día, a las 12:00 p. m.
+  de Colombia (America/Bogota). Los envía `send-reminders` a todas las cuentas
+  de administración que tocaron *Activar notificaciones* en el Calendario
+  (tabla privada `admin_push_subscriptions`). Usa la misma configuración de la
+  sección anterior (VAPID + función + cron cada 5 minutos). Con la app abierta
+  también se muestran en el navegador, sin duplicarse.
+- **Para activarlo:** volver a ejecutar `supabase/calendar_league.sql` (no borra
+  datos) y volver a desplegar la función: `supabase functions deploy send-reminders --no-verify-jwt`.
+
 ## Pruebas
 
-- `npm test`: cálculo de asistencia y ranking.
+- `npm test`: cálculo de asistencia y ranking, alimentación y cumpleaños.
 - `SUPABASE_TEST_URL=<url de una base de PRUEBA> node tests/supabase.rpc.test.mjs`:
   seguridad y funciones de la base de datos con la clave pública. No ejecutar
   contra producción: crea datos.

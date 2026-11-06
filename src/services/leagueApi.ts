@@ -32,6 +32,7 @@ import {
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { postgresToPerson } from './supabaseSync';
 import { actorName, getCurrentSession, getSessionToken } from './session';
+import { BirthdayPerson, bogotaToday, parseBirthDate } from '../../supabase/functions/_shared/birthdays';
 import { newId, randomToken } from './syncedCollection';
 import {
   calendarEvents,
@@ -41,6 +42,7 @@ import {
   localSaveReminder,
   reminderFromRow,
   reminderPreferences,
+  personPrimaryGt,
 } from './calendarService';
 import {
   activityClaims,
@@ -540,11 +542,63 @@ export const api = {
   async adminProfile(personId: string): Promise<PersonProfileData> {
     if (remote()) {
       const r = await call('admin_get_profile', { p_person_id: personId });
-      return { personId: r.person_id, qrToken: r.qr_token, photoUrl: r.photo_url ?? undefined, qrRenewedAt: r.qr_renewed_at ?? undefined };
+      return {
+        personId: r.person_id,
+        qrToken: r.qr_token,
+        photoUrl: r.photo_url ?? undefined,
+        qrRenewedAt: r.qr_renewed_at ?? undefined,
+        birthDate: r.birth_date ?? undefined,
+      };
     }
     return local(() => {
       requireAdminLocal();
       return localEnsureProfile(personId);
+    });
+  },
+
+  // --------------------------------------------------------------------------
+  // Cumpleaños (solo administración: la fecha de nacimiento es privada)
+  // --------------------------------------------------------------------------
+  async setBirthDate(personId: string, birthDate: string | null): Promise<void> {
+    if (birthDate && !parseBirthDate(birthDate, bogotaToday())) throw new ApiError('La fecha de nacimiento no es válida.');
+    if (remote()) {
+      await call('admin_set_birth_date', { p_person_id: personId, p_birth_date: birthDate || null });
+      return;
+    }
+    return local(() => {
+      const admin = requireAdminLocal();
+      const pr = localEnsureProfile(personId);
+      const next = { ...pr, id: personId, birthDate: birthDate || undefined };
+      localProfiles.upsert(next);
+      audit(admin, 'actualizar_fecha_nacimiento', 'person_profiles', personId, { birthDate: pr.birthDate ?? null }, { birthDate: birthDate || null });
+    });
+  },
+
+  async listBirthdays(people: Person[]): Promise<BirthdayPerson[]> {
+    if (remote()) {
+      const rows: any[] = await call('admin_list_birthdays');
+      return rows.map((r) => ({ personId: r.person_id, name: r.name, gt: r.gt ?? null, birthDate: r.birth_date }));
+    }
+    return local(() => {
+      requireAdminLocal();
+      return localProfiles
+        .getAll()
+        .filter((pr) => pr.birthDate)
+        .flatMap((pr) => {
+          const p = people.find((x) => x.id === pr.personId);
+          return p ? [{ personId: p.id, name: p.name, gt: personPrimaryGt(p) ?? null, birthDate: pr.birthDate! }] : [];
+        });
+    });
+  },
+
+  async saveAdminPushSubscription(sub: { id: string; endpoint: string; p256dh: string; auth: string; userAgent: string }) {
+    if (!remote()) return;
+    await call('save_admin_push_subscription', {
+      p_id: sub.id,
+      p_endpoint: sub.endpoint,
+      p_p256dh: sub.p256dh,
+      p_auth: sub.auth,
+      p_user_agent: sub.userAgent,
     });
   },
 

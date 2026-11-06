@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Award, CalendarCheck, Image as ImageIcon, Maximize2, Plus, RefreshCw, ScrollText, Swords, User } from 'lucide-react';
+import { Award, Cake, CalendarCheck, Image as ImageIcon, Maximize2, Plus, RefreshCw, ScrollText, Swords, User } from 'lucide-react';
 import { ATTENDANCE_STATE_LABELS, Person, PersonProfileData, PointMovement } from '../types';
 import { calendarEvents, formatClock, personGts, personPrimaryGt } from '../services/calendarService';
 import { eventAttendances, pointMovements, round2 } from '../services/leagueService';
@@ -10,6 +10,7 @@ import { QrCode, qrLink } from './league/QrCode';
 import { AssignPointsModal, EditMovementModal, MovementRow } from './LeagueMovements';
 import { STATE_STYLE } from './EventAttendancePanel';
 import { PersonFoodSection } from './PersonFoodSection';
+import { birthdays, bogotaToday, formatBirthdayDate, nextBirthday } from '../services/birthdayService';
 
 /** Carga el QR personal (el propio o, si es admin, el de cualquier integrante). */
 export function useProfile(personId: string | undefined, asAdmin: boolean) {
@@ -134,6 +135,16 @@ export const PersonProfile: React.FC<Props> = ({ person, people, mode }) => {
                     <dt className="text-[11px] text-tinta-500">Otros GT</dt>
                     <dd className="font-semibold">{otherGts.join(', ')}</dd>
                   </div>
+                )}
+                {/* Fecha de nacimiento: privada, solo la ve y la edita la administración */}
+                {isAdmin && profile && (
+                  <BirthDateField
+                    personId={person.id}
+                    name={person.name}
+                    gt={gt}
+                    value={profile.birthDate}
+                    onSaved={(birthDate) => setProfile({ ...profile, birthDate })}
+                  />
                 )}
               </dl>
               {isAdmin && (
@@ -284,6 +295,76 @@ export const PersonProfile: React.FC<Props> = ({ person, people, mode }) => {
       {assigning && <AssignPointsModal people={people} person={person} onClose={() => setAssigning(false)} />}
       {editing && <EditMovementModal movement={editing.m} mode={editing.mode} label={person.name} onClose={() => setEditing(null)} />}
       {editPhoto && <PhotoModal person={person} current={profile?.photoUrl} onSaved={setProfile} onClose={() => setEditPhoto(false)} />}
+    </div>
+  );
+};
+
+const BirthDateField: React.FC<{ personId: string; name: string; gt?: string; value?: string; onSaved: (v?: string) => void }> = ({
+  personId,
+  name,
+  gt,
+  value,
+  onSaved,
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || '');
+  const [busy, run] = useBusy();
+  const today = bogotaToday();
+  const next = value ? nextBirthday({ personId, name, gt, birthDate: value }, today) : null;
+  const save = (v: string | null) =>
+    run(() =>
+      attempt(async () => {
+        await api.setBirthDate(personId, v);
+        await birthdays.refresh().catch(() => undefined);
+        onSaved(v || undefined);
+        setEditing(false);
+      }, v ? 'Fecha de nacimiento guardada' : 'Fecha de nacimiento eliminada')
+    );
+  return (
+    <div className="sm:col-span-2">
+      <dt className="text-[11px] text-tinta-500 flex items-center gap-1">
+        <Cake className="w-3 h-3" /> Fecha de nacimiento <span className="text-tinta-400">(privada)</span>
+      </dt>
+      {editing ? (
+        <dd className="flex flex-wrap items-center gap-2 mt-1">
+          <input type="date" className={`${inputCls} !py-1.5 !w-auto`} value={draft} max={today} onChange={(e) => setDraft(e.target.value)} />
+          <button className={btnPrimary} disabled={busy || !draft} onClick={() => save(draft)}>
+            Guardar
+          </button>
+          {value && (
+            <button className={btnSecondary} disabled={busy} onClick={() => save(null)}>
+              Quitar
+            </button>
+          )}
+          <button className={btnSecondary} disabled={busy} onClick={() => setEditing(false)}>
+            Cancelar
+          </button>
+        </dd>
+      ) : (
+        <dd className="font-semibold flex flex-wrap items-center gap-2">
+          {value ? (
+            <>
+              <span className="tabular-nums">{value.split('-').reverse().join('/')}</span>
+              {next && (
+                <span className="text-[11px] font-semibold text-coral-700 bg-coral-50 border border-coral-200 rounded-full px-2 py-0.5">
+                  🎂 {formatBirthdayDate(next.date)} · cumple {next.age}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-tinta-400 font-normal">Sin registrar</span>
+          )}
+          <button
+            className="text-xs font-semibold text-lila-700 hover:underline"
+            onClick={() => {
+              setDraft(value || '');
+              setEditing(true);
+            }}
+          >
+            {value ? 'Editar' : 'Agregar'}
+          </button>
+        </dd>
+      )}
     </div>
   );
 };

@@ -69,6 +69,11 @@ CREATE TABLE IF NOT EXISTS public.person_profiles (
     qr_renewed_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
+-- Fecha de nacimiento (privada: solo la administración la lee o la edita,
+-- mediante funciones con sesión). Va en el perfil del integrante existente,
+-- sin crear registros nuevos. Los cumpleaños NO se guardan como eventos:
+-- el calendario y la función programada los calculan cada año.
+ALTER TABLE public.person_profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
 
 -- ------------------------------------------------------------------------------
 -- 3. Calendario
@@ -126,6 +131,17 @@ CREATE TABLE IF NOT EXISTS public.calendar_reminders (
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
     id TEXT PRIMARY KEY,
     person_id TEXT NOT NULL REFERENCES public.people(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent TEXT,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+-- Suscripciones push de las cuentas de administración (recordatorios de cumpleaños)
+CREATE TABLE IF NOT EXISTS public.admin_push_subscriptions (
+    id TEXT PRIMARY KEY,
+    admin_id TEXT NOT NULL REFERENCES public.admin_users(id) ON DELETE CASCADE,
     endpoint TEXT NOT NULL,
     p256dh TEXT NOT NULL,
     auth TEXT NOT NULL,
@@ -320,7 +336,7 @@ BEGIN
   END LOOP;
   -- Privadas: solo accesibles mediante funciones con sesión
   FOREACH t IN ARRAY ARRAY['admin_users','app_sessions','login_attempts','person_profiles','event_qr_codes',
-                           'calendar_reminders','push_subscriptions','reminder_deliveries','event_attendances',
+                           'calendar_reminders','push_subscriptions','admin_push_subscriptions','reminder_deliveries','event_attendances',
                            'point_activity_qr','qr_scans','admin_audit_log']
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
@@ -534,7 +550,37 @@ BEGIN
   PERFORM _require_admin(p_session);
   IF NOT EXISTS (SELECT 1 FROM people WHERE id = p_person_id) THEN PERFORM _fail('NO_ENCONTRADO', 'Integrante no encontrado.'); END IF;
   pr := _ensure_profile(p_person_id);
-  RETURN jsonb_build_object('person_id', p_person_id, 'qr_token', pr.qr_token, 'photo_url', pr.photo_url, 'qr_renewed_at', pr.qr_renewed_at);
+  RETURN jsonb_build_object('person_id', p_person_id, 'qr_token', pr.qr_token, 'photo_url', pr.photo_url, 'qr_renewed_at', pr.qr_renewed_at,
+                            'birth_date', pr.birth_date);
+END;
+$$;
+
+-- Cumpleaños: guardar o borrar la fecha de nacimiento (solo administración)
+CREATE OR REPLACE FUNCTION public.admin_set_birth_date(p_session TEXT, p_person_id TEXT, p_birth_date DATE) RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE adm TEXT := _require_admin(p_session); before public.person_profiles;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM people WHERE id = p_person_id) THEN PERFORM _fail('NO_ENCONTRADO', 'Integrante no encontrado.'); END IF;
+  IF p_birth_date IS NOT NULL AND (p_birth_date > (now() AT TIME ZONE 'America/Bogota')::date OR p_birth_date < DATE '1900-01-01') THEN
+    PERFORM _fail('FECHA_INVALIDA', 'La fecha de nacimiento no es válida.');
+  END IF;
+  before := _ensure_profile(p_person_id);
+  UPDATE person_profiles SET birth_date = p_birth_date, updated_at = now() WHERE person_id = p_person_id;
+  PERFORM _audit(adm, 'actualizar_fecha_nacimiento', 'person_profiles', p_person_id,
+                 jsonb_build_object('birth_date', before.birth_date), jsonb_build_object('birth_date', p_birth_date));
+  RETURN jsonb_build_object('person_id', p_person_id, 'birth_date', p_birth_date);
+END;
+$$;
+
+-- Cumpleaños para el calendario de la administración. Solo personas con fecha registrada.
+CREATE OR REPLACE FUNCTION public.admin_list_birthdays(p_session TEXT) RETURNS JSONB
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+BEGIN
+  PERFORM _require_admin(p_session);
+  RETURN coalesce((
+    SELECT jsonb_agg(jsonb_build_object('person_id', p.id, 'name', p.name, 'gt', _person_primary_gt(p), 'birth_date', pr.birth_date) ORDER BY p.name)
+      FROM person_profiles pr JOIN people p ON p.id = pr.person_id
+     WHERE pr.birth_date IS NOT NULL), '[]');
 END;
 $$;
 
@@ -1159,6 +1205,20 @@ BEGIN
   INSERT INTO push_subscriptions (id, person_id, endpoint, p256dh, auth, user_agent, updated_at)
   VALUES (p_id, s.person_id, p_endpoint, p_p256dh, p_auth, left(p_user_agent, 250), now())
   ON CONFLICT (id) DO UPDATE SET person_id = EXCLUDED.person_id, endpoint = EXCLUDED.endpoint, p256dh = EXCLUDED.p256dh,
+     auth = EXCLUDED.auth, user_agent = EXCLUDED.user_agent, updated_at = now();
+  RETURN true;
+END;
+$$;
+
+-- Suscripción push de la administradora (recordatorios de cumpleaños con la app cerrada)
+CREATE OR REPLACE FUNCTION public.save_admin_push_subscription(p_session TEXT, p_id TEXT, p_endpoint TEXT, p_p256dh TEXT, p_auth TEXT, p_user_agent TEXT) RETURNS BOOLEAN
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE s public.app_sessions := _session(p_session);
+BEGIN
+  IF s.role <> 'admin' OR s.admin_id IS NULL THEN PERFORM _fail('SIN_PERMISO', 'Esta acción es solo para administradores.'); END IF;
+  INSERT INTO admin_push_subscriptions (id, admin_id, endpoint, p256dh, auth, user_agent, updated_at)
+  VALUES (p_id, s.admin_id, p_endpoint, p_p256dh, p_auth, left(p_user_agent, 250), now())
+  ON CONFLICT (id) DO UPDATE SET admin_id = EXCLUDED.admin_id, endpoint = EXCLUDED.endpoint, p256dh = EXCLUDED.p256dh,
      auth = EXCLUDED.auth, user_agent = EXCLUDED.user_agent, updated_at = now();
   RETURN true;
 END;
