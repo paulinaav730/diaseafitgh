@@ -2298,7 +2298,113 @@ export async function deleteBase(
   basesCache = basesCache.filter((b) => String(b.id) !== String(id));
   localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
   baseListeners.forEach((fn) => fn([...basesCache]));
+  // Antes solo se borraba en el navegador y la base reaparecía al sincronizar
+  import('./supabaseSync').then((sync) => sync.deleteRecordsFromSupabase('bases', [String(id)])).catch(() => {});
   return { success: true };
+}
+
+// ----------------- ELIMINACIÓN MASIVA DE TURNOS Y BASES -----------------
+
+/** Asignaciones que apuntan a una base (por id de base o número de base exacto). */
+function assignmentsOfBases(bases: ConfigurableBase[]): Assignment[] {
+  const ids = new Set(bases.map((b) => String(b.id)));
+  const numbers = new Set(bases.map((b) => String(b.baseNumber ?? b.id)));
+  return assignmentCache.filter(
+    (a) =>
+      (a.baseId !== undefined && a.baseId !== null && ids.has(String(a.baseId))) ||
+      (a.baseNumber !== undefined && a.baseNumber !== null && numbers.has(String(a.baseNumber)) &&
+        bases.some((b) => !b.dayId || b.dayId === a.dayId))
+  );
+}
+
+/** Impacto de eliminar varios turnos: asignaciones y personas afectadas. */
+export function checkShiftsBatchImpact(ids: string[]): { assignments: number; people: number } {
+  initializeStorage();
+  const set = new Set(ids);
+  const affected = assignmentCache.filter((a) => set.has(a.shiftId));
+  return { assignments: affected.length, people: new Set(affected.map((a) => a.personId)).size };
+}
+
+/** Impacto de eliminar varias bases: asignaciones que quedarían sin base. */
+export function checkBasesBatchImpact(ids: (string | number)[]): { assignments: number; people: number } {
+  initializeStorage();
+  const set = new Set(ids.map(String));
+  const affected = assignmentsOfBases(basesCache.filter((b) => set.has(String(b.id))));
+  return { assignments: affected.length, people: new Set(affected.map((a) => a.personId)).size };
+}
+
+/**
+ * Elimina varios turnos con sus asignaciones, asistencias de turno y cupos
+ * (igual que al eliminar uno solo), en el navegador y en Supabase.
+ */
+export async function deleteShiftsBatch(ids: string[]): Promise<{ shifts: number; assignments: number; error?: string }> {
+  initializeStorage();
+  const set = new Set(ids);
+  const removedAssignments = assignmentCache.filter((a) => set.has(a.shiftId));
+
+  shiftsCache = shiftsCache.filter((s) => !set.has(s.id));
+  assignmentCache = assignmentCache.filter((a) => !set.has(a.shiftId));
+  attendanceCache = attendanceCache.filter((a) => !set.has(a.shiftId));
+  requirementCache = requirementCache.filter((r) => !set.has(r.shiftId));
+  localStorage.setItem(STORAGE_KEYS.SHIFTS, JSON.stringify(shiftsCache));
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  localStorage.setItem(STORAGE_KEYS.ATTENDANCES, JSON.stringify(attendanceCache));
+  localStorage.setItem(STORAGE_KEYS.REQUIREMENTS, JSON.stringify(requirementCache));
+  notifyAll();
+
+  let error: string | undefined;
+  if (isSupabaseConfigured() && ids.length > 0) {
+    const { getSupabase } = await import('./supabaseClient');
+    const client = getSupabase();
+    if (client) {
+      // Primero lo que depende del turno; luego el turno
+      for (const table of ['assignments', 'attendances', 'shift_requirements']) {
+        const { error: e } = await client.from(table).delete().in('shift_id', ids);
+        if (e) console.warn(`Supabase delete ${table}:`, e.message);
+      }
+      const { error: e } = await client.from('shifts').delete().in('id', ids);
+      if (e) error = e.message;
+    }
+  }
+  return { shifts: ids.length, assignments: removedAssignments.length, error };
+}
+
+/**
+ * Elimina varias bases. Las personas NO pierden su turno: sus asignaciones
+ * quedan sin base para poder reasignarlas.
+ */
+export async function deleteBasesBatch(ids: (string | number)[]): Promise<{ bases: number; assignments: number; error?: string }> {
+  initializeStorage();
+  const set = new Set(ids.map(String));
+  const toDelete = basesCache.filter((b) => set.has(String(b.id)));
+  const affected = new Set(assignmentsOfBases(toDelete).map((a) => a.id));
+  const now = new Date().toISOString();
+
+  assignmentCache = assignmentCache.map((a) =>
+    affected.has(a.id) ? { ...a, baseId: undefined, baseNumber: undefined, baseName: undefined, updatedAt: now } : a
+  );
+  basesCache = basesCache.filter((b) => !set.has(String(b.id)));
+  localStorage.setItem(STORAGE_KEYS.BASES, JSON.stringify(basesCache));
+  localStorage.setItem(STORAGE_KEYS.ASSIGNMENTS, JSON.stringify(assignmentCache));
+  notifyAll();
+
+  let error: string | undefined;
+  if (isSupabaseConfigured() && ids.length > 0) {
+    const { getSupabase } = await import('./supabaseClient');
+    const client = getSupabase();
+    if (client) {
+      if (affected.size > 0) {
+        const { error: e } = await client
+          .from('assignments')
+          .update({ base_id: null, base_name: null, updated_at: now })
+          .in('id', [...affected]);
+        if (e) console.warn('Supabase update assignments:', e.message);
+      }
+      const { error: e } = await client.from('bases').delete().in('id', [...set]);
+      if (e) error = e.message;
+    }
+  }
+  return { bases: toDelete.length, assignments: affected.size, error };
 }
 
 export async function restoreDefaultSchedule(): Promise<void> {

@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Person, Assignment, AvailabilityRecord, AttendanceRecord } from '../types';
-import { resetToEmptyState, exportAllData, importAllData } from '../services/storageService';
+import {
+  resetToEmptyState,
+  exportAllData,
+  importAllData,
+  getShifts,
+  getBases,
+  checkShiftsBatchImpact,
+  checkBasesBatchImpact,
+  deleteShiftsBatch,
+  deleteBasesBatch,
+} from '../services/storageService';
+import { BulkDeleteDialog } from './BulkDeleteDialog';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 import {
   testSupabaseConnection,
@@ -40,6 +51,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   attendances,
 }) => {
   const [importJson, setImportJson] = useState('');
+  const [bulkDelete, setBulkDelete] = useState<'shifts' | 'bases' | null>(null);
   const [importStatus, setImportStatus] = useState<string | null>(null);
 
   // Cloud sync state
@@ -317,6 +329,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Trash2 className="w-4 h-4 text-lila-600" />
               <span>Vaciar Toda la Base de Datos (Volver a 0)</span>
             </button>
+
+            <button
+              onClick={() => setBulkDelete('shifts')}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-lila-50 hover:bg-lila-100 text-lila-600 border border-lila-200 flex items-center gap-2 transition-all shadow-2xs"
+            >
+              <Trash2 className="w-4 h-4 text-lila-600" />
+              <span>Vaciar Turnos ({getShifts().length})</span>
+            </button>
+
+            <button
+              onClick={() => setBulkDelete('bases')}
+              className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold bg-lila-50 hover:bg-lila-100 text-lila-600 border border-lila-200 flex items-center gap-2 transition-all shadow-2xs"
+            >
+              <Trash2 className="w-4 h-4 text-lila-600" />
+              <span>Vaciar Bases ({getBases().length})</span>
+            </button>
           </div>
 
           <div className="pt-2">
@@ -357,6 +385,58 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
       </div>
+      {bulkDelete && <VaciarDialog kind={bulkDelete} onClose={() => setBulkDelete(null)} />}
     </div>
+  );
+};
+
+/** Vaciar todos los turnos o todas las bases (como "Vaciar Toda la Base de Datos"). */
+const VaciarDialog: React.FC<{ kind: 'shifts' | 'bases'; onClose: () => void }> = ({ kind, onClose }) => {
+  const isShifts = kind === 'shifts';
+  const items = isShifts ? getShifts() : getBases();
+  const ids = items.map((x) => x.id as string);
+  const impact = isShifts ? checkShiftsBatchImpact(ids) : checkBasesBatchImpact(ids);
+  return (
+    <BulkDeleteDialog
+      title={isShifts ? `Vaciar los ${items.length} turnos` : `Vaciar las ${items.length} bases`}
+      impact={
+        isShifts ? (
+          <>
+            <p>
+              Se eliminarán <b>todos los turnos ({items.length})</b> de todos los días.
+            </p>
+            <p>
+              También se eliminan sus <b>{impact.assignments} asignaciones</b> ({impact.people} persona{impact.people === 1 ? "" : "s"}), su asistencia de turno y sus cupos. Las personas y su disponibilidad no se borran.
+            </p>
+          </>
+        ) : (
+          <>
+            <p>
+              Se eliminarán <b>todas las bases ({items.length})</b>.
+            </p>
+            <p>
+              {impact.assignments > 0 ? (
+                <>
+                  <b>{impact.assignments} asignaciones</b> ({impact.people} persona{impact.people === 1 ? "" : "s"}) quedarán <b>sin base</b>, pero conservan su turno.
+                </>
+              ) : (
+                'Ninguna asignación usa estas bases.'
+              )}
+            </p>
+          </>
+        )
+      }
+      onConfirm={async () => {
+        if (isShifts) {
+          const r = await deleteShiftsBatch(ids);
+          if (r.error) throw new Error(`Se borraron en este dispositivo, pero Supabase respondió: ${r.error}`);
+          return `Listo: se eliminaron ${r.shifts} turnos y ${r.assignments} asignaciones.`;
+        }
+        const r = await deleteBasesBatch(ids);
+        if (r.error) throw new Error(`Se borraron en este dispositivo, pero Supabase respondió: ${r.error}`);
+        return `Listo: se eliminaron ${r.bases} bases. ${r.assignments} asignaciones quedaron sin base.`;
+      }}
+      onClose={onClose}
+    />
   );
 };

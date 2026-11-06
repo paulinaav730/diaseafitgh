@@ -1,3 +1,4 @@
+import { BulkDeleteDialog } from './BulkDeleteDialog';
 import React, { useState, useMemo } from 'react';
 import {
   AppEvent,
@@ -21,6 +22,10 @@ import {
   saveBase,
   deleteBase,
   checkBaseDeleteImpact,
+  checkShiftsBatchImpact,
+  checkBasesBatchImpact,
+  deleteShiftsBatch,
+  deleteBasesBatch,
   restoreDefaultSchedule,
   ShiftConflictReport,
 } from '../services/storageService';
@@ -74,6 +79,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
   onNavigateToFunctions,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<ConfigSubTab>('shifts');
+  const [bulkDelete, setBulkDelete] = useState<'shifts' | 'bases' | null>(null);
 
   // Filters for Shifts
   const [dayFilter, setDayFilter] = useState<string>('all');
@@ -342,6 +348,9 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
     });
   }, [bases, baseEventFilter]);
 
+  const shiftFiltersActive =
+    dayFilter !== 'all' || eventFilter !== 'all' || categoryFilter !== 'all' || subTeamFilter !== 'all' || searchQuery.trim() !== '';
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -381,6 +390,28 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               <RotateCcw className="w-3.5 h-3.5 text-lila-600" />
               Restablecer Oficial
             </button>
+
+            {activeSubTab === 'shifts' && filteredShifts.length > 0 && (
+              <button
+                onClick={() => setBulkDelete('shifts')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 border border-lila-200 shadow-2xs transition-all cursor-pointer"
+                title={shiftFiltersActive ? 'Eliminar los turnos que coinciden con los filtros' : 'Eliminar todos los turnos'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {shiftFiltersActive ? `Eliminar Filtrados (${filteredShifts.length})` : `Eliminar Todos (${filteredShifts.length})`}
+              </button>
+            )}
+
+            {activeSubTab === 'bases' && filteredBases.length > 0 && (
+              <button
+                onClick={() => setBulkDelete('bases')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-lila-600 bg-lila-50 hover:bg-lila-100 border border-lila-200 shadow-2xs transition-all cursor-pointer"
+                title={baseEventFilter !== 'all' ? 'Eliminar las bases del evento filtrado' : 'Eliminar todas las bases'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {baseEventFilter !== 'all' ? `Eliminar Filtradas (${filteredBases.length})` : `Eliminar Todas (${filteredBases.length})`}
+              </button>
+            )}
 
             {activeSubTab === 'shifts' && (
               <button
@@ -1865,6 +1896,56 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
       {/* ========================================================= */}
       {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN                       */}
       {/* ========================================================= */}
+      {bulkDelete && (() => {
+        const isShifts = bulkDelete === 'shifts';
+        const ids = isShifts ? filteredShifts.map((x) => x.id) : filteredBases.map((x) => x.id);
+        const impact = isShifts ? checkShiftsBatchImpact(ids as string[]) : checkBasesBatchImpact(ids);
+        const filtered = isShifts ? shiftFiltersActive : baseEventFilter !== 'all';
+        return (
+          <BulkDeleteDialog
+            title={isShifts ? `Eliminar ${ids.length} turno${ids.length === 1 ? '' : 's'}` : `Eliminar ${ids.length} base${ids.length === 1 ? '' : 's'}`}
+            impact={
+              isShifts ? (
+                <>
+                  <p>
+                    Se eliminarán <b>{filtered ? `los ${ids.length} turnos filtrados` : `todos los turnos (${ids.length})`}</b>.
+                  </p>
+                  <p>
+                    También se eliminan sus <b>{impact.assignments} asignaciones</b> ({impact.people} persona{impact.people === 1 ? "" : "s"}), su asistencia de turno y sus cupos. Las personas y su disponibilidad no se borran.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Se eliminarán <b>{filtered ? `las ${ids.length} bases filtradas` : `todas las bases (${ids.length})`}</b>.
+                  </p>
+                  <p>
+                    {impact.assignments > 0 ? (
+                      <>
+                        <b>{impact.assignments} asignaciones</b> ({impact.people} persona{impact.people === 1 ? "" : "s"}) quedarán <b>sin base</b>, pero conservan su turno.
+                      </>
+                    ) : (
+                      'Ninguna asignación usa estas bases.'
+                    )}
+                  </p>
+                </>
+              )
+            }
+            onConfirm={async () => {
+              if (isShifts) {
+                const r = await deleteShiftsBatch(ids as string[]);
+                if (r.error) throw new Error(`Se borraron en este dispositivo, pero Supabase respondió: ${r.error}`);
+                return `Listo: se eliminaron ${r.shifts} turnos y ${r.assignments} asignaciones.`;
+              }
+              const r = await deleteBasesBatch(ids);
+              if (r.error) throw new Error(`Se borraron en este dispositivo, pero Supabase respondió: ${r.error}`);
+              return `Listo: se eliminaron ${r.bases} bases. ${r.assignments} asignaciones quedaron sin base.`;
+            }}
+            onClose={() => setBulkDelete(null)}
+          />
+        );
+      })()}
+
       {deleteConfirm && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-coral-600">
