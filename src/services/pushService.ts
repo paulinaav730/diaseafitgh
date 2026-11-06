@@ -77,15 +77,19 @@ export async function enablePushNotifications(_personId?: string): Promise<PushP
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
         }));
       const json = sub.toJSON();
-      // Se guarda con la sesión del integrante (función segura del servidor)
+      // Se guarda con la sesión de quien la activa (función segura del servidor):
+      // integrantes → recordatorios de sus eventos; administración → cumpleaños.
       const { api } = await import('./leagueApi');
-      await api.savePushSubscription({
+      const { getCurrentSession } = await import('./session');
+      const data = {
         id: await hashId(sub.endpoint),
         endpoint: sub.endpoint,
         p256dh: json.keys?.p256dh || '',
         auth: json.keys?.auth || '',
         userAgent: navigator.userAgent.slice(0, 250),
-      });
+      };
+      if (getCurrentSession()?.role === 'admin') await api.saveAdminPushSubscription(data);
+      else await api.savePushSubscription(data);
     } catch (err) {
       console.warn('No se pudo registrar la suscripción push:', err);
     }

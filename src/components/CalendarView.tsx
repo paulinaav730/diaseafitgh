@@ -70,6 +70,16 @@ import { EventTypesModal } from './EventTypesModal';
 import { EventQrPanel } from './EventQrPanel';
 import { api } from '../services/leagueApi';
 import { attempt, useBusy } from './league/toast';
+import {
+  AdminBirthdayPushBanner,
+  BirthdayDot,
+  BirthdayListItem,
+  BirthdayModal,
+  BirthdayPill,
+  UpcomingBirthdays,
+  useBirthdaysByDate,
+} from './BirthdayCalendar';
+import { BirthdayOccurrence } from '../services/birthdayService';
 
 // ----------------------------------------------------------------------------
 // Utilidades de fecha (todo en cadenas YYYY-MM-DD para evitar líos de zona horaria)
@@ -146,6 +156,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
   const [listFrom, setListFrom] = useState(todayIso());
   const [listTo, setListTo] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedBirthday, setSelectedBirthday] = useState<BirthdayOccurrence | null>(null);
   const [editing, setEditing] = useState<CalendarEvent | 'new' | null>(null);
   const [newDate, setNewDate] = useState<string | undefined>();
 
@@ -162,6 +173,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
     return allEvents
       .filter((e) => isAdmin || (person && isPersonInAudience(person, e.audience)))
       .filter((e) => typeFilter === 'all' || typeFilterKey(e) === typeFilter || e.type === typeFilter)
+      .filter(() => typeFilter !== 'cumpleanos')
       .filter((e) => showCancelled || e.status === 'activo')
       .filter((e) => {
         if (groupFilter === 'all') return true;
@@ -185,6 +197,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
     const now = Date.now();
     return events.filter((e) => e.status === 'activo' && eventEnd(e).getTime() >= now).slice(0, 4);
   }, [events]);
+
+  // Cumpleaños (solo administración): se calculan para el rango visible
+  const showBirthdays = isAdmin && (typeFilter === 'all' || typeFilter === 'cumpleanos');
+  const bdayFrom = view === 'lista' ? listFrom || todayIso() : view === 'mes' ? weekStart(monthStart(cursor)) : weekStart(cursor);
+  const bdayTo = view === 'lista' ? listTo || addDays(bdayFrom, 365) : addDays(bdayFrom, view === 'mes' ? 41 : 6);
+  const bdayGt = ['all', 'GAP', 'MESA', 'PERSONAS'].includes(groupFilter) ? (groupFilter === 'all' ? 'all' : '__ninguno__') : groupFilter;
+  const birthdaysByDate = useBirthdaysByDate(showBirthdays, people, bdayFrom, bdayTo, bdayGt);
 
   const selected = selectedId ? allEvents.find((e) => e.id === selectedId) : undefined;
   const today = todayIso();
@@ -222,6 +241,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
         <div className="grid grid-cols-7">
           {days.map((d) => {
             const list = byDate.get(d) || [];
+            const bdays = birthdaysByDate.get(d) || [];
             const inMonth = d.slice(0, 7) === month;
             return (
               <div
@@ -246,6 +266,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
                 </div>
                 {/* En móvil: puntos; en escritorio: títulos */}
                 <div className="sm:hidden flex flex-wrap gap-1 mt-1 justify-center">
+                  {bdays.map((o) => (
+                    <BirthdayDot key={'b' + o.personId} o={o} onOpen={setSelectedBirthday} />
+                  ))}
                   {list.map((e) => (
                     <button
                       key={e.id}
@@ -256,6 +279,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
                   ))}
                 </div>
                 <div className="hidden sm:flex flex-col gap-1 mt-0.5">
+                  {bdays.slice(0, 2).map((o) => (
+                    <BirthdayPill key={'b' + o.personId} o={o} onOpen={setSelectedBirthday} compact />
+                  ))}
+                  {bdays.length > 2 && (
+                    <span className="text-[10px] font-semibold text-coral-700 px-1">+{bdays.length - 2} cumpleaños</span>
+                  )}
                   {list.slice(0, 3).map((e) => (
                     <EventPill key={e.id} e={e} compact />
                   ))}
@@ -286,6 +315,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
       <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-tinta-100">
         {days.map((d) => {
           const list = byDate.get(d) || [];
+          const bdays = birthdaysByDate.get(d) || [];
           return (
             <div key={d} className="p-2 md:min-h-[320px]">
               <p
@@ -295,7 +325,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
                 {d === today && ' · hoy'}
               </p>
               <div className="flex flex-col gap-1.5">
-                {list.length === 0 && <p className="text-[11px] text-tinta-400 md:hidden">Sin eventos</p>}
+                {list.length === 0 && bdays.length === 0 && <p className="text-[11px] text-tinta-400 md:hidden">Sin eventos</p>}
+                {bdays.map((o) => (
+                  <BirthdayPill key={'b' + o.personId} o={o} onOpen={setSelectedBirthday} />
+                ))}
                 {list.map((e) => (
                   <EventPill key={e.id} e={e} />
                 ))}
@@ -309,17 +342,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
 
   const renderList = () => {
     const list = events.filter((e) => (!listFrom || e.date >= listFrom) && (!listTo || e.date <= listTo));
-    if (list.length === 0) {
+    if (list.length === 0 && birthdaysByDate.size === 0) {
       return <EmptyState icon={CalendarDays} title="No hay eventos en este rango" text="Ajusta las fechas o los filtros." />;
     }
     const groups = new Map<string, CalendarEvent[]>();
     list.forEach((e) => groups.set(e.date, [...(groups.get(e.date) || []), e]));
+    birthdaysByDate.forEach((_, d) => !groups.has(d) && groups.set(d, []));
     return (
       <div className="divide-y divide-tinta-100">
-        {[...groups.entries()].map(([d, evs]) => (
+        {[...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([d, evs]) => (
           <div key={d} className="p-4 sm:px-6 flex flex-col sm:flex-row gap-2 sm:gap-6">
             <p className="text-xs font-semibold text-tinta-600 capitalize sm:w-44 shrink-0">{formatDateLong(d)}</p>
             <div className="flex-1 flex flex-col gap-2">
+              {(birthdaysByDate.get(d) || []).map((o) => (
+                <BirthdayListItem key={'b' + o.personId} o={o} onOpen={setSelectedBirthday} />
+              ))}
               {evs.map((e) => (
                 <button
                   key={e.id}
@@ -395,6 +432,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
       />
 
       {!isAdmin && person && <PushBanner personId={person.id} />}
+      {isAdmin && <AdminBirthdayPushBanner />}
+      {isAdmin && <UpcomingBirthdays onOpen={setSelectedBirthday} />}
 
       {/* Próximos eventos */}
       {upcoming.length > 0 && (
@@ -472,6 +511,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
                   {f.label}
                 </option>
               ))}
+              {isAdmin && <option value="cumpleanos">🎂 Cumpleaños</option>}
             </select>
             {isAdmin && (
               <select
@@ -512,6 +552,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
           {legend.map((l) => (
             <EventTypeChip key={l.type + (l.trainingMode || '')} type={l.type} trainingMode={l.trainingMode} />
           ))}
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-coral-300 bg-coral-50 px-2 py-0.5 text-[11px] font-semibold text-coral-800">
+              🎂 Cumpleaños
+            </span>
+          )}
           {isAdmin && view === 'mes' && (
             <span className="text-[11px] text-tinta-500 ml-auto self-center">Doble clic en un día para crear un evento</span>
           )}
@@ -540,6 +585,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ mode, people, person
           }
         />
       )}
+
+      {selectedBirthday && <BirthdayModal o={selectedBirthday} people={people} onClose={() => setSelectedBirthday(null)} />}
 
       {managingTypes && <EventTypesModal onClose={() => setManagingTypes(false)} />}
 

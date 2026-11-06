@@ -278,6 +278,52 @@ const mine = await rpc('my_reminders', { p_session: S });
 assert.equal(mine.length, 1);
 ok('Recordatorios guardados en la base de datos, solo del propio integrante');
 
+// Cumpleaños: la fecha de nacimiento es privada (solo administración)
+{
+  const target = people[0];
+  assert.match(await rpcErr('admin_set_birth_date', { p_session: S, p_person_id: target.id, p_birth_date: '2003-11-06' }), /SIN_PERMISO/);
+  assert.match(await rpcErr('admin_list_birthdays', { p_session: S }), /SIN_PERMISO/);
+  assert.match(await rpcErr('admin_list_birthdays', { p_session: 'inventado' }), /SESION_INVALIDA/);
+  ok('Un integrante no puede ver ni cambiar fechas de nacimiento');
+
+  assert.match(await rpcErr('admin_set_birth_date', { p_session: A, p_person_id: target.id, p_birth_date: '2999-01-01' }), /FECHA_INVALIDA/);
+  await rpc('admin_set_birth_date', { p_session: A, p_person_id: target.id, p_birth_date: '2003-11-06' });
+  const list = await rpc('admin_list_birthdays', { p_session: A });
+  const mineB = list.filter((b) => b.person_id === target.id);
+  assert.equal(mineB.length, 1);
+  assert.equal(mineB[0].birth_date, '2003-11-06');
+  assert.equal(mineB[0].gt, target.gt_sub_team);
+  assert.ok(!list.some((b) => b.person_id === people[1].id), 'sin fecha registrada no aparece');
+  const prof = await rpc('admin_get_profile', { p_session: A, p_person_id: target.id });
+  assert.equal(prof.birth_date, '2003-11-06');
+  ok('La administración guarda la fecha en el perfil existente y ve el cumpleaños; sin fecha no aparece nada');
+
+  // Se guarda en el mismo perfil: no se duplican registros
+  await rpc('admin_set_birth_date', { p_session: A, p_person_id: target.id, p_birth_date: '2003-11-07' });
+  assert.equal((await rpc('admin_list_birthdays', { p_session: A })).filter((b) => b.person_id === target.id).length, 1);
+  const { data: anonRead, error: anonErr } = await db.from('person_profiles').select('birth_date').limit(1);
+  assert.ok(anonErr || anonRead.length === 0, 'anon no debe leer fechas de nacimiento');
+  const { data: peopleCols } = await db.from('people').select('*').eq('id', target.id);
+  assert.ok(!('birth_date' in (peopleCols?.[0] || {})), 'la fecha no está en la tabla pública people');
+  ok('La fecha no se puede leer con la clave pública y no se duplica el registro');
+
+  const auditB = await rpc('admin_list_audit', { p_session: A, p_entity_id: target.id });
+  assert.ok(auditB.some((x) => x.action === 'actualizar_fecha_nacimiento'));
+  ok('El cambio de fecha queda en la auditoría');
+
+  // Notificaciones push de la administradora
+  assert.match(await rpcErr('save_admin_push_subscription', { p_session: S, p_id: 'x', p_endpoint: 'https://push/x', p_p256dh: 'k', p_auth: 'a', p_user_agent: 't' }), /SIN_PERMISO/);
+  assert.equal(await rpc('save_admin_push_subscription', { p_session: A, p_id: `adm_${run}`, p_endpoint: 'https://push/a', p_p256dh: 'k', p_auth: 'a', p_user_agent: 't' }), true);
+  const { data: subsRead, error: subsErr } = await db.from('admin_push_subscriptions').select('*').limit(1);
+  assert.ok(subsErr || subsRead.length === 0, 'anon no debe leer suscripciones');
+  ok('Solo la administración registra su dispositivo para recibir los recordatorios de cumpleaños');
+
+  // El perfil propio del integrante no expone la fecha
+  const own = await rpc('my_profile', { p_session: S });
+  assert.ok(!('birth_date' in own));
+  ok('El perfil que ve el integrante no muestra fecha de nacimiento ni edad');
+}
+
 await rpc('logout', { p_session: S });
 assert.match(await rpcErr('my_profile', { p_session: S }), /SESION_INVALIDA/);
 ok('Cerrar sesión invalida el token');
