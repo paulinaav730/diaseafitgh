@@ -333,9 +333,9 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                 {currentDaySummary.dayDef?.eventName}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-tinta-900 font-display tracking-wide mt-1">
+            <p className="text-sm sm:text-base text-tinta-700 font-sans leading-relaxed mt-2 max-w-2xl">
               {currentDaySummary.dayDef?.description}
-            </h2>
+            </p>
           </div>
 
           {/* Alimentación badge for this day */}

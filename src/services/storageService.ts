@@ -19,6 +19,7 @@ import {
   THE_GAMES_VIERNES_BASES,
   getBaseDisplayName,
   DEFAULT_INITIAL_EVENTS,
+  LEGACY_EVENT_DESCRIPTIONS,
   DEFAULT_INITIAL_SHIFTS,
   DEFAULT_INITIAL_BASES,
   DEFAULT_INITIAL_REQUIREMENTS,
@@ -290,6 +291,19 @@ export function initializeStorage(): void {
       eventsCache = [...DEFAULT_INITIAL_EVENTS];
       localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
     }
+
+    // Actualiza las descripciones oficiales de los 5 días si siguen con el texto anterior
+    let descriptionsUpdated = false;
+    eventsCache = eventsCache.map((ev) => {
+      const legacy = LEGACY_EVENT_DESCRIPTIONS[ev.id];
+      const official = DEFAULT_INITIAL_EVENTS.find((d) => d.id === ev.id)?.description;
+      if (legacy && official && (!ev.description || legacy.includes(ev.description))) {
+        descriptionsUpdated = true;
+        return { ...ev, description: official };
+      }
+      return ev;
+    });
+    if (descriptionsUpdated) localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsCache));
 
     // Guarantee Carnival is configured with its official dual GT/GAP architecture
     eventsCache = eventsCache.map((ev) => {

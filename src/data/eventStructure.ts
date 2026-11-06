@@ -182,6 +182,15 @@ export const DEFAULT_INITIAL_BASES: ConfigurableBase[] = [
   ...THE_GAMES_VIERNES_BASES,
 ];
 
+/** Descripciones anteriores de los 5 días: si un evento guardado conserva una, se actualiza a la nueva. */
+export const LEGACY_EVENT_DESCRIPTIONS: Record<string, string[]> = {
+  'the-show': ['Apertura y gran inauguración de Días EAFIT. Coordinación y soporte con equipo GRUPO DE TRABAJO (GT).'],
+  'the-zone': ['Zona de interacción, actividades interactivas en campus con equipo GRUPO DE TRABAJO (GT).'],
+  'carnival': ['Día de actividades simultáneas en campus con equipo GRUPO DE TRABAJO (GT) y GAP.', 'Día de actividades simultáneas. Estructura diferenciada: GRUPO DE TRABAJO (GT) con 5 turnos y GRUPO DE APOYO (GAP) con 3 turnos en 30 bases físicas únicas.'],
+  'the-challenge': ['Turno 1 GT (6:00 a. m. – 12:00 p. m.), Turno 2 GT (1:00 p. m. – 9:00 p. m.), Turno 1 MESA (5:30 a. m. – 12:00 p. m.), Turno 2 MESA (1:00 p. m. – 9:00 p. m.) y Turno 1 GAP (1:00 p. m. – 9:00 p. m.).', 'Mañana: The Challenge (GRUPO DE TRABAJO). Tarde: The Games con 15 bases físicas GRUPO DE APOYO (GAP).'],
+  'the-games': ['Gran final de competencias con equipo GRUPO DE TRABAJO (GT).', 'Gran final de competencias. Equipo GRUPO DE TRABAJO (GT) todo el día y 15 bases físicas GRUPO DE APOYO (GAP).'],
+};
+
 // DEFAULT INITIAL EVENTS (Admin can edit, delete, or add new ones)
 export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
   {
@@ -189,7 +198,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE SHOW',
     dayId: 'lunes',
     dayName: 'Lunes',
-    description: 'Apertura y gran inauguración de Días EAFIT. Coordinación y soporte con equipo GRUPO DE TRABAJO (GT).',
+    description: 'Es el día de los espectáculos, las presentaciones y las experiencias que buscan sorprender y entretener a los estudiantes.',
     notes: '5 turnos programados para GRUPO DE TRABAJO (GT).',
     isActive: true,
     order: 1,
@@ -199,7 +208,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE ZONE',
     dayId: 'martes',
     dayName: 'Martes',
-    description: 'Zona de interacción, actividades interactivas en campus con equipo GRUPO DE TRABAJO (GT).',
+    description: 'Es el día de la Feria de Marca, un espacio en el que diferentes marcas, emprendimientos y aliados presentan sus productos y servicios, generando experiencias e interacción con la comunidad universitaria.',
     notes: '4 turnos GT y 1 Turno MESA (8:00 a. m. – 12:30 p. m.).',
     isActive: true,
     order: 2,
@@ -209,7 +218,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'CARNIVAL',
     dayId: 'miercoles',
     dayName: 'Miércoles',
-    description: 'Día de actividades simultáneas en campus con equipo GRUPO DE TRABAJO (GT) y GAP.',
+    description: 'Es el día de la feria tipo americana, que cuenta con diferentes bases y actividades recreativas para que los estudiantes disfruten de una experiencia llena de energía, diversión y entretenimiento.',
     notes: '5 turnos GT y 3 turnos GAP con 22 bases físicas oficiales.',
     isCarnival: true,
     isDivided: true,
@@ -221,7 +230,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE CHALLENGE & THE GAMES',
     dayId: 'jueves',
     dayName: 'Jueves',
-    description: 'Turno 1 GT (6:00 a. m. – 12:00 p. m.), Turno 2 GT (1:00 p. m. – 9:00 p. m.), Turno 1 MESA (5:30 a. m. – 12:00 p. m.), Turno 2 MESA (1:00 p. m. – 9:00 p. m.) y Turno 1 GAP (1:00 p. m. – 9:00 p. m.).',
+    description: 'Es el día de los juegos, retos y competencias. Los participantes se enfrentan a diferentes pruebas y actividades recreativas que ponen a prueba sus habilidades, creatividad y trabajo en equipo.',
     notes: 'Turnos programados para GT, MESA y GAP en 15 bases físicas.',
     isDivided: false,
     isActive: true,
@@ -232,7 +241,7 @@ export const DEFAULT_INITIAL_EVENTS: AppEvent[] = [
     name: 'THE GAMES',
     dayId: 'viernes',
     dayName: 'Viernes',
-    description: 'Gran final de competencias con equipo GRUPO DE TRABAJO (GT).',
+    description: 'Es la continuación de la jornada de juegos y competencias. Se mantienen las diferentes actividades, retos y experiencias para que los estudiantes disfruten y participen en el cierre de la semana de DÍAS.',
     notes: 'Turno programado para GRUPO DE TRABAJO (GT).',
     isDivided: false,
     isActive: true,
