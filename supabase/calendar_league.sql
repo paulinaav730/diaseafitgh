@@ -16,7 +16,11 @@
 --    funciones que verifican la sesión.
 -- ==============================================================================
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- En Supabase pgcrypto vive en el esquema "extensions"; las funciones de este
+-- archivo lo incluyen en su search_path.
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+SET search_path = public, extensions;
 
 -- ------------------------------------------------------------------------------
 -- 1. Autenticación: administradores, sesiones e intentos
@@ -329,12 +333,12 @@ END $$;
 -- FUNCIONES INTERNAS
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public._new_token() RETURNS TEXT
-LANGUAGE sql VOLATILE SET search_path = public, pg_temp AS $$
+LANGUAGE sql VOLATILE SET search_path = public, extensions, pg_temp AS $$
   SELECT translate(encode(gen_random_bytes(24), 'base64'), '+/=', '-_');
 $$;
 
 CREATE OR REPLACE FUNCTION public._hash(p TEXT) RETURNS TEXT
-LANGUAGE sql IMMUTABLE SET search_path = public, pg_temp AS $$
+LANGUAGE sql IMMUTABLE SET search_path = public, extensions, pg_temp AS $$
   SELECT encode(digest(coalesce(p, ''), 'sha256'), 'hex');
 $$;
 
@@ -346,7 +350,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public._session(p_session TEXT) RETURNS public.app_sessions
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions;
 BEGIN
   SELECT * INTO s FROM app_sessions
@@ -357,7 +361,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public._require_admin(p_session TEXT) RETURNS TEXT
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _session(p_session);
 BEGIN
   IF s.role <> 'admin' THEN PERFORM _fail('SIN_PERMISO', 'Esta acción es solo para administradores.'); END IF;
@@ -366,7 +370,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public._require_staff(p_session TEXT) RETURNS public.app_sessions
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _session(p_session);
 BEGIN
   IF s.role <> 'staff' OR s.person_id IS NULL THEN
@@ -378,7 +382,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public._audit(p_admin TEXT, p_action TEXT, p_entity TEXT, p_id TEXT,
   p_before JSONB, p_after JSONB, p_reason TEXT DEFAULT NULL) RETURNS void
-LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE sql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
   INSERT INTO admin_audit_log (admin_name, action, entity, entity_id, before_data, after_data, reason)
   VALUES (p_admin, p_action, p_entity, p_id, p_before, p_after, p_reason);
 $$;
@@ -400,7 +404,7 @@ $$;
 
 -- QR personal: se crea automáticamente para cada integrante (nuevo o existente)
 CREATE OR REPLACE FUNCTION public._ensure_profile(p_person_id TEXT) RETURNS public.person_profiles
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE pr public.person_profiles;
 BEGIN
   INSERT INTO person_profiles (person_id, qr_token) VALUES (p_person_id, _new_token())
@@ -411,7 +415,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public._people_profile_trigger() RETURNS trigger
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 BEGIN
   PERFORM _ensure_profile(NEW.id);
   RETURN NEW;
@@ -425,7 +429,7 @@ INSERT INTO public.person_profiles (person_id, qr_token)
 
 CREATE OR REPLACE FUNCTION public._log_scan(p_kind TEXT, p_target TEXT, s public.app_sessions,
   p_scanned_person TEXT, p_result TEXT, p_detail TEXT DEFAULT NULL) RETURNS void
-LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE sql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
   INSERT INTO qr_scans (kind, target_id, scanner_role, scanner_name, scanner_person_id, scanned_person_id, result, detail)
   VALUES (p_kind, p_target, s.role, s.display_name, s.person_id, p_scanned_person, p_result, p_detail);
 $$;
@@ -437,7 +441,7 @@ LANGUAGE sql VOLATILE AS $$ SELECT 'pts_' || replace(gen_random_uuid()::text, '-
 -- LOGIN
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public._check_rate(p_login TEXT) RETURNS void
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 BEGIN
   IF (SELECT count(*) FROM login_attempts
        WHERE login = lower(p_login) AND NOT success AND attempted_at > now() - interval '15 minutes') >= 10 THEN
@@ -447,7 +451,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.login_admin(p_username TEXT, p_password TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE a public.admin_users; tok TEXT := _new_token(); exp TIMESTAMPTZ := now() + interval '12 hours';
 BEGIN
   PERFORM _check_rate('admin:' || p_username);
@@ -465,7 +469,7 @@ $$;
 
 -- Misma lógica de búsqueda que usaba la app: usuario, cédula, correos, EPIK, nombre.
 CREATE OR REPLACE FUNCTION public.login_staff(p_login TEXT, p_password TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE
   q TEXT := lower(trim(p_login));
   q_noat TEXT := ltrim(lower(trim(p_login)), '@');
@@ -499,7 +503,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.session_info(p_session TEXT) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _session(p_session);
 BEGIN
   RETURN jsonb_build_object('role', s.role, 'name', s.display_name, 'person_id', s.person_id, 'expires_at', s.expires_at);
@@ -507,7 +511,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.logout(p_session TEXT) RETURNS BOOLEAN
-LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE sql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
   UPDATE app_sessions SET revoked = true WHERE token_hash = _hash(p_session) RETURNING true;
 $$;
 
@@ -515,7 +519,7 @@ $$;
 -- PERFIL DÍAS Y QR PERSONAL
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.my_profile(p_session TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session); pr public.person_profiles;
 BEGIN
   pr := _ensure_profile(s.person_id);
@@ -524,7 +528,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_get_profile(p_session TEXT, p_person_id TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE pr public.person_profiles;
 BEGIN
   PERFORM _require_admin(p_session);
@@ -535,7 +539,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_update_profile(p_session TEXT, p_person_id TEXT, p_photo_url TEXT, p_renew_qr BOOLEAN DEFAULT false) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); before public.person_profiles := _ensure_profile(p_person_id); after public.person_profiles;
 BEGIN
   UPDATE person_profiles SET photo_url = nullif(trim(p_photo_url), ''),
@@ -551,7 +555,7 @@ $$;
 
 -- Escaneo de un QR personal: el administrador ve el perfil; un integrante solo ve nombre y GT.
 CREATE OR REPLACE FUNCTION public.resolve_person_qr(p_session TEXT, p_qr TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _session(p_session); pr public.person_profiles; p public.people;
 BEGIN
   SELECT * INTO pr FROM person_profiles WHERE qr_token = p_qr;
@@ -572,7 +576,7 @@ $$;
 -- CALENDARIO (administración)
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.admin_save_calendar_event(p_session TEXT, p_event JSONB) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); before JSONB; r public.calendar_events;
   v_id TEXT := coalesce(nullif(p_event->>'id', ''), 'evt_' || replace(gen_random_uuid()::text, '-', ''));
   v_date DATE := (p_event->>'date')::date; v_start TEXT := p_event->>'startTime'; v_end TEXT := p_event->>'endTime';
@@ -602,7 +606,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_calendar_event(p_session TEXT, p_event_id TEXT) RETURNS BOOLEAN
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); before JSONB;
 BEGIN
   IF EXISTS (SELECT 1 FROM conectados_closures WHERE event_id = p_event_id) THEN
@@ -616,7 +620,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_save_event_type(p_session TEXT, p_id TEXT, p_name TEXT, p_color TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); r public.calendar_event_types;
 BEGIN
   IF coalesce(trim(p_name), '') = '' THEN PERFORM _fail('DATOS', 'Escribe el nombre del tipo.'); END IF;
@@ -630,7 +634,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_delete_event_type(p_session TEXT, p_id TEXT) RETURNS BOOLEAN
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session);
 BEGIN
   IF EXISTS (SELECT 1 FROM calendar_events WHERE type = p_id) THEN
@@ -644,7 +648,7 @@ $$;
 
 -- QR de asistencia del evento (habilitar, cerrar o renovar)
 CREATE OR REPLACE FUNCTION public.admin_event_qr(p_session TEXT, p_event_id TEXT, p_action TEXT DEFAULT 'ver') RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); q public.event_qr_codes;
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM calendar_events WHERE id = p_event_id AND attendance_enabled) THEN
@@ -676,7 +680,7 @@ $$;
 
 -- El integrante escanea el QR del evento con su sesión iniciada.
 CREATE OR REPLACE FUNCTION public.checkin_event(p_session TEXT, p_token TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session); q public.event_qr_codes; e public.calendar_events;
   p public.people; a public.event_attendances; v_status TEXT; v_id TEXT;
 BEGIN
@@ -725,7 +729,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_attendance(p_session TEXT, p_event_id TEXT, p_person_ids TEXT[], p_status TEXT,
   p_observation TEXT DEFAULT NULL, p_excuse_reason TEXT DEFAULT NULL, p_evidence_url TEXT DEFAULT NULL) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); pid TEXT; before JSONB; r public.event_attendances; out JSONB := '[]';
 BEGIN
   IF _attendance_locked(p_event_id) THEN PERFORM _fail('ASISTENCIA_CERRADA', 'La asistencia está cerrada. Reábrela para corregirla.'); END IF;
@@ -757,7 +761,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_list_event_attendance(p_session TEXT, p_event_id TEXT) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 BEGIN
   PERFORM _require_admin(p_session);
   RETURN coalesce((SELECT jsonb_agg(to_jsonb(a)) FROM event_attendances a WHERE event_id = p_event_id OR p_event_id IS NULL), '[]');
@@ -765,7 +769,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.my_attendance(p_session TEXT) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session);
 BEGIN
   RETURN coalesce((SELECT jsonb_agg(to_jsonb(a)) FROM event_attendances a WHERE person_id = s.person_id), '[]');
@@ -774,7 +778,7 @@ $$;
 
 -- Cálculo de un CONECTADOS (mismo cálculo que la app; se puede revisar antes de cerrar)
 CREATE OR REPLACE FUNCTION public._conectados_results(p_event_id TEXT, p_scoring JSONB) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE e public.calendar_events; gts TEXT[] := ARRAY['Generales','Finanzas','GH','Mercadeo','RRPP','Logística','Seguridad','Carnival','The Games'];
   g TEXT; c_ok INT; c_late INT; c_exc INT; c_abs INT; c_pend INT; enabled INT; den NUMERIC; eff NUMERIC; pct NUMERIC; out JSONB := '[]';
   late_w NUMERIC := coalesce((p_scoring->>'lateWeight')::numeric, 1); mode TEXT := coalesce(p_scoring->>'excuseMode', 'excluir');
@@ -804,7 +808,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_preview_attendance(p_session TEXT, p_event_id TEXT) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE e public.calendar_events; sc JSONB;
 BEGIN
   PERFORM _require_admin(p_session);
@@ -817,7 +821,7 @@ $$;
 
 -- CERRAR ASISTENCIA: pendientes → no asistió, congela resultados y entrega DÍAS POINTS (CONECTADOS)
 CREATE OR REPLACE FUNCTION public.admin_close_attendance(p_session TEXT, p_event_id TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); e public.calendar_events; sc JSONB; res JSONB := '[]'; r JSONB; c public.conectados_closures;
   rec RECORD; ip NUMERIC;
 BEGIN
@@ -869,7 +873,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_reopen_attendance(p_session TEXT, p_event_id TEXT, p_reason TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); c public.conectados_closures;
 BEGIN
   IF coalesce(trim(p_reason), '') = '' THEN PERFORM _fail('DATOS', 'Escribe el motivo de la reapertura.'); END IF;
@@ -888,7 +892,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.admin_add_points(p_session TEXT, p_target TEXT, p_gt TEXT, p_person_id TEXT, p_points NUMERIC,
   p_category TEXT, p_activity TEXT, p_reason TEXT, p_observation TEXT DEFAULT NULL, p_evidence TEXT DEFAULT NULL,
   p_date DATE DEFAULT NULL) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); m public.point_movements; v_gt TEXT := p_gt; p public.people;
 BEGIN
   IF coalesce(p_points, 0) = 0 THEN PERFORM _fail('DATOS', 'Los puntos deben ser distintos de cero.'); END IF;
@@ -912,7 +916,7 @@ $$;
 
 -- Corregir: anula el original y crea uno nuevo con valor anterior → nuevo
 CREATE OR REPLACE FUNCTION public.admin_correct_points(p_session TEXT, p_movement_id TEXT, p_new_points NUMERIC, p_reason TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); o public.point_movements; n public.point_movements;
 BEGIN
   IF coalesce(trim(p_reason), '') = '' THEN PERFORM _fail('DATOS', 'El motivo de la corrección es obligatorio.'); END IF;
@@ -934,7 +938,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_void_points(p_session TEXT, p_movement_id TEXT, p_reason TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); o public.point_movements; n public.point_movements;
 BEGIN
   IF coalesce(trim(p_reason), '') = '' THEN PERFORM _fail('DATOS', 'El motivo de la anulación es obligatorio.'); END IF;
@@ -950,7 +954,7 @@ $$;
 -- RETOS Y CONFIGURACIÓN
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.admin_save_challenge(p_session TEXT, p_challenge JSONB) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); r public.league_challenges;
   v_id TEXT := coalesce(nullif(p_challenge->>'id', ''), 'reto_' || replace(gen_random_uuid()::text, '-', ''));
 BEGIN
@@ -972,7 +976,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.admin_register_challenge_results(p_session TEXT, p_challenge_id TEXT, p_results JSONB,
   p_awards JSONB, p_date DATE) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); c public.league_challenges; x JSONB; p public.people;
 BEGIN
   SELECT * INTO c FROM league_challenges WHERE id = p_challenge_id FOR UPDATE;
@@ -1004,7 +1008,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_save_league_settings(p_session TEXT, p_scoring JSONB) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); before JSONB; r public.league_settings;
 BEGIN
   SELECT default_conectados_scoring INTO before FROM league_settings WHERE id = 'default';
@@ -1020,7 +1024,7 @@ $$;
 -- DÍAS POINTS POR QR (actividades)
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.admin_save_point_activity(p_session TEXT, p_activity JSONB) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); r public.point_activities;
   v_id TEXT := coalesce(nullif(p_activity->>'id', ''), 'act_' || replace(gen_random_uuid()::text, '-', ''));
 BEGIN
@@ -1044,7 +1048,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_activity_qr(p_session TEXT, p_activity_id TEXT, p_action TEXT DEFAULT 'ver') RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE adm TEXT := _require_admin(p_session); q public.point_activity_qr;
 BEGIN
   INSERT INTO point_activity_qr (activity_id, token) VALUES (p_activity_id, _new_token()) ON CONFLICT (activity_id) DO NOTHING;
@@ -1061,7 +1065,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public._claim_activity(a public.point_activities, p public.people, p_source TEXT, p_by TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE v_id TEXT := a.id || '__' || p.id; v_gt TEXT := _person_primary_gt(p); pts JSONB := '[]';
 BEGIN
   IF a.status <> 'activa' THEN PERFORM _fail('ACTIVIDAD_CERRADA', 'Esta actividad ya no entrega DÍAS POINTS.'); END IF;
@@ -1086,7 +1090,7 @@ $$;
 
 -- El integrante escanea el QR de la actividad
 CREATE OR REPLACE FUNCTION public.claim_activity_qr(p_session TEXT, p_token TEXT) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session); q public.point_activity_qr; a public.point_activities; p public.people; r JSONB;
 BEGIN
   SELECT * INTO q FROM point_activity_qr WHERE token = p_token;
@@ -1104,7 +1108,7 @@ $$;
 
 -- El administrador escanea el QR personal del integrante (o lo registra a mano)
 CREATE OR REPLACE FUNCTION public.admin_award_activity(p_session TEXT, p_activity_id TEXT, p_person_qr TEXT DEFAULT NULL, p_person_id TEXT DEFAULT NULL) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _session(p_session); a public.point_activities; p public.people; v_pid TEXT := p_person_id; r JSONB;
 BEGIN
   PERFORM _require_admin(p_session);
@@ -1128,7 +1132,7 @@ $$;
 -- RECORDATORIOS, PUSH Y AUDITORÍA
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.save_my_reminder(p_session TEXT, p_event_id TEXT, p_enabled BOOLEAN, p_offsets INTEGER[]) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session); r public.calendar_reminders;
 BEGIN
   INSERT INTO calendar_reminders (id, event_id, person_id, enabled, offsets, updated_at)
@@ -1141,7 +1145,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.my_reminders(p_session TEXT) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session);
 BEGIN
   RETURN coalesce((SELECT jsonb_agg(to_jsonb(r)) FROM calendar_reminders r WHERE person_id = s.person_id), '[]');
@@ -1149,7 +1153,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.save_my_push_subscription(p_session TEXT, p_id TEXT, p_endpoint TEXT, p_p256dh TEXT, p_auth TEXT, p_user_agent TEXT) RETURNS BOOLEAN
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 DECLARE s public.app_sessions := _require_staff(p_session);
 BEGIN
   INSERT INTO push_subscriptions (id, person_id, endpoint, p256dh, auth, user_agent, updated_at)
@@ -1161,7 +1165,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.admin_list_audit(p_session TEXT, p_entity_id TEXT DEFAULT NULL, p_limit INTEGER DEFAULT 200) RETURNS JSONB
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
 BEGIN
   PERFORM _require_admin(p_session);
   RETURN coalesce((SELECT jsonb_agg(to_jsonb(l) ORDER BY l.at DESC) FROM

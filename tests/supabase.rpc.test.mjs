@@ -151,7 +151,8 @@ const now = new Date();
 const bog = new Date(now.getTime() - 5 * 3600e3);
 const hhmm = (d) => d.toISOString().slice(11, 16);
 const evStart = new Date(bog.getTime() - 20 * 60e3); // empezó hace 20 min
-const evEnd = new Date(bog.getTime() + 60 * 60e3);
+// Termina en 1 hora, pero sin pasar de las 23:59 (los eventos no cruzan la medianoche)
+const evEnd = new Date(Math.min(bog.getTime() + 60 * 60e3, Date.parse(bog.toISOString().slice(0, 10) + 'T23:59:00Z')));
 const ev = await rpc('admin_save_calendar_event', { p_session: A, p_event: {
   title: `Conectados prueba ${run}`, date: evStart.toISOString().slice(0, 10), startTime: hhmm(evStart), endTime: hhmm(evEnd),
   type: 'conectados', audience: { all: true }, attendanceEnabled: true, lateAfterMinutes: 30, checkinOpensMinutes: 30,
