@@ -63,6 +63,10 @@ export function emitQr(text: string): boolean {
   return true;
 }
 
+// Equivale a abrir el enlace del QR (sigue exigiendo sesión y un token válido).
+// La copia de prueba lo usa para simular un escaneo sin cámara.
+if (typeof window !== 'undefined') (window as unknown as { diasEmitQr?: typeof emitQr }).diasEmitQr = emitQr;
+
 export function onQr(fn: (p: { kind: QrKind; token: string }) => void): () => void {
   qrListeners.add(fn);
   return () => qrListeners.delete(fn);

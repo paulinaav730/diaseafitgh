@@ -14,13 +14,13 @@ type Outcome = { ok: boolean; title: string; text?: string; tone?: 'ok' | 'info'
 
 /**
  * Una misma lectura de QR se procesa UNA sola vez aunque la pantalla se monte
- * dos veces (modo desarrollo de React, doble apertura del enlace): todos
- * reciben el mismo resultado durante unos segundos.
+ * dos veces seguidas (modo desarrollo de React). Un nuevo escaneo, segundos
+ * después, sí se envía al servidor y recibe "ya estaba registrada".
  */
 const inflight = new Map<string, { at: number; promise: Promise<unknown> }>();
 function once<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const hit = inflight.get(key);
-  if (hit && Date.now() - hit.at < 15_000) return hit.promise as Promise<T>;
+  if (hit && Date.now() - hit.at < 2_000) return hit.promise as Promise<T>;
   const promise = fn();
   inflight.set(key, { at: Date.now(), promise });
   return promise;
