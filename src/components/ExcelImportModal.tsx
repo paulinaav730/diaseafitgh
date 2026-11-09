@@ -496,7 +496,29 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               {(() => {
                 const withDate = preview.rows.filter((r) => r.isValid && r.birthDate).length;
                 const badRows = preview.rows.filter((r) => r.warnings.some((w) => w.startsWith('Fecha de nacimiento')));
-                if (withDate === 0 && badRows.length === 0) return null;
+                if (!preview.birthDateColumn) {
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-tinta-50 border border-tinta-200 text-xs text-tinta-700 flex items-start gap-2">
+                      <span className="text-base leading-none">🎂</span>
+                      <span>
+                        <b>Este Excel no tiene columna de fecha de nacimiento</b>, así que no se cargan
+                        cumpleaños. Agrega una columna titulada <b>Fecha de nacimiento</b> (por ejemplo
+                        06/11/2003) y vuelve a importarlo: las personas que ya están se actualizan, no
+                        se repiten.
+                      </span>
+                    </div>
+                  );
+                }
+                if (withDate === 0 && badRows.length === 0) {
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-tinta-50 border border-tinta-200 text-xs text-tinta-700 flex items-start gap-2">
+                      <span className="text-base leading-none">🎂</span>
+                      <span>
+                        La columna <b>{preview.birthDateColumn}</b> está vacía: no hay cumpleaños para guardar.
+                      </span>
+                    </div>
+                  );
+                }
                 return (
                   <div className="p-3.5 rounded-2xl bg-coral-50 border border-coral-200 text-xs text-tinta-900 flex items-start gap-2">
                     <span className="text-base leading-none">🎂</span>

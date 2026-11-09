@@ -89,6 +89,8 @@ export interface ExcelMaestroPreview {
     }
   >;
   rows: ExcelMaestroParsedRow[];
+  /** Título de la columna de fecha de nacimiento, si el archivo la trae. */
+  birthDateColumn?: string;
 }
 
 // Backward-compatible interfaces for legacy callers
@@ -390,8 +392,8 @@ export function identifyColumns(headers: string[]): {
       norm.includes('nacimiento') ||
       norm.includes('cumple') ||
       norm.includes('birth') ||
-      norm === 'fecha nac' ||
-      norm === 'f nacimiento'
+      norm === 'dob' ||
+      norm.split(' ').includes('nac')
     ) {
       result.birthDateKey = hdr;
     } else if (norm === 'id' || norm === 'external id' || norm === 'id excel') {
@@ -549,7 +551,9 @@ export async function parseExcelMaestroFile(
   allConfiguredShifts: ConfigurableShift[]
 ): Promise<ExcelMaestroPreview> {
   const data = await file.arrayBuffer();
-  const workbook = XLSX.read(data, { type: 'array' });
+  // raw: en CSV las fechas quedan como texto; si no, 06/11/2003 se leería al
+  // estilo de EE. UU. (11 de junio) en vez de día/mes/año.
+  const workbook = XLSX.read(data, { type: 'array', raw: true });
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
 
@@ -936,6 +940,7 @@ export async function parseExcelMaestroFile(
     unrecognizedDetails: allUnrecognized,
     summaryByDay,
     rows: parsedRows,
+    birthDateColumn: colMap.birthDateKey,
   };
 }
 
