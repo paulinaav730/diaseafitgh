@@ -1289,7 +1289,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                       >
                         {(editingShift.gtSubTeams || []).length === GT_SUBTEAMS.length
                           ? 'Solo Logística'
-                          : 'Seleccionar todos (8)'}
+                          : `Seleccionar todos (${GT_SUBTEAMS.length})`}
                       </button>
                     </div>
 
@@ -1406,11 +1406,11 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
               {/* Hours (Start and End) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-tinta-50 border border-tinta-200">
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1.5 space-y-1.5">
                     <label className="block text-xs font-bold text-tinta-600 font-sans">
-                      HORA DE INICIO (24H) *
+                      HORA DE INICIO *
                     </label>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                       {['07:00', '08:30', '12:30', '16:00'].map((timePreset) => (
                         <button
                           key={timePreset}
@@ -1438,11 +1438,11 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1.5 space-y-1.5">
                     <label className="block text-xs font-bold text-tinta-600 font-sans">
-                      HORA DE FINALIZACIÓN (24H) *
+                      HORA DE FINALIZACIÓN *
                     </label>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                       {['12:30', '16:00', '19:30', '22:30'].map((timePreset) => (
                         <button
                           key={timePreset}
@@ -1469,7 +1469,7 @@ export const ConfigurationView: React.FC<ConfigurationViewProps> = ({
                   />
                 </div>
 
-                <div className="sm:col-span-2 text-xs text-tinta-500 flex items-center justify-between pt-1">
+                <div className="sm:col-span-2 text-xs text-tinta-500 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-1">
                   <span>
                     Etiqueta visible: <strong>{formatTimeRangeLabel(editingShift.startTime || '06:00', editingShift.endTime || '08:00')}</strong>
                   </span>
