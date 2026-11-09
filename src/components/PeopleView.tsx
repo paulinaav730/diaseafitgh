@@ -1915,7 +1915,7 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
                       >
                         {formGtSubTeams.length === GT_SUBTEAMS.length
                           ? 'Solo Logística'
-                          : 'Seleccionar todos (8)'}
+                          : `Seleccionar todos (${GT_SUBTEAMS.length})`}
                       </button>
                     </div>
 
