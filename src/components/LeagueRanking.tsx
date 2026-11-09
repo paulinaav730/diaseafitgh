@@ -87,9 +87,11 @@ export const GtRankingBoard: React.FC<{ ranking: LeagueRanking | null; error: st
         <div className="space-y-1">
           <p className="font-semibold text-tinta-900">Puntaje sobre 100, igual de justo para GT grandes y pequeños</p>
           <p className="text-xs text-tinta-700 leading-relaxed">
-            <b>50 %</b> promedio de DÍAS POINTS por integrante (puntos del GT ÷ todos sus integrantes, también los que tienen 0) +{' '}
-            <b>50 %</b> participación (el % de sus integrantes que participó en cada actividad, en promedio). En cada parte, el mejor GT
-            vale 100 y los demás se comparan con él. Gana el GT con mejor promedio y más participación, no el que tiene más gente.
+            <b>50 %</b> promedio de DÍAS POINTS por integrante + <b>50 %</b> participación. Gana el GT con mejor promedio y más
+            participación, no el que tiene más gente.{' '}
+            <a href="#como-se-calcula" className="font-semibold text-lila-700 underline underline-offset-2 hover:text-lila-800">
+              Ver cómo se calcula
+            </a>
           </p>
         </div>
       </div>
@@ -525,5 +527,117 @@ export const MyGtRankCard: React.FC<{ gt?: string; ranking: LeagueRanking | null
         </>
       )}
     </div>
+  );
+};
+
+// ----------------------------------------------------------------------------
+// Explicación al final de la página: cómo se calcula el ranking
+// ----------------------------------------------------------------------------
+const Step: React.FC<{ n: number; title: string; tone: string; children: React.ReactNode }> = ({ n, title, tone, children }) => (
+  <div className={`rounded-2xl border p-4 space-y-2 ${tone}`}>
+    <div className="flex items-center gap-2">
+      <span className="w-7 h-7 rounded-lg bg-surface border border-tinta-200 flex items-center justify-center text-sm font-bold text-tinta-900">{n}</span>
+      <p className="text-sm font-semibold text-tinta-900">{title}</p>
+    </div>
+    <div className="text-xs text-tinta-700 leading-relaxed space-y-1.5">{children}</div>
+  </div>
+);
+
+export const RankingExplainer: React.FC<{ ranking: LeagueRanking | null }> = ({ ranking }) => {
+  const settings = useCollection(leagueSettings.subscribe);
+  const custom = useCollection(customEventTypes.subscribe);
+  const cfg = normalizeRankingConfig(settings.find((s) => s.id === 'default')?.rankingConfig);
+  const counted = cfg.countedTypes.map((t) => eventTypeName(t, custom));
+  const countedText = [...counted, ...(cfg.includeQrActivities ? ['actividades con QR de DÍAS POINTS'] : [])];
+  const list = countedText.length > 1 ? `${countedText.slice(0, -1).join(', ')} y ${countedText.at(-1)}` : countedText[0] || 'ninguna actividad';
+
+  // Ejemplo con los datos reales: el primer GT con datos y el mejor de cada parte
+  const rows = ranking?.rows ?? [];
+  // Mejor si no es el líder: así se ve cómo se compara con el mejor de cada parte
+  const ex = rows.find((r) => r.score > 0 && r.score < 100 && r.members > 0) ?? rows.find((r) => r.score > 0 && r.members > 0);
+  const bestAvg = [...rows].sort((a, b) => b.avgPoints - a.avgPoints)[0];
+  const bestPart = [...rows].sort((a, b) => b.participation - a.participation)[0];
+
+  return (
+    <section id="como-se-calcula" className="scroll-mt-24">
+      <Card className="p-5 sm:p-6 space-y-5">
+        <div>
+          <p className="text-[10px] font-subtitle text-lila-600">DÍAS LEAGUE</p>
+          <h2 className="text-xl font-display text-tinta-900 mt-1">¿Cómo se calcula el ranking?</h2>
+          <p className="text-sm text-tinta-600 mt-1 max-w-3xl">
+            Cada GT recibe un puntaje de 0 a 100. No gana el GT que tiene más integrantes, sino el que tiene mejor promedio de puntos por
+            persona y mayor participación proporcional.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Step n={1} title="Promedio por integrante" tone="border-turquesa-200 bg-turquesa-50/60">
+            <p>
+              Se suman los DÍAS POINTS del GT y se dividen entre <b>todos</b> sus integrantes, también los que tienen 0 puntos.
+            </p>
+            <p className="text-tinta-600">
+              {cfg.pointsBase === 'todos'
+                ? 'Entran los puntos de cada integrante y los que se entregan al GT completo.'
+                : 'Entran solo los puntos que recibió cada integrante.'}{' '}
+              Los puntos anulados no cuentan.
+            </p>
+          </Step>
+          <Step n={2} title="Participación" tone="border-coral-200 bg-coral-50/60">
+            <p>
+              En cada actividad se mide qué <b>% de los integrantes</b> del GT participó (participaron ÷ invitados). Luego se saca el
+              promedio de todas las actividades.
+            </p>
+            <p className="text-tinta-600">Cuentan: {list}.</p>
+          </Step>
+          <Step n={3} title="Escala de 0 a 100" tone="border-mostaza-200 bg-mostaza-50/60">
+            <p>
+              En cada parte, el <b>mejor GT vale 100</b> y los demás reciben un valor proporcional.
+            </p>
+            <p className="text-tinta-600">Ejemplo: si el mejor promedio es 10 pts y tu GT tiene 6 pts, tu GT obtiene 60 de 100.</p>
+          </Step>
+          <Step n={4} title="Puntaje final" tone="border-lila-200 bg-lila-50/70">
+            <p>
+              <b>50 %</b> del promedio + <b>50 %</b> de la participación = puntaje sobre 100.
+            </p>
+            <p className="text-tinta-600">Los GT se ordenan de mayor a menor. Si dos quedan con el mismo puntaje, comparten el puesto.</p>
+          </Step>
+        </div>
+
+        <div className="rounded-2xl bg-tinta-50 border border-tinta-200 px-4 py-3 text-sm text-tinta-800 text-center">
+          <b>Puntaje final</b> = 50 % × (promedio del GT ÷ mejor promedio × 100) + 50 % × (participación del GT ÷ mejor participación × 100)
+        </div>
+
+        {ex && bestAvg && bestPart && (
+          <div className="rounded-2xl border border-tinta-200 p-4 space-y-2">
+            <p className="text-sm font-semibold text-tinta-900">Ejemplo con los datos de hoy: {ex.gt}</p>
+            <ol className="text-sm text-tinta-700 space-y-1 list-decimal pl-5">
+              <li>
+                Promedio: {formatPoints(ex.totalPoints)} pts ÷ {ex.members} integrante{ex.members === 1 ? '' : 's'} ={' '}
+                <b>{formatPoints(ex.avgPoints)} pts</b>. El mejor promedio es {formatPoints(bestAvg.avgPoints)} pts ({bestAvg.gt}), así
+                que obtiene <b>{formatPoints(ex.pointsScore)} de 100</b>.
+              </li>
+              <li>
+                Participación: <b>{formatPoints(ex.participation)}%</b> en {ex.activitiesCounted} actividad
+                {ex.activitiesCounted === 1 ? '' : 'es'}. La mejor es {formatPoints(bestPart.participation)}% ({bestPart.gt}), así que
+                obtiene <b>{formatPoints(ex.participationScore)} de 100</b>.
+              </li>
+              <li>
+                Puntaje final: 50 % × {formatPoints(ex.pointsScore)} + 50 % × {formatPoints(ex.participationScore)} ={' '}
+                <b>{formatPoints(ex.score)} de 100</b> → puesto {ex.position}.
+              </li>
+            </ol>
+          </div>
+        )}
+
+        <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-tinta-600">
+          <li>• Se actualiza solo cada vez que se registran DÍAS POINTS, se cierra una asistencia o termina una actividad.</li>
+          <li>• Una actividad cuenta cuando se cierra su asistencia (o, si es con QR, cuando se cierra o pasa su fecha).</li>
+          <li>• Si un GT no tenía invitados en una actividad, esa actividad no cuenta para él: no lo perjudica.</li>
+          <li>• Las llegadas tarde y las excusas siguen la regla de cada evento.</li>
+          <li>• Integrantes = las personas del directorio de cada GT. MESA no hace parte de ningún GT.</li>
+          <li>• Cada día queda guardado en el historial del ranking.</li>
+        </ul>
+      </Card>
+    </section>
   );
 };
