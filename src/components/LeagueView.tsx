@@ -17,13 +17,11 @@ import {
 } from 'lucide-react';
 import { ConectadosScoring, LEAGUE_GTS, Person, PointMovement, POINT_CATEGORY_LABELS } from '../types';
 import {
-  computeGtStandings,
   computePersonStandings,
   exportLeagueReport,
   getDefaultScoring,
   leagueSettings,
   pointMovements,
-  GtStanding,
   PersonStanding,
 } from '../services/leagueService';
 import { calendarEvents, personPrimaryGt } from '../services/calendarService';
@@ -49,6 +47,8 @@ import { QrScanner } from './league/QrScanner';
 import { emitQr } from './league/QrCode';
 import { LeagueChallenges } from './LeagueChallenges';
 import { LeagueMovements } from './LeagueMovements';
+import { GtRankingBoard, MyGtRankCard, RankingConfigPanel, RankingHistoryPanel, useLeagueRanking } from './LeagueRanking';
+import { LeagueRanking } from '../services/leagueRanking';
 
 type LeagueTab = 'ranking' | 'individual' | 'conectados' | 'retos' | 'actividades' | 'perfiles' | 'movimientos' | 'config';
 
@@ -72,7 +72,7 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
     if (focusConectadosId) setTab('conectados');
   }, [focusConectadosId]);
 
-  const standings = useMemo(() => computeGtStandings(movements), [movements]);
+  const { ranking, error: rankingError } = useLeagueRanking(people);
   const [scanning, setScanning] = useState(false);
 
   const tabs: { id: LeagueTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -102,7 +102,7 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
               <button className={btnSecondary} onClick={() => setScanning(true)}>
                 <ScanLine className="w-4 h-4" /> Escanear QR
               </button>
-              <button className={btnSecondary} onClick={() => exportLeagueReport(people, events)}>
+              <button className={btnSecondary} onClick={() => exportLeagueReport(people, events, ranking?.rows ?? [])}>
                 <Download className="w-4 h-4" /> Exportar reporte
               </button>
             </>
@@ -110,13 +110,18 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
         }
       />
 
-      {!isAdmin && person && <MyPointsCard person={person} movements={movements} standings={standings} />}
+      {!isAdmin && person && <MyPointsCard person={person} movements={movements} ranking={ranking} />}
 
       <div className="overflow-x-auto -mx-1 px-1">
         <Segmented value={tab} onChange={setTab} options={tabs} />
       </div>
 
-      {tab === 'ranking' && <GtRanking standings={standings} movements={movements} highlightGt={person ? personPrimaryGt(person) : undefined} />}
+      {tab === 'ranking' && (
+        <>
+          <GtRankingBoard ranking={ranking} error={rankingError} highlightGt={person ? personPrimaryGt(person) : undefined} />
+          <RankingHistoryPanel isAdmin={isAdmin} currentRows={ranking?.rows ?? []} />
+        </>
+      )}
       {tab === 'individual' && <PersonRanking movements={movements} people={people} highlightId={person?.id} isAdmin={isAdmin} />}
       {isAdmin && tab === 'conectados' && (
         <EventAttendancePanel people={people} author={author} focusEventId={focusConectadosId} onFocusHandled={onFocusHandled} />
@@ -125,7 +130,12 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
       {isAdmin && tab === 'perfiles' && <ProfilesBrowser people={people} />}
       {isAdmin && tab === 'retos' && <LeagueChallenges people={people} author={author} />}
       {isAdmin && tab === 'movimientos' && <LeagueMovements people={people} author={author} />}
-      {isAdmin && tab === 'config' && <LeagueSettingsPanel />}
+      {isAdmin && tab === 'config' && (
+        <div className="space-y-5">
+          <RankingConfigPanel />
+          <LeagueSettingsPanel />
+        </div>
+      )}
       {scanning && (
         <QrScanner
           title="Escanear QR personal"
@@ -144,111 +154,6 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
 // ----------------------------------------------------------------------------
 // Ranking de GT
 // ----------------------------------------------------------------------------
-
-const Sparkline: React.FC<{ data: { date: string; total: number }[]; label: string }> = ({ data, label }) => {
-  if (data.length < 2) return <span className="text-[11px] text-tinta-400">—</span>;
-  const w = 96;
-  const h = 28;
-  const values = data.map((d) => d.total);
-  const min = Math.min(0, ...values);
-  const max = Math.max(...values, 1);
-  const x = (i: number) => (i / (data.length - 1)) * (w - 4) + 2;
-  const y = (v: number) => h - 3 - ((v - min) / (max - min)) * (h - 6);
-  const pts = data.map((d, i) => `${x(i)},${y(d.total)}`).join(' ');
-  const last = data[data.length - 1];
-  return (
-    <svg width={w} height={h} role="img" aria-label={`Evolución de ${label}`} className="overflow-visible">
-      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className="text-tinta-800" />
-      {data.map((d, i) => (
-        <circle key={d.date} cx={x(i)} cy={y(d.total)} r={6} fill="transparent">
-          <title>{`${d.date}: ${formatPoints(d.total)} pts`}</title>
-        </circle>
-      ))}
-      <circle cx={x(data.length - 1)} cy={y(last.total)} r={3} className="fill-lila-600" />
-    </svg>
-  );
-};
-
-const POSITION_STYLES = ['bg-mostaza-300 text-negro', 'bg-tinta-300 text-negro', 'bg-coral-200 text-negro'];
-
-const GtRanking: React.FC<{ standings: GtStanding[]; movements: PointMovement[]; highlightGt?: string }> = ({
-  standings,
-  movements,
-  highlightGt,
-}) => {
-  const [detailGt, setDetailGt] = useState<string | null>(null);
-  const leader = Math.max(...standings.map((s) => s.total), 1);
-  const hasPoints = standings.some((s) => s.total !== 0);
-
-  return (
-    <Card className="overflow-hidden">
-      {!hasPoints && (
-        <div className="px-5 py-3 bg-tinta-50 border-b border-tinta-200 text-xs text-tinta-600">
-          Aún no hay DÍAS POINTS registrados. El ranking se actualiza solo al cerrar un Conectados, registrar un reto o asignar puntos.
-        </div>
-      )}
-      <div className="hidden md:grid grid-cols-[56px_1.4fr_2fr_repeat(3,90px)_110px_24px] gap-3 px-5 py-2.5 text-[11px] font-semibold text-tinta-500 uppercase tracking-wide border-b border-tinta-200">
-        <span>Puesto</span>
-        <span>GT</span>
-        <span>Total</span>
-        <span className="text-right">Retos</span>
-        <span className="text-right">Conectados</span>
-        <span className="text-right">Otros</span>
-        <span>Evolución</span>
-        <span />
-      </div>
-      <ol className="divide-y divide-tinta-100">
-        {standings.map((s) => (
-          <li key={s.gt}>
-            <button
-              onClick={() => setDetailGt(s.gt)}
-              className={`w-full text-left grid grid-cols-[44px_1fr_auto] md:grid-cols-[56px_1.4fr_2fr_repeat(3,90px)_110px_24px] gap-3 items-center px-4 md:px-5 py-3 hover:bg-tinta-50 transition-colors ${
-                highlightGt === s.gt ? 'bg-lila-50' : ''
-              }`}
-            >
-              <span
-                className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold tabular-nums text-sm ${
-                  (s.total > 0 && POSITION_STYLES[s.position - 1]) || 'bg-tinta-100 text-tinta-700'
-                }`}
-              >
-                {s.position}
-              </span>
-              <span className="font-semibold text-tinta-900 truncate">
-                {s.gt}
-                {highlightGt === s.gt && <span className="ml-2 text-[11px] font-semibold text-lila-700">Tu GT</span>}
-                <span className="md:hidden block text-[11px] font-normal text-tinta-500">
-                  Retos {formatPoints(s.retos)} · Conectados {formatPoints(s.conectados)} · Otros {formatPoints(s.otros)}
-                </span>
-              </span>
-              <span className="md:hidden font-bold tabular-nums text-tinta-900">{formatPoints(s.total)}</span>
-              <span className="hidden md:flex items-center gap-3">
-                <span className="flex-1 h-2.5 rounded-full bg-tinta-100 overflow-hidden">
-                  <span
-                    className="block h-full rounded-full bg-lila-400"
-                    style={{ width: `${Math.max(0, (s.total / leader) * 100)}%` }}
-                  />
-                </span>
-                <span className="w-14 text-right font-bold tabular-nums text-tinta-900">{formatPoints(s.total)}</span>
-              </span>
-              <span className="hidden md:block text-right tabular-nums text-sm text-tinta-700">{formatPoints(s.retos)}</span>
-              <span className="hidden md:block text-right tabular-nums text-sm text-tinta-700">{formatPoints(s.conectados)}</span>
-              <span className="hidden md:block text-right tabular-nums text-sm text-tinta-700">{formatPoints(s.otros)}</span>
-              <span className="hidden md:block">
-                <Sparkline data={s.evolution} label={s.gt} />
-              </span>
-              <ChevronRight className="hidden md:block w-4 h-4 text-tinta-400" />
-            </button>
-          </li>
-        ))}
-      </ol>
-      {detailGt && (
-        <Modal title={`Puntos de ${detailGt}`} onClose={() => setDetailGt(null)} size="lg">
-          <MovementList movements={movements.filter((m) => !m.voided && m.target === 'gt' && m.gt === detailGt)} />
-        </Modal>
-      )}
-    </Card>
-  );
-};
 
 export const MovementList: React.FC<{ movements: PointMovement[]; people?: Person[] }> = ({ movements, people }) => {
   const sorted = [...movements].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
@@ -375,15 +280,14 @@ const PersonRanking: React.FC<{ movements: PointMovement[]; people: Person[]; hi
 // Tarjeta del integrante (modo staff)
 // ----------------------------------------------------------------------------
 
-const MyPointsCard: React.FC<{ person: Person; movements: PointMovement[]; standings: GtStanding[] }> = ({
+const MyPointsCard: React.FC<{ person: Person; movements: PointMovement[]; ranking: LeagueRanking | null }> = ({
   person,
   movements,
-  standings,
+  ranking,
 }) => {
   const mine = movements.filter((m) => !m.voided && m.target === 'person' && m.personId === person.id);
   const total = mine.reduce((a, m) => a + m.points, 0);
   const gt = personPrimaryGt(person);
-  const gtStanding = standings.find((s) => s.gt === gt);
   const [open, setOpen] = useState(false);
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -394,20 +298,7 @@ const MyPointsCard: React.FC<{ person: Person; movements: PointMovement[]; stand
           <User className="w-3.5 h-3.5" /> {mine.length} movimiento{mine.length === 1 ? '' : 's'} · ver historial
         </p>
       </button>
-      <div className="bg-surface border border-tinta-200 rounded-3xl p-5">
-        <p className="text-[10px] font-subtitle text-tinta-600">Mi GT</p>
-        {gtStanding ? (
-          <>
-            <p className="text-2xl font-display text-tinta-900 mt-2">{gt}</p>
-            <p className="text-sm text-tinta-600 mt-1">
-              Puesto <b className="text-tinta-900">{gtStanding.position}</b> de {standings.length} ·{' '}
-              <b className="text-tinta-900 tabular-nums">{formatPoints(gtStanding.total)}</b> pts
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-tinta-600 mt-2">No perteneces a un GT de la liga.</p>
-        )}
-      </div>
+      <MyGtRankCard gt={gt} ranking={ranking} />
       {open && (
         <Modal title="Mi historial de DÍAS POINTS" onClose={() => setOpen(false)} size="lg">
           <MovementList movements={mine} />

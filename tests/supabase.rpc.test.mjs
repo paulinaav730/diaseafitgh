@@ -3,7 +3,7 @@
  * con la clave pública (anon), igual que la app en el navegador.
  *
  * Requiere una base de datos de prueba con schema.sql + calendar_league.sql:
- *   SUPABASE_TEST_URL=http://localhost:54321 node tests/supabase.rpc.test.mjs
+ *   SUPABASE_TEST_URL=http://localhost:54321 npx tsx tests/supabase.rpc.test.mjs
  * NO ejecutar contra la base de datos de producción: crea y modifica datos.
  */
 import assert from 'node:assert/strict';
@@ -150,7 +150,8 @@ ok('Actividad por QR: el integrante escanea o el admin escanea su QR personal, s
 const now = new Date();
 const bog = new Date(now.getTime() - 5 * 3600e3);
 const hhmm = (d) => d.toISOString().slice(11, 16);
-const evStart = new Date(bog.getTime() - 20 * 60e3); // empezó hace 20 min
+// Empezó hace 20 min (sin pasar a la víspera si es justo después de medianoche)
+const evStart = new Date(Math.max(bog.getTime() - 20 * 60e3, Date.parse(bog.toISOString().slice(0, 10) + 'T00:00:00Z')));
 // Termina en 1 hora, pero sin pasar de las 23:59 (los eventos no cruzan la medianoche)
 const evEnd = new Date(Math.min(bog.getTime() + 60 * 60e3, Date.parse(bog.toISOString().slice(0, 10) + 'T23:59:00Z')));
 const ev = await rpc('admin_save_calendar_event', { p_session: A, p_event: {
@@ -346,6 +347,87 @@ ok('Recordatorios guardados en la base de datos, solo del propio integrante');
   const own = await rpc('my_profile', { p_session: S });
   assert.ok(!('birth_date' in own));
   ok('El perfil que ve el integrante no muestra fecha de nacimiento ni edad');
+}
+
+// ---------------------------------------------------------------------------
+// Ranking equitativo de la DÍAS LEAGUE (50 % promedio por integrante + 50 % participación)
+// ---------------------------------------------------------------------------
+{
+  const { computeLeagueRanking } = await import('../src/services/leagueRanking.ts');
+  const all = async (t) => {
+    const { data, error } = await db.from(t).select('*');
+    assert.ifError(error);
+    return data;
+  };
+  const inAudience = (p, a) =>
+    !!a.all || (a.personIds || []).includes(p.id) ||
+    (a.gtTeams || []).some((g) => g === p.gtSubTeam || (p.gtTeams || []).includes(g)) ||
+    (!!a.includeGap && p.primaryType === 'GAP') || (!!a.includeMesa && p.primaryType === 'MESA');
+  const bogota = new Date(Date.now() - 5 * 3600e3).toISOString().slice(0, 10);
+  const fromDb = async () => {
+    const settings = (await all('league_settings')).find((x) => x.id === 'default');
+    return computeLeagueRanking({
+      people: (await all('people')).map((r) => ({ id: r.id, name: r.name, primaryType: r.primary_type, gtSubTeam: r.gt_sub_team, gtTeams: r.gt_teams })),
+      movements: (await all('point_movements')).map((r) => ({ target: r.target, gt: r.gt, personId: r.person_id, points: Number(r.points), voided: r.voided })),
+      events: (await all('calendar_events')).map((r) => ({ id: r.id, title: r.title, date: r.event_date, type: r.type, status: r.status })),
+      closures: (await all('conectados_closures')).map((r) => ({ eventId: r.event_id, status: r.status, results: r.results })),
+      activities: (await all('point_activities')).map((r) => ({ id: r.id, name: r.name, status: r.status, date: r.activity_date, eligibility: r.eligibility })),
+      claims: (await all('point_activity_claims')).map((r) => ({ activityId: r.activity_id, personId: r.person_id })),
+      inAudience,
+      config: settings?.ranking_config,
+      today: bogota,
+    });
+  };
+  const same = (server, app) => {
+    assert.equal(server.rows.length, 9);
+    for (const a of app.rows) {
+      const s = server.rows.find((r) => r.gt === a.gt);
+      for (const k of ['position', 'score', 'members', 'totalPoints', 'avgPoints', 'pointsScore', 'participation', 'participationScore', 'activitiesCounted'])
+        assert.equal(Number(s[k]), a[k], `${a.gt} · ${k}: servidor ${s[k]} ≠ app ${a[k]}`);
+    }
+    assert.deepEqual(server.activities.map((x) => x.id).sort(), app.activities.map((x) => x.id).sort());
+  };
+
+  const DEFAULT_CFG = { countedTypes: ['conectados', 'expectadias', 'decoracion', 'reto', 'capacitacion', 'otro'], includeQrActivities: true, excludedIds: [], pointsBase: 'todos' };
+  await rpc('admin_save_ranking_config', { p_session: A, p_config: DEFAULT_CFG });
+  let server = await rpc('league_ranking', {});
+  same(server, await fromDb());
+  assert.ok(server.rows.every((r, i) => i === 0 || Number(server.rows[i - 1].score) >= Number(r.score)));
+  ok('El ranking del servidor (Supabase) da exactamente lo mismo que el cálculo de la app, ordenado de mayor a menor');
+
+  // Conectados de esta prueba: Finanzas 100 %, GH 100 %, Logística 75 %, Carnival 80 % → participación por GT
+  const fin = server.rows.find((r) => r.gt === 'Finanzas');
+  assert.ok(Number(fin.activitiesCounted) >= 1 && Number(fin.members) >= 3);
+  ok('Usa a todos los integrantes de cada GT (también los que tienen 0 puntos) y la participación de los eventos cerrados');
+
+  // Solo la administración cambia qué cuenta
+  assert.match(await rpcErr('admin_save_ranking_config', { p_session: S, p_config: { countedTypes: [] } }), /PERMISO|admin/i);
+  await rpc('admin_save_ranking_config', { p_session: A, p_config: { countedTypes: ['expectadias'], includeQrActivities: false, excludedIds: [], pointsBase: 'individuales' } });
+  server = await rpc('league_ranking', {});
+  same(server, await fromDb());
+  assert.ok(server.rows.every((r) => Number(r.participation) === 0 || r.activitiesCounted > 0));
+  ok('La administración configura qué actividades y qué puntos cuentan; el ranking se recalcula al instante');
+
+  // Historial: el registro del día se actualiza solo al registrar DÍAS POINTS
+  const latestDaily = async () => (await all('league_ranking_history')).filter((h) => h.kind === 'diario').sort((x, y) => y.updated_at.localeCompare(x.updated_at))[0];
+  const before = await latestDaily();
+  await rpc('admin_add_points', { p_session: A, p_target: 'gt', p_gt: 'Seguridad', p_person_id: null, p_points: 3, p_category: 'manual', p_activity: 'Prueba ranking', p_reason: 'Prueba' });
+  const after = await latestDaily();
+  assert.ok(after && (!before || after.updated_at > before.updated_at));
+  assert.deepEqual(after.rows.map((r) => r.gt), (await rpc('league_ranking', {})).rows.map((r) => r.gt));
+  // Corte con nombre: solo la administración
+  assert.match(await rpcErr('admin_save_ranking_cut', { p_session: S, p_label: 'x' }), /PERMISO|admin/i);
+  const cut = await rpc('admin_save_ranking_cut', { p_session: A, p_label: `Corte ${run}` });
+  assert.equal(cut.kind, 'corte');
+  assert.equal(cut.rows.length, 9);
+  await rpc('admin_delete_ranking_cut', { p_session: A, p_id: cut.id });
+  assert.match(await rpcErr('admin_delete_ranking_cut', { p_session: A, p_id: after.id }), /NO_ENCONTRADO/);
+  const { error: histWrite } = await db.from('league_ranking_history').delete().eq('id', after.id);
+  assert.ok(histWrite || (await all('league_ranking_history')).some((h) => h.id === after.id), 'anon no debe borrar el historial');
+  ok('Historial: se guarda solo cada día al cambiar el ranking, y la administración puede guardar cortes con nombre');
+
+  // Volver a la configuración por defecto
+  await rpc('admin_save_ranking_config', { p_session: A, p_config: DEFAULT_CFG });
 }
 
 await rpc('logout', { p_session: S });

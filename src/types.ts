@@ -594,6 +594,8 @@ export interface PointMovement {
 export interface LeagueSettings {
   id: 'default';
   defaultConectadosScoring: ConectadosScoring;
+  /** Qué cuenta para el ranking equitativo de la liga */
+  rankingConfig?: Partial<import('./services/leagueRanking').RankingConfig>;
   updatedAt: string;
 }
 
