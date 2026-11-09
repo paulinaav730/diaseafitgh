@@ -134,3 +134,31 @@ assert.equal(again.rows[0].status, 'sin_cambio');
 assert.match(parseBirthdayRows([{ Cédula: '1', Otra: 'x' }], gente, []).error!, /Fecha de nacimiento/);
 ok('Si la fecha ya estaba, no cambia nada; si falta la columna, lo explica');
 console.log('\nCarga masiva OK.');
+
+// ---- Directorio de personal: la fecha de nacimiento viene en el mismo Excel ----
+{
+  const XLSX = await import('xlsx');
+  const { identifyColumns, parseExcelMaestroFile } = await import('../src/services/excelService');
+  assert.equal(identifyColumns(['Nombre', 'Fecha de nacimiento', 'THE SHOW LUNES 28 de septiembre']).birthDateKey, 'Fecha de nacimiento');
+  assert.equal(identifyColumns(['Cumpleaños']).birthDateKey, 'Cumpleaños');
+  const ws = XLSX.utils.json_to_sheet([
+    { Nombre: 'Paulina', 'Documento de identidad': '1017123456', 'Fecha de nacimiento': '06/11/2003' },
+    { Nombre: 'Juan', 'Documento de identidad': '1020304050', 'Fecha de nacimiento': 35000 },
+    { Nombre: 'Ana', 'Documento de identidad': '43111222', 'Fecha de nacimiento': '31/02/2001' },
+    { Nombre: 'Luis', 'Documento de identidad': '71222333', 'Fecha de nacimiento': '' },
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Hoja');
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  const preview = await parseExcelMaestroFile(new File([buf], 'directorio.xlsx'), [], []);
+  assert.deepEqual(preview.rows.map((r) => [r.name, r.birthDate ?? null, r.isValid]), [
+    ['Paulina', '2003-11-06', true],
+    ['Juan', '1995-10-28', true],
+    ['Ana', null, true],
+    ['Luis', null, true],
+  ]);
+  assert.ok(preview.rows[2].warnings.some((w) => w.startsWith('Fecha de nacimiento')));
+  assert.equal(preview.rows[3].warnings.length, 0);
+  ok('El Excel del directorio de personal lee la fecha de nacimiento; una fecha mala solo avisa, no bloquea a la persona');
+}
+

@@ -16,6 +16,8 @@ import {
   getAvailabilities,
 } from '../services/storageService';
 import { isSupabaseConfigured } from '../services/supabaseClient';
+import { api } from '../services/leagueApi';
+import { birthdays } from '../services/birthdayService';
 import { syncAllToSupabase } from '../services/supabaseSync';
 import {
   FileSpreadsheet,
@@ -59,6 +61,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
   const [importResult, setImportResult] = useState<ExcelMaestroImportResult | null>(null);
   const [cloudSyncResult, setCloudSyncResult] = useState<{ synced: boolean; message: string } | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [birthdayResult, setBirthdayResult] = useState<{ saved: number; error?: string } | null>(null);
   const [filterTab, setFilterTab] = useState<'ALL' | 'NEW' | 'EXISTING' | 'ERROR' | 'UNRECOGNIZED'>('ALL');
   const [tableSearch, setTableSearch] = useState('');
   const [showUnrecognizedDetails, setShowUnrecognizedDetails] = useState(false);
@@ -75,6 +78,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     setIsLoading(true);
     setImportResult(null);
     setCloudSyncResult(null);
+    setBirthdayResult(null);
 
     try {
       const parsedPreview = await parseExcelMaestroFile(
@@ -126,6 +130,21 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
         }
       }
 
+      // Fechas de nacimiento: se guardan aparte (privadas) DESPUÉS de subir a las
+      // personas, porque el servidor solo las acepta para integrantes que ya existen.
+      if (result.birthDates.length > 0) {
+        try {
+          const r = await api.setBirthDates(result.birthDates);
+          setBirthdayResult({ saved: r.saved });
+          void birthdays.refresh(getPeople());
+        } catch (bErr: any) {
+          setBirthdayResult({
+            saved: 0,
+            error: bErr?.message || 'No se pudieron guardar las fechas de nacimiento.',
+          });
+        }
+      }
+
       if (onImportComplete) onImportComplete();
     } catch (err) {
       console.error('Error importing excel maestro batch:', err);
@@ -140,6 +159,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     setPreview(null);
     setImportResult(null);
     setCloudSyncResult(null);
+    setBirthdayResult(null);
     setFilterTab('ALL');
     setTableSearch('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -260,6 +280,30 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {birthdayResult && (
+                <div
+                  className={`p-3.5 rounded-2xl border text-xs text-left flex items-start gap-2 ${
+                    birthdayResult.error
+                      ? 'bg-amber-50/80 border-amber-200 text-amber-900'
+                      : 'bg-coral-50 border-coral-200 text-tinta-900'
+                  }`}
+                >
+                  <span className="text-base leading-none">🎂</span>
+                  <span>
+                    {birthdayResult.error ? (
+                      <>
+                        <b>Las fechas de nacimiento no se guardaron:</b> {birthdayResult.error}
+                      </>
+                    ) : (
+                      <>
+                        <b>{birthdayResult.saved} fechas de nacimiento guardadas.</b> Los cumpleaños ya
+                        aparecen en el calendario (solo los ve la administración).
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
 
               {/* CLOUD SUPABASE STATUS INDICATOR */}
               {isSupabaseConfigured() ? (
@@ -449,6 +493,29 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
           ) : (
             /* STEP 2: PREVIEW SCREEN */
             <div className="space-y-6">
+              {(() => {
+                const withDate = preview.rows.filter((r) => r.isValid && r.birthDate).length;
+                const badRows = preview.rows.filter((r) => r.warnings.some((w) => w.startsWith('Fecha de nacimiento')));
+                if (withDate === 0 && badRows.length === 0) return null;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-coral-50 border border-coral-200 text-xs text-tinta-900 flex items-start gap-2">
+                    <span className="text-base leading-none">🎂</span>
+                    <span>
+                      <b>{withDate} fechas de nacimiento</b> se guardarán con las personas y sus cumpleaños
+                      saldrán solos en el calendario.
+                      {badRows.length > 0 && (
+                        <>
+                          {' '}
+                          No se entendió la fecha de {badRows.length}:{' '}
+                          {badRows.map((r) => `${r.name || 'Fila ' + r.rowNumber} (fila ${r.rowNumber})`).join(', ')}.
+                          Esas se omiten; usa día/mes/año, por ejemplo 06/11/2003.
+                        </>
+                      )}
+                    </span>
+                  </div>
+                );
+              })()}
+
               {/* TOP METRICS CARDS */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* 1. Total Rows */}

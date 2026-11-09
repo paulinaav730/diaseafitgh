@@ -90,7 +90,11 @@ las notificaciones web requieren agregar DÍAS a la pantalla de inicio.
   privada: la clave pública no puede leerla y solo una sesión de administración
   la consulta (`admin_list_birthdays`) o la cambia (`admin_set_birth_date`, con
   auditoría). El integrante no ve su fecha ni su edad.
-- **Cómo se registra:** de una vez desde Calendario → *🎂 Cargar cumpleaños*
+- **Cómo se registra:** lo normal es ponerla en el **Excel del directorio de
+  personal** (Personas → *Importar Excel*) en una columna *Fecha de nacimiento*
+  (también sirve *Cumpleaños*): al importar a las personas se guardan sus
+  fechas, sin cargar otro archivo. Una fecha que no se entiende solo avisa y no
+  bloquea a la persona. También se puede cargar aparte desde Calendario → *🎂 Cargar cumpleaños*
   (descargar la plantilla con todos los integrantes, llenar *Fecha de
   nacimiento* y subirla; también sirve cualquier Excel/CSV con cédula o nombre
   y fecha). Cada fila se une al integrante existente; no se crean personas.

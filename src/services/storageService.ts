@@ -1106,6 +1106,8 @@ export interface ExcelMaestroImportResult {
   updatedPeople: number;
   skippedPeople: number;
   totalAvailabilitiesAdded: number;
+  /** Fechas de nacimiento leídas del Excel (se guardan aparte, de forma privada). */
+  birthDates: { personId: string; birthDate: string }[];
 }
 
 /**
@@ -1127,6 +1129,7 @@ export async function importExcelMaestroBatch(
   let updatedPeople = 0;
   let skippedPeople = 0;
   let totalAvailabilitiesAdded = 0;
+  const birthDates: { personId: string; birthDate: string }[] = [];
 
   for (const row of parsedRows) {
     if (!row.isValid) continue;
@@ -1262,6 +1265,10 @@ export async function importExcelMaestroBatch(
       addedPeople++;
     }
 
+    if (row.birthDate && targetPersonId && (existingIndex < 0 || options.updateExisting)) {
+      birthDates.push({ personId: targetPersonId, birthDate: row.birthDate });
+    }
+
     // ---------------- SAVE AVAILABILITIES (EXCEL DOES NOT CREATE ASSIGNMENTS) ----------------
     for (const [dayId, recognizedMatches] of Object.entries(row.recognizedShiftsByDay)) {
       if (!recognizedMatches || recognizedMatches.length === 0) continue;
@@ -1309,6 +1316,7 @@ export async function importExcelMaestroBatch(
     updatedPeople,
     skippedPeople,
     totalAvailabilitiesAdded,
+    birthDates,
   };
 }
 

@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { toBirthDate } from './birthDateParse';
 import {
   Person,
   PersonType,
@@ -46,6 +47,8 @@ export interface ExcelMaestroParsedRow {
   foodAllergies?: string;
   dietaryRestrictions?: string;
   medicalConditions?: string;
+  /** Fecha de nacimiento AAAA-MM-DD (privada: se guarda aparte, solo para administración). */
+  birthDate?: string;
   primaryType: PersonType;
   alsoActsAsGap?: boolean;
   gapRoleDescription?: string;
@@ -364,6 +367,7 @@ export function identifyColumns(headers: string[]): {
   foodAllergiesKey?: string;
   dietaryRestrictionsKey?: string;
   medicalConditionsKey?: string;
+  birthDateKey?: string;
   eventDayKeys: Record<string, string>; // dayId -> original header key
 } {
   const result: ReturnType<typeof identifyColumns> = {
@@ -382,7 +386,15 @@ export function identifyColumns(headers: string[]): {
     }
 
     // 2. Personal fields detection
-    if (norm === 'id' || norm === 'external id' || norm === 'id excel') {
+    if (
+      norm.includes('nacimiento') ||
+      norm.includes('cumple') ||
+      norm.includes('birth') ||
+      norm === 'fecha nac' ||
+      norm === 'f nacimiento'
+    ) {
+      result.birthDateKey = hdr;
+    } else if (norm === 'id' || norm === 'external id' || norm === 'id excel') {
       result.idKey = hdr;
     } else if (norm.includes('hora') && norm.includes('inicio')) {
       result.startTimeKey = hdr;
@@ -614,6 +626,8 @@ export async function parseExcelMaestroFile(
     const medicalConditions = colMap.medicalConditionsKey
       ? cleanVal(raw[colMap.medicalConditionsKey])
       : '';
+    const birthCell = colMap.birthDateKey ? raw[colMap.birthDateKey] : '';
+    const birthDate = toBirthDate(birthCell) ?? undefined;
 
     // Fallbacks
     if (!name && fullName) {
@@ -647,6 +661,10 @@ export async function parseExcelMaestroFile(
       } else if (documentId) {
         username = documentId.trim();
       }
+    }
+
+    if (cleanVal(birthCell) && !birthDate) {
+      warnings.push(`Fecha de nacimiento "${cleanVal(birthCell)}" no válida: no se guarda. Usa día/mes/año, por ejemplo 06/11/2003.`);
     }
 
     if (!name) {
@@ -882,6 +900,7 @@ export async function parseExcelMaestroFile(
       foodAllergies: foodAllergies || (existingPerson?.foodAllergies ?? 'Ninguna'),
       dietaryRestrictions: dietaryRestrictions || (existingPerson?.dietaryRestrictions ?? 'Ninguna'),
       medicalConditions: medicalConditions || (existingPerson?.medicalConditions ?? 'Ninguna'),
+      birthDate,
       primaryType,
       alsoActsAsGap,
       gapRoleDescription,
@@ -961,6 +980,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Alergias alimentarias': 'Ninguna',
       'Restricción de comidas': 'Vegetariana',
       'Enfermedad o condición médica': 'Ninguna',
+      'Fecha de nacimiento': '06/11/2003',
       'THE SHOW LUNES 28 de septiembre': lunesSample,
       'THE ZONE MARTES 29 de septiembre': martesSample,
       'CARNIVAL MIÉRCOLES 30 de septiembre': miercolesSample,
@@ -984,6 +1004,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Alergias alimentarias': 'Maní, mariscos',
       'Restricción de comidas': 'Sin gluten / Celíaca',
       'Enfermedad o condición médica': 'Asma leve',
+      'Fecha de nacimiento': '15/03/2004',
       'THE SHOW LUNES 28 de septiembre': '',
       'THE ZONE MARTES 29 de septiembre': '',
       'CARNIVAL MIÉRCOLES 30 de septiembre': '8:50 AM – 12:10 PM; 12:00 PM – 3:10 PM',
@@ -1007,6 +1028,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
       'Alergias alimentarias': 'Lactosa',
       'Restricción de comidas': 'Ninguna',
       'Enfermedad o condición médica': 'Diabetes tipo 1',
+      'Fecha de nacimiento': '28/07/2002',
       'THE SHOW LUNES 28 de septiembre': '6:00 AM – 8:00 AM',
       'THE ZONE MARTES 29 de septiembre': '7:00 AM – 12:30 PM',
       'CARNIVAL MIÉRCOLES 30 de septiembre': '',
@@ -1038,6 +1060,7 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
     { wch: 24 }, // Alergias alimentarias
     { wch: 24 }, // Restricción de comidas
     { wch: 30 }, // Enfermedad o condición médica
+    { wch: 20 }, // Fecha de nacimiento
     { wch: 34 }, // Lunes
     { wch: 32 }, // Martes
     { wch: 36 }, // Miércoles
