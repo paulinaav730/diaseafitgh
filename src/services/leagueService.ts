@@ -24,6 +24,7 @@ import {
 import { createSyncedCollection, newId, randomToken } from './syncedCollection';
 import { getCurrentSession } from './session';
 import { isPersonInAudience, normalizeAudience, personPrimaryGt, privateRead, todayIso, calendarEvents } from './calendarService';
+import { computeLeagueRanking, GtRankingRow, LeagueRanking, RankingConfig, RankingSnapshot } from './leagueRanking';
 
 // ============================================================================
 // Colecciones
@@ -42,6 +43,39 @@ export const leagueSettings = createSyncedCollection<LeagueSettings>({
   fromRow: (r) => ({
     id: 'default',
     defaultConectadosScoring: { ...DEFAULT_CONECTADOS_SCORING, ...(r.default_conectados_scoring || {}) },
+    rankingConfig: r.ranking_config ?? undefined,
+    updatedAt: r.updated_at,
+  }),
+});
+
+const num = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
+/** Filas del ranking que llegan del servidor (los números de Postgres pueden venir como texto). */
+export function rankingRowsFromServer(rows: any[]): GtRankingRow[] {
+  return (rows || []).map((r) => ({
+    gt: r.gt,
+    position: num(r.position),
+    score: num(r.score),
+    members: num(r.members),
+    totalPoints: num(r.totalPoints),
+    avgPoints: num(r.avgPoints),
+    pointsScore: num(r.pointsScore),
+    participation: num(r.participation),
+    participationScore: num(r.participationScore),
+    activitiesCounted: num(r.activitiesCounted),
+  }));
+}
+
+/** Historial del ranking: un registro por día (automático) y cortes con nombre. */
+export const rankingHistory = createSyncedCollection<RankingSnapshot>({
+  storageKey: 'dias_eafit_ranking_history',
+  table: 'league_ranking_history',
+  fromRow: (r) => ({
+    id: r.id,
+    kind: r.kind,
+    date: String(r.snapshot_date).slice(0, 10),
+    label: r.label ?? undefined,
+    rows: rankingRowsFromServer(r.rows),
+    createdBy: r.created_by ?? undefined,
     updatedAt: r.updated_at,
   }),
 });
@@ -250,12 +284,15 @@ export function computeConectadosResults(
   scoring: ConectadosScoring,
   gts: string[],
   people: Person[],
-  statusOf: (personId: string) => AttendanceState | undefined
+  statusOf: (personId: string) => AttendanceState | undefined,
+  /** Solo cuentan los invitados (por defecto, todos los integrantes del GT) */
+  audience?: CalendarEvent['audience']
 ): ConectadosGtResult[] {
   return gts.map((gt) => {
     const c = { llego: 0, llego_tarde: 0, excusa: 0, no_asistio: 0, pendiente: 0 };
     let enabled = 0;
     gtMembers(people, gt).forEach((p) => {
+      if (audience && !isPersonInAudience(p, audience)) return;
       const st = statusOf(p.id) ?? 'pendiente';
       if (st === 'no_aplica') return;
       enabled++;
@@ -485,7 +522,10 @@ export function localCheckin(token: string, person: Person): CheckinResult {
 export function localPreview(ev: CalendarEvent, people: Person[]) {
   const scoring = ev.scoring ?? getDefaultScoring();
   const map = new Map(eventAttendances.getAll().filter((a) => a.eventId === ev.id).map((a) => [a.personId, a.status] as const));
-  return { scoring, results: ev.type === 'conectados' ? computeConectadosResults(scoring, conectadosGts(ev), people, (id) => map.get(id)) : [] };
+  // En los Conectados da los DÍAS POINTS; en los demás tipos solo el % de participación de cada GT
+  // (lo usa el ranking de la liga), sin puntos.
+  const sc = ev.type === 'conectados' ? scoring : { ...scoring, maxGtPoints: 0 };
+  return { scoring, results: computeConectadosResults(sc, conectadosGts(ev), people, (id) => map.get(id), ev.audience) };
 }
 
 export function localCloseAttendance(ev: CalendarEvent, people: Person[], admin: string): ConectadosClosure {
@@ -673,20 +713,76 @@ export function localClaimActivity(a: PointActivity, p: Person, source: PointAct
   return { result: 'registrada', activity: a.name, person: p.name, points: pts };
 }
 
+// ----------------------------------------------------------------------------
+// Ranking equitativo (modo local). En Supabase lo calcula `league_ranking()`.
+// ----------------------------------------------------------------------------
+export function localComputeRanking(people: Person[]): LeagueRanking {
+  return computeLeagueRanking({
+    people,
+    movements: pointMovements.getAll(),
+    events: calendarEvents.getAll(),
+    closures: conectadosClosures.getAll(),
+    activities: pointActivities.getAll(),
+    claims: activityClaims.getAll(),
+    inAudience: isPersonInAudience,
+    config: leagueSettings.get('default')?.rankingConfig,
+    today: todayIso(),
+  });
+}
+
+export function localSaveRankingConfig(config: RankingConfig, admin: string) {
+  const cur = leagueSettings.get('default');
+  leagueSettings.upsert({
+    id: 'default',
+    defaultConectadosScoring: cur?.defaultConectadosScoring ?? DEFAULT_CONECTADOS_SCORING,
+    rankingConfig: config,
+    updatedAt: now(),
+  });
+  audit(admin, 'configuracion_ranking', 'league_settings', 'default', cur?.rankingConfig ?? null, config);
+}
+
+/** Igual que el servidor: un registro por día que se actualiza cuando cambia el ranking. */
+export function localSaveDailyRanking(rows: GtRankingRow[]) {
+  const date = todayIso();
+  const id = `diario-${date}`;
+  const prev = rankingHistory.get(id);
+  if (prev && JSON.stringify(prev.rows) === JSON.stringify(rows)) return;
+  rankingHistory.upsert({ id, kind: 'diario', date, rows, updatedAt: now() });
+}
+
+export function localSaveRankingCut(label: string, rows: GtRankingRow[], admin: string): RankingSnapshot {
+  if (!label.trim()) fail('Ponle un nombre al corte.');
+  const snap: RankingSnapshot = { id: `corte-${Date.now()}`, kind: 'corte', date: todayIso(), label: label.trim(), rows, createdBy: admin, updatedAt: now() };
+  rankingHistory.upsert(snap);
+  audit(admin, 'guardar_corte_ranking', 'league_ranking_history', snap.id, null, snap);
+  return snap;
+}
+
+export function localDeleteRankingCut(id: string, admin: string) {
+  const snap = rankingHistory.get(id);
+  if (!snap || snap.kind !== 'corte') fail('Solo se pueden borrar los cortes guardados a mano.');
+  rankingHistory.remove(id);
+  audit(admin, 'borrar_corte_ranking', 'league_ranking_history', id, snap, null);
+}
+
 // ============================================================================
 // Exportar reportes
 // ============================================================================
 
-export function exportLeagueReport(people: Person[], events: CalendarEvent[]) {
+export function exportLeagueReport(people: Person[], events: CalendarEvent[], ranking: GtRankingRow[]) {
   const moves = pointMovements.getAll();
   const wb = XLSX.utils.book_new();
-  const gtRows = computeGtStandings(moves).map((s) => ({
+  const gtRows = ranking.map((s) => ({
     Puesto: s.position,
     GT: s.gt,
-    'Total DÍAS POINTS': s.total,
-    'Retos y actividades': s.retos,
-    Conectados: s.conectados,
-    Otros: s.otros,
+    'Puntaje final (sobre 100)': s.score,
+    Integrantes: s.members,
+    'DÍAS POINTS acumulados': s.totalPoints,
+    'Promedio por integrante': s.avgPoints,
+    'Promedio (escala 0-100)': s.pointsScore,
+    'Participación (%)': s.participation,
+    'Participación (escala 0-100)': s.participationScore,
+    'Actividades que cuentan': s.activitiesCounted,
   }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gtRows), 'Ranking GT');
 

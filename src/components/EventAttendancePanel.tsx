@@ -130,7 +130,7 @@ const AttendanceDetail: React.FC<{ event: CalendarEvent; people: Person[] }> = (
   const statusOf = (id: string): AttendanceState => records.get(id)?.status ?? 'pendiente';
 
   const live: ConectadosGtResult[] = useMemo(
-    () => (isConectados ? computeConectadosResults(scoring, conectadosGts(event), people, (id) => records.get(id)?.status) : []),
+    () => (isConectados ? computeConectadosResults(scoring, conectadosGts(event), people, (id) => records.get(id)?.status, event.audience) : []),
     [isConectados, scoring, event, people, records]
   );
   const results = closure?.results?.length ? closure.results : live;

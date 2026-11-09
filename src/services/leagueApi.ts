@@ -34,6 +34,7 @@ import { postgresToPerson } from './supabaseSync';
 import { actorName, getCurrentSession, getSessionToken } from './session';
 import { BirthdayPerson, bogotaToday, parseBirthDate } from '../../supabase/functions/_shared/birthdays';
 import { newId, randomToken } from './syncedCollection';
+import { GtRankingRow, LeagueRanking, RankingConfig } from './leagueRanking';
 import {
   calendarEvents,
   customEventTypes,
@@ -64,6 +65,13 @@ import {
   localCheckin,
   localClaimActivity,
   localCloseAttendance,
+  localComputeRanking,
+  localDeleteRankingCut,
+  localSaveDailyRanking,
+  localSaveRankingConfig,
+  localSaveRankingCut,
+  rankingHistory,
+  rankingRowsFromServer,
   localCorrectPoints,
   localEnsureProfile,
   localEventQrs,
@@ -451,6 +459,55 @@ export const api = {
       leagueSettings.upsert({ id: 'default', defaultConectadosScoring: scoring, updatedAt: new Date().toISOString() });
       audit(admin, 'configuracion_liga', 'league_settings', 'default', null, scoring);
     });
+  },
+
+  // --------------------------------------------------------------------------
+  // Ranking equitativo de la liga
+  // --------------------------------------------------------------------------
+  /** Ranking actual. Con Supabase lo calcula el servidor con los datos reales. */
+  async ranking(people: Person[]): Promise<LeagueRanking> {
+    if (remote()) {
+      const r = await call<any>('league_ranking', {}, false);
+      return {
+        rows: rankingRowsFromServer(r?.rows),
+        activities: (r?.activities || []).map((a: any) => ({
+          ...a,
+          byGt: (a.byGt || []).map((x: any) => ({ gt: x.gt, eligible: Number(x.eligible), participated: Number(x.participated), rate: Number(x.rate) })),
+        })),
+      };
+    }
+    const result = localComputeRanking(people);
+    localSaveDailyRanking(result.rows);
+    return result;
+  },
+
+  async saveRankingConfig(config: RankingConfig): Promise<void> {
+    if (remote()) {
+      await call('admin_save_ranking_config', { p_config: config });
+      await leagueSettings.pull();
+      return;
+    }
+    return local(() => localSaveRankingConfig(config, requireAdminLocal()));
+  },
+
+  async saveRankingCut(label: string, rows: GtRankingRow[]): Promise<void> {
+    if (remote()) {
+      await call('admin_save_ranking_cut', { p_label: label });
+      await rankingHistory.pull();
+      return;
+    }
+    return local(() => {
+      localSaveRankingCut(label, rows, requireAdminLocal());
+    });
+  },
+
+  async deleteRankingCut(id: string): Promise<void> {
+    if (remote()) {
+      await call('admin_delete_ranking_cut', { p_id: id });
+      await rankingHistory.pull();
+      return;
+    }
+    return local(() => localDeleteRankingCut(id, requireAdminLocal()));
   },
 
   // --------------------------------------------------------------------------

@@ -72,6 +72,37 @@ Excusa válida: por defecto no penaliza (sale del total); se puede configurar
 para que cuente como asistencia o como ausencia. Llegada tarde: completa, media
 o nada.
 
+## Ranking equitativo de la DÍAS LEAGUE
+
+El ranking de los nueve GT (Generales, Finanzas, GH, Mercadeo, RRPP, Logística,
+Seguridad, Carnival, The Games) da un puntaje sobre 100 que no premia al GT con
+más integrantes:
+
+| Dimensión | Peso | Cómo se calcula |
+| --- | --- | --- |
+| Promedio de DÍAS POINTS por integrante | 50 % | DÍAS POINTS del GT ÷ todos sus integrantes (también los que tienen 0) |
+| Participación ajustada | 50 % | Promedio, entre las actividades que cuentan, del % de integrantes del GT que participó en cada una |
+
+Cada dimensión se lleva a 0–100 tomando como 100 el mejor de los nueve GT.
+Puntaje final = 50 % × escala del promedio + 50 % × escala de la participación.
+
+- **Integrantes:** las personas del directorio cuyo GT principal es ese GT (MESA no cuenta).
+- **Puntos:** los no anulados. Por defecto entran los de cada integrante + los entregados al
+  GT completo; en Configuración se puede dejar solo los individuales.
+- **Participación:** cuentan los eventos con la **asistencia cerrada** de los tipos elegidos
+  (por defecto Conectados, Expectadías, Decoración, Reto, Capacitación y Otras) y las
+  actividades de DÍAS POINTS por QR ya terminadas (cerradas o de días anteriores). En cada
+  una, el % del GT = participantes ÷ invitados habilitados del GT (las excusas y llegadas
+  tarde siguen la regla del evento). Un GT sin invitados en una actividad no se penaliza por ella.
+- **Configuración:** DÍAS League → Configuración → *Qué cuenta para el ranking* (tipos,
+  actividades QR, base de puntos y exclusión de actividades puntuales).
+- **Servidor:** `league_ranking()` calcula el ranking con los datos de Supabase; la app lo
+  muestra y se actualiza sola. `src/services/leagueRanking.ts` tiene la misma lógica (modo
+  local y pruebas: `tests/ranking.test.ts` y la comparación en `tests/supabase.rpc.test.mjs`).
+- **Historial:** `league_ranking_history` guarda un registro por día, que se actualiza solo
+  cada vez que cambian puntos, asistencias, actividades, la configuración o el directorio.
+  La administración puede guardar *cortes* con nombre (por ejemplo, "Cierre semestre 1").
+
 ## Recordatorios con la app cerrada (opcional)
 
 1. `npx web-push generate-vapid-keys`
@@ -121,6 +152,6 @@ las notificaciones web requieren agregar DÍAS a la pantalla de inicio.
 ## Pruebas
 
 - `npm test`: cálculo de asistencia y ranking, alimentación y cumpleaños.
-- `SUPABASE_TEST_URL=<url de una base de PRUEBA> node tests/supabase.rpc.test.mjs`:
+- `SUPABASE_TEST_URL=<url de una base de PRUEBA> npx tsx tests/supabase.rpc.test.mjs`:
   seguridad y funciones de la base de datos con la clave pública. No ejecutar
   contra producción: crea datos.

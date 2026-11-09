@@ -288,6 +288,21 @@ CREATE TABLE IF NOT EXISTS public.league_settings (
     default_conectados_scoring JSONB NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
+-- Qué cuenta para el ranking equitativo (tipos de evento, actividades QR, exclusiones, base de puntos)
+ALTER TABLE public.league_settings ADD COLUMN IF NOT EXISTS ranking_config JSONB;
+
+-- Historial del ranking: un registro por día (automático) y cortes guardados por la administración
+CREATE TABLE IF NOT EXISTS public.league_ranking_history (
+    id TEXT PRIMARY KEY,                -- 'diario-AAAA-MM-DD' o 'corte-…'
+    kind TEXT NOT NULL CHECK (kind IN ('diario','corte')),
+    snapshot_date DATE NOT NULL,
+    label TEXT,
+    rows JSONB NOT NULL,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_league_ranking_history_date ON public.league_ranking_history (snapshot_date DESC);
 
 -- ------------------------------------------------------------------------------
 -- 6. Registro de escaneos y auditoría administrativa
@@ -326,7 +341,7 @@ DECLARE t TEXT;
 BEGIN
   -- Lectura pública (ranking, calendario, retos, actividades): sin datos personales sensibles
   FOREACH t IN ARRAY ARRAY['calendar_events','calendar_event_types','conectados_closures','league_challenges',
-                           'point_movements','league_settings','point_activities','point_activity_claims']
+                           'point_movements','league_settings','point_activities','point_activity_claims','league_ranking_history']
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS "Lectura publica" ON public.%I', t);
@@ -872,7 +887,7 @@ BEGIN
       INTO c_ok, c_late, c_exc, c_abs, c_pend, enabled
       FROM (SELECT coalesce(a.status, 'pendiente') st FROM people p
               LEFT JOIN event_attendances a ON a.event_id = p_event_id AND a.person_id = p.id
-             WHERE _person_primary_gt(p) = g) t;
+             WHERE _person_primary_gt(p) = g AND _in_audience(p, e.audience)) t;
     den := enabled;
     eff := c_ok + c_late * late_w;
     IF mode = 'excluir' THEN den := den - c_exc; ELSIF mode = 'asistencia' THEN eff := eff + c_exc; END IF;
@@ -917,8 +932,9 @@ BEGIN
 
   sc := coalesce(e.scoring, (SELECT default_conectados_scoring FROM league_settings WHERE id = 'default'),
                  '{"maxGtPoints":20,"individualPoints":{"asistio":5,"tarde":3,"excusa":0},"lateWeight":1,"excuseMode":"excluir"}');
+  -- % de participación de cada GT (lo usa el ranking); DÍAS POINTS solo en los Conectados
+  res := _conectados_results(e.id, CASE WHEN e.type = 'conectados' THEN sc ELSE sc || '{"maxGtPoints":0}' END);
   IF e.type = 'conectados' THEN
-    res := _conectados_results(e.id, sc);
     FOR r IN SELECT * FROM jsonb_array_elements(res) LOOP
       IF (r->>'points')::numeric > 0 THEN
         INSERT INTO point_movements (id, activity_date, target, gt, points, category, source_type, source_id, activity_name, reason, registered_by)
@@ -1265,12 +1281,194 @@ BEGIN
 END;
 $$;
 
+-- ==============================================================================
+-- RANKING EQUITATIVO DE LA DÍAS LEAGUE
+-- Puntaje final (sobre 100) = 50 % promedio de DÍAS POINTS por integrante
+--                           + 50 % participación ajustada (% promedio por actividad)
+-- Cada dimensión se lleva a 0–100 tomando como 100 el mejor de los nueve GT.
+-- Idéntico a computeLeagueRanking() en src/services/leagueRanking.ts.
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public._league_ranking(p_today DATE DEFAULT NULL) RETURNS JSONB
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE
+  gts TEXT[] := ARRAY['Generales','Finanzas','GH','Mercadeo','RRPP','Logística','Seguridad','Carnival','The Games'];
+  v_today DATE := coalesce(p_today, (now() AT TIME ZONE 'America/Bogota')::date);
+  cfg JSONB; v_types TEXT[]; v_excluded TEXT[]; v_qr BOOLEAN; v_base TEXT; acts JSONB; out_rows JSONB;
+BEGIN
+  SELECT ranking_config INTO cfg FROM league_settings WHERE id = 'default';
+  cfg := coalesce(cfg, '{}'::jsonb);
+  v_types := CASE WHEN jsonb_typeof(cfg->'countedTypes') = 'array' THEN ARRAY(SELECT jsonb_array_elements_text(cfg->'countedTypes'))
+                  ELSE ARRAY['conectados','expectadias','decoracion','reto','capacitacion','otro'] END;
+  v_excluded := CASE WHEN jsonb_typeof(cfg->'excludedIds') = 'array' THEN ARRAY(SELECT jsonb_array_elements_text(cfg->'excludedIds')) ELSE '{}'::text[] END;
+  v_qr := CASE WHEN jsonb_typeof(cfg->'includeQrActivities') = 'boolean' THEN (cfg->>'includeQrActivities')::boolean ELSE true END;
+  v_base := CASE WHEN cfg->>'pointsBase' = 'individuales' THEN 'individuales' ELSE 'todos' END;
+
+  -- Actividades que cuentan y % de participación de cada GT en cada una
+  WITH ev AS (
+    SELECT e.id, 'evento'::text AS kind, e.title AS name, e.type::text AS type, e.event_date AS d, r->>'gt' AS gt,
+           (r->>'denominator')::numeric AS eligible, (r->>'effectiveAttendance')::numeric AS participated,
+           (r->>'percentage')::numeric AS rate
+      FROM conectados_closures c
+      JOIN calendar_events e ON e.id = c.event_id
+      CROSS JOIN LATERAL jsonb_array_elements(c.results) r
+     WHERE c.status = 'cerrado' AND e.status = 'activo' AND e.type = ANY(v_types) AND NOT (e.id = ANY(v_excluded))
+       AND r->>'gt' = ANY(gts) AND (r->>'denominator')::numeric > 0
+  ), qr AS (
+    SELECT a.id, 'actividad_qr'::text, a.name, 'actividad_qr'::text, a.activity_date, _person_primary_gt(p),
+           count(*)::numeric, count(cl.id)::numeric, round(count(cl.id)::numeric / count(*) * 100, 2)
+      FROM point_activities a
+      JOIN people p ON _person_primary_gt(p) = ANY(gts) AND _in_audience(p, a.eligibility)
+      LEFT JOIN point_activity_claims cl ON cl.activity_id = a.id AND cl.person_id = p.id
+     WHERE v_qr AND NOT (a.id = ANY(v_excluded)) AND (a.status = 'cerrada' OR a.activity_date < v_today)
+     GROUP BY a.id, a.name, a.activity_date, _person_primary_gt(p)
+  ), allr AS (SELECT * FROM ev UNION ALL SELECT * FROM qr)
+  SELECT coalesce(jsonb_agg(jsonb_build_object('id', x.id, 'kind', x.kind, 'name', x.name, 'type', x.type, 'date', x.d::text, 'byGt', x.by_gt)
+                            ORDER BY x.d DESC, x.name), '[]'::jsonb)
+    INTO acts
+    FROM (SELECT id, kind, name, type, d,
+                 jsonb_agg(jsonb_build_object('gt', gt, 'eligible', eligible, 'participated', participated, 'rate', rate)
+                           ORDER BY array_position(gts, gt)) AS by_gt
+            FROM allr GROUP BY id, kind, name, type, d) x;
+
+  WITH base AS (
+    SELECT g AS gt, array_position(gts, g) AS ord,
+           (SELECT count(*) FROM people p WHERE _person_primary_gt(p) = g) AS members,
+           round(coalesce((SELECT sum(m.points) FROM point_movements m JOIN people p ON p.id = m.person_id
+                            WHERE NOT m.voided AND m.target = 'person' AND _person_primary_gt(p) = g), 0)
+               + CASE WHEN v_base = 'todos'
+                      THEN coalesce((SELECT sum(m.points) FROM point_movements m WHERE NOT m.voided AND m.target = 'gt' AND m.gt = g), 0)
+                      ELSE 0 END, 2) AS total,
+           (SELECT array_agg((b->>'rate')::numeric) FROM jsonb_array_elements(acts) a, jsonb_array_elements(a->'byGt') b
+             WHERE b->>'gt' = g) AS rates
+      FROM unnest(gts) g
+  ), b2 AS (
+    SELECT gt, ord, members, total,
+           CASE WHEN members > 0 THEN round(total / members, 2) ELSE 0 END AS avg_points,
+           coalesce((SELECT round(avg(x), 2) FROM unnest(rates) x), 0) AS participation,
+           coalesce(array_length(rates, 1), 0) AS n_acts
+      FROM base
+  ), b3 AS (
+    SELECT b2.*,
+           CASE WHEN max(avg_points) OVER () > 0 THEN round(greatest(avg_points, 0) / max(avg_points) OVER () * 100, 2) ELSE 0 END AS points_score,
+           CASE WHEN max(participation) OVER () > 0 THEN round(participation / max(participation) OVER () * 100, 2) ELSE 0 END AS part_score
+      FROM b2
+  ), b4 AS (
+    SELECT b3.*, round(0.5 * points_score + 0.5 * part_score, 2) AS score FROM b3
+  ), b5 AS (
+    SELECT b4.*, rank() OVER (ORDER BY score DESC) AS pos,
+           row_number() OVER (ORDER BY score DESC, avg_points DESC, participation DESC, ord) AS rn
+      FROM b4
+  )
+  SELECT jsonb_agg(jsonb_build_object('gt', gt, 'position', pos, 'score', score, 'members', members, 'totalPoints', total,
+                   'avgPoints', avg_points, 'pointsScore', points_score, 'participation', participation,
+                   'participationScore', part_score, 'activitiesCounted', n_acts) ORDER BY rn)
+    INTO out_rows FROM b5;
+
+  RETURN jsonb_build_object('rows', out_rows, 'activities', acts, 'computedAt', now());
+END;
+$$;
+
+-- Ranking actual (lectura pública: solo datos agregados por GT)
+CREATE OR REPLACE FUNCTION public.league_ranking() RETURNS JSONB
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+  SELECT _league_ranking(NULL);
+$$;
+
+-- Historial automático: guarda (o actualiza) el ranking del día cada vez que algo lo cambia
+CREATE OR REPLACE FUNCTION public._save_daily_ranking() RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE d DATE := (now() AT TIME ZONE 'America/Bogota')::date;
+BEGIN
+  INSERT INTO league_ranking_history (id, kind, snapshot_date, rows, updated_at)
+  VALUES ('diario-' || d, 'diario', d, _league_ranking(d)->'rows', now())
+  ON CONFLICT (id) DO UPDATE SET rows = EXCLUDED.rows, updated_at = now();
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public._ranking_changed() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+BEGIN
+  PERFORM _save_daily_ranking();
+  RETURN NULL;
+EXCEPTION WHEN OTHERS THEN
+  -- El historial nunca debe impedir registrar puntos o asistencias
+  RAISE WARNING 'No se pudo actualizar el historial del ranking: %', SQLERRM;
+  RETURN NULL;
+END;
+$$;
+
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['point_movements','conectados_closures','point_activity_claims','point_activities',
+                           'league_settings','calendar_events','people']
+  LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS trg_ranking_history ON public.%I', t);
+    EXECUTE format('CREATE TRIGGER trg_ranking_history AFTER INSERT OR UPDATE OR DELETE ON public.%I
+                    FOR EACH STATEMENT EXECUTE FUNCTION public._ranking_changed()', t);
+  END LOOP;
+END $$;
+
+-- Configurar qué cuenta para el ranking
+CREATE OR REPLACE FUNCTION public.admin_save_ranking_config(p_session TEXT, p_config JSONB) RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE adm TEXT := _require_admin(p_session); before JSONB; cfg JSONB; r public.league_settings;
+BEGIN
+  IF jsonb_typeof(p_config->'countedTypes') IS DISTINCT FROM 'array' THEN PERFORM _fail('DATOS', 'Elige los tipos de evento que cuentan.'); END IF;
+  cfg := jsonb_build_object(
+    'countedTypes', p_config->'countedTypes',
+    'includeQrActivities', coalesce((p_config->>'includeQrActivities')::boolean, true),
+    'excludedIds', CASE WHEN jsonb_typeof(p_config->'excludedIds') = 'array' THEN p_config->'excludedIds' ELSE '[]'::jsonb END,
+    'pointsBase', CASE WHEN p_config->>'pointsBase' = 'individuales' THEN 'individuales' ELSE 'todos' END);
+  SELECT ranking_config INTO before FROM league_settings WHERE id = 'default';
+  INSERT INTO league_settings (id, default_conectados_scoring, ranking_config, updated_at)
+  VALUES ('default', '{"maxGtPoints":20,"individualPoints":{"asistio":5,"tarde":3,"excusa":0},"lateWeight":1,"excuseMode":"excluir"}', cfg, now())
+  ON CONFLICT (id) DO UPDATE SET ranking_config = EXCLUDED.ranking_config, updated_at = now()
+  RETURNING * INTO r;
+  PERFORM _audit(adm, 'configuracion_ranking', 'league_settings', 'default', before, cfg);
+  RETURN to_jsonb(r);
+END;
+$$;
+
+-- Guardar un corte del ranking con nombre (por ejemplo, "Cierre del semestre 1")
+CREATE OR REPLACE FUNCTION public.admin_save_ranking_cut(p_session TEXT, p_label TEXT) RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE adm TEXT := _require_admin(p_session); h public.league_ranking_history; d DATE := (now() AT TIME ZONE 'America/Bogota')::date;
+BEGIN
+  IF coalesce(trim(p_label), '') = '' THEN PERFORM _fail('DATOS', 'Ponle un nombre al corte.'); END IF;
+  INSERT INTO league_ranking_history (id, kind, snapshot_date, label, rows, created_by)
+  VALUES ('corte-' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSMS'), 'corte', d, trim(p_label), _league_ranking(d)->'rows', adm)
+  RETURNING * INTO h;
+  PERFORM _audit(adm, 'guardar_corte_ranking', 'league_ranking_history', h.id, NULL, to_jsonb(h));
+  RETURN to_jsonb(h);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_ranking_cut(p_session TEXT, p_id TEXT) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions, pg_temp AS $$
+DECLARE adm TEXT := _require_admin(p_session); h public.league_ranking_history;
+BEGIN
+  DELETE FROM league_ranking_history WHERE id = p_id AND kind = 'corte' RETURNING * INTO h;
+  IF NOT FOUND THEN PERFORM _fail('NO_ENCONTRADO', 'Solo se pueden borrar los cortes guardados a mano.'); END IF;
+  PERFORM _audit(adm, 'borrar_corte_ranking', 'league_ranking_history', p_id, to_jsonb(h), NULL);
+END;
+$$;
+
+-- Cierres anteriores de eventos que no eran Conectados: calcular su % por GT una vez
+UPDATE public.conectados_closures c
+   SET results = public._conectados_results(c.event_id, coalesce(c.scoring, '{}'::jsonb) || '{"maxGtPoints":0}')
+ WHERE c.status = 'cerrado' AND c.results = '[]'::jsonb;
+
+-- Primer registro del historial con el ranking de hoy
+SELECT public._save_daily_ranking();
+
 -- Funciones internas: no invocables desde la API pública
 REVOKE EXECUTE ON FUNCTION public._new_token(), public._hash(TEXT), public._session(TEXT), public._require_admin(TEXT),
   public._require_staff(TEXT), public._ensure_profile(TEXT), public._conectados_results(TEXT, JSONB), public._check_rate(TEXT),
   public._claim_activity(public.point_activities, public.people, TEXT, TEXT), public._movement_id(),
   public._audit(TEXT, TEXT, TEXT, TEXT, JSONB, JSONB, TEXT),
-  public._log_scan(TEXT, TEXT, public.app_sessions, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+  public._log_scan(TEXT, TEXT, public.app_sessions, TEXT, TEXT, TEXT),
+  public._league_ranking(DATE), public._save_daily_ranking(), public._ranking_changed() FROM PUBLIC, anon, authenticated;
 
 -- ------------------------------------------------------------------------------
 -- Tiempo real (el ranking y el calendario se actualizan solos)
@@ -1279,7 +1477,7 @@ DO $$
 DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY['calendar_events','calendar_event_types','conectados_closures','league_challenges',
-                           'point_movements','point_activities','point_activity_claims']
+                           'point_movements','point_activities','point_activity_claims','league_settings','league_ranking_history']
   LOOP
     BEGIN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', t);
