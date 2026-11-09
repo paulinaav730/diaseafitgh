@@ -160,5 +160,13 @@ console.log('\nCarga masiva OK.');
   assert.ok(preview.rows[2].warnings.some((w) => w.startsWith('Fecha de nacimiento')));
   assert.equal(preview.rows[3].warnings.length, 0);
   ok('El Excel del directorio de personal lee la fecha de nacimiento; una fecha mala solo avisa, no bloquea a la persona');
+  assert.equal(preview.birthDateColumn, 'Fecha de nacimiento');
+  const csv = 'Nombre,Documento de identidad,Fecha de nacimiento\nPaulina,1017123456,06/11/2003\nJuan,1020304050,15/11/2003\n';
+  const csvPreview = await parseExcelMaestroFile(new File([csv], 'directorio.csv'), [], []);
+  assert.deepEqual(csvPreview.rows.map((r) => r.birthDate), ['2003-11-06', '2003-11-15']);
+  for (const h of ['F. Nac', 'Fecha Nac.', 'DOB', 'FECHA DE NACIMIENTO']) assert.equal(identifyColumns([h]).birthDateKey, h);
+  const sinColumna = await parseExcelMaestroFile(new File(['Nombre,Documento de identidad\nAna,43111222\n'], 'x.csv'), [], []);
+  assert.equal(sinColumna.birthDateColumn, undefined);
+  ok('En CSV 06/11/2003 es 6 de noviembre (no 11 de junio); reconoce "F. Nac" y "DOB"; avisa si no hay columna');
 }
 

@@ -40,7 +40,12 @@ export function parseBirthdayRows(rows: Record<string, unknown>[], people: Perso
 } {
   if (rows.length === 0) return { rows: [], error: 'El archivo no tiene filas.' };
   const headers = Object.keys(rows[0]);
-  const dateCol = findColumn(headers, [(h) => h.includes('nacimiento'), (h) => h.includes('cumple'), (h) => h === 'fecha']);
+  const dateCol = findColumn(headers, [
+    (h) => h.includes('nacimiento'),
+    (h) => h.includes('cumple'),
+    (h) => h.split(' ').includes('nac') || h === 'dob' || h.includes('birth'),
+    (h) => h === 'fecha',
+  ]);
   if (!dateCol) return { rows: [], error: 'No encontré la columna de la fecha. Ponle de título "Fecha de nacimiento".' };
   const docCol = findColumn(headers, [
     (h) => h.includes('cedula'),
@@ -87,7 +92,7 @@ export function parseBirthdayRows(rows: Record<string, unknown>[], people: Perso
 export async function readBirthdayFile(file: File, people: Person[], current: BirthdayPerson[]) {
   // Sin cellDates: las fechas llegan como número de serie de Excel y se
   // convierten sin depender de la zona horaria del computador.
-  const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+  const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', raw: true });
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: true });
   return parseBirthdayRows(rows, people, current);
