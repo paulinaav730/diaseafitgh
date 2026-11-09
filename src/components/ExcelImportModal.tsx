@@ -203,7 +203,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                   IMPORTADOR EXCEL MAESTRO — DÍAS EAFIT 2027
                 </h3>
                 <span className="px-2 py-0.5 rounded-md bg-lila-50 text-lila-600 border border-lila-200 text-[10px] font-bold">
-                  17 Columnas Oficiales
+                  22 Columnas Oficiales
                 </span>
               </div>
               <p className="text-xs text-tinta-500">
@@ -217,7 +217,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
             <button
               onClick={() => downloadOfficialExcelMaestroTemplate(configuredShifts)}
               className="px-3 py-1.5 rounded-xl border border-tinta-200 bg-white hover:bg-tinta-50 text-tinta-900 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
-              title="Descargar la plantilla oficial con las 17 columnas y turnos del sistema"
+              title="Descargar la plantilla oficial con las 22 columnas y turnos del sistema"
             >
               <Download className="w-3.5 h-3.5 text-lila-600" />
               <span className="hidden sm:inline">Descargar Plantilla Oficial</span>
@@ -475,7 +475,7 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
                       ¿No tienes el formato oficial o deseas verificar los turnos configurados?
                     </div>
                     <div className="text-[11px] text-tinta-500">
-                      Descarga la plantilla oficial con las 17 columnas y la hoja anexa con los turnos
+                      Descarga la plantilla oficial con las 22 columnas y la hoja anexa con los turnos
                       activos en el sistema.
                     </div>
                   </div>
