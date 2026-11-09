@@ -40,8 +40,6 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
   const [personQuery, setPersonQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [attendanceEnabled, setAttendanceEnabled] = useState<boolean>(initial?.attendanceEnabled ?? (initial ? false : true));
-  const [checkinOpens, setCheckinOpens] = useState(initial?.checkinOpensMinutes ?? 30);
-  const [lateAfter, setLateAfter] = useState(initial?.lateAfterMinutes ?? 15);
   const customTypes = useCollection(customEventTypes.subscribe);
   const [busy, run] = useBusy();
 
@@ -100,8 +98,9 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
         status: initial?.status ?? 'activo',
         scoring: type === 'conectados' ? scoring : undefined,
         attendanceEnabled,
-        checkinOpensMinutes: checkinOpens,
-        lateAfterMinutes: lateAfter,
+        // Ya no se usan (el QR no tiene horario); se conservan por compatibilidad.
+        checkinOpensMinutes: initial?.checkinOpensMinutes ?? 30,
+        lateAfterMinutes: initial?.lateAfterMinutes ?? 15,
     };
     // Solo se cierra el formulario cuando el servidor confirma que se guardó
     await run(async () => {
@@ -389,7 +388,7 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
             <span>
               <span className="block text-sm font-semibold text-tinta-900">QR de asistencia</span>
               <span className="block text-[11px] text-tinta-600 mt-0.5">
-                Los invitados escanean el código del evento con su sesión iniciada y su asistencia queda registrada sola.
+                Al final del evento muestras el código; los invitados lo escanean con su sesión iniciada y su asistencia queda registrada sola. No tiene horario: lo cierras tú cuando termine.
               </span>
             </span>
             <input
@@ -399,16 +398,6 @@ export const EventFormModal: React.FC<Props> = ({ initial, defaultDate, people, 
               onChange={(e) => setAttendanceEnabled(e.target.checked)}
             />
           </label>
-          {attendanceEnabled && (
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Se puede escanear desde" hint="Minutos antes del inicio">
-                <input type="number" min={0} className={inputCls} value={checkinOpens} onChange={(e) => setCheckinOpens(Math.max(0, Number(e.target.value)))} />
-              </Field>
-              <Field label="Cuenta como “llegó tarde” después de" hint="Minutos desde el inicio">
-                <input type="number" min={0} className={inputCls} value={lateAfter} onChange={(e) => setLateAfter(Math.max(0, Number(e.target.value)))} />
-              </Field>
-            </div>
-          )}
         </div>
 
         {/* Puntuación de CONECTADOS */}

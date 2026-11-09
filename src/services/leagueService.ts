@@ -23,7 +23,7 @@ import {
 } from '../types';
 import { createSyncedCollection, newId, randomToken } from './syncedCollection';
 import { getCurrentSession } from './session';
-import { isPersonInAudience, normalizeAudience, personPrimaryGt, privateRead, todayIso, checkinWindow, calendarEvents } from './calendarService';
+import { isPersonInAudience, normalizeAudience, personPrimaryGt, privateRead, todayIso, calendarEvents } from './calendarService';
 
 // ============================================================================
 // Colecciones
@@ -471,13 +471,12 @@ export function localCheckin(token: string, person: Person): CheckinResult {
   if (!q.enabled || !e.attendanceEnabled) fail('El registro de asistencia de este evento está cerrado.');
   if (e.status !== 'activo') fail('Este evento fue cancelado.');
   if (getClosure(e.id)) fail('La asistencia de este evento ya fue cerrada.');
-  if (checkinWindow(e) !== 'abierta')
-    fail(`El registro abre ${e.checkinOpensMinutes ?? 30} minutos antes del inicio y cierra al terminar el evento.`);
   if (!isPersonInAudience(person, e.audience)) fail('No estás en la lista de invitados de este evento.');
   if (prev && (prev.status === 'excusa' || prev.status === 'no_aplica'))
     fail('Tu asistencia ya fue gestionada por el administrador. Consúltale si hay un error.');
-  const start = new Date(`${e.date}T${e.startTime}:00-05:00`).getTime();
-  const status: AttendanceState = Date.now() > start + (e.lateAfterMinutes ?? 15) * 60_000 ? 'llego_tarde' : 'llego';
+  // Sin límite de horario: el QR registra mientras la administración no lo cierre.
+  // Escanear cuenta como "llegó"; "llegó tarde" se marca a mano.
+  const status: AttendanceState = 'llego';
   const rec: EventAttendance = { id, eventId: e.id, personId: person.id, status, source: 'qr', checkedInAt: now(), updatedBy: person.name, updatedAt: now() };
   eventAttendances.upsert(rec);
   return { result: 'registrada', eventTitle: e.title, status, checkedInAt: rec.checkedInAt };

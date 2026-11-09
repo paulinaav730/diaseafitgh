@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Maximize2, QrCode as QrIcon, RefreshCw, Lock, Unlock } from 'lucide-react';
 import { CalendarEvent } from '../types';
 import { api, QrInfo } from '../services/leagueApi';
-import { checkinWindow, formatTime12 } from '../services/calendarService';
+import { formatTime12 } from '../services/calendarService';
 import { QrCode, qrLink } from './league/QrCode';
 import { btnSecondary, Modal } from './league/ui';
 import { attempt, useBusy } from './league/toast';
@@ -31,16 +31,11 @@ export const EventQrPanel: React.FC<{ event: CalendarEvent; isClosed: boolean }>
       }, ok)
     );
 
-  const windowState = checkinWindow(e);
   const status = isClosed
     ? 'Asistencia cerrada'
     : !qr?.enabled
     ? 'QR cerrado: nadie puede registrarse'
-    : windowState === 'antes'
-    ? `Se podrá escanear desde ${e.checkinOpensMinutes ?? 30} min antes de las ${formatTime12(e.startTime)}`
-    : windowState === 'terminada'
-    ? 'El evento terminó: el QR ya no registra'
-    : 'Abierto: los invitados pueden escanear';
+    : 'Abierto: los invitados pueden escanear hasta que lo cierres';
 
   return (
     <div className="rounded-2xl border border-lila-200 bg-lila-50 p-4 space-y-3">
@@ -55,9 +50,9 @@ export const EventQrPanel: React.FC<{ event: CalendarEvent; isClosed: boolean }>
             <QrCode value={qrLink('E', qr.token)} size={132} label={`QR de asistencia de ${e.title}`} />
           </button>
           <div className="space-y-2 text-center sm:text-left">
-            <p className={`text-xs font-semibold ${qr.enabled && !isClosed && windowState === 'abierta' ? 'text-turquesa-700' : 'text-tinta-600'}`}>{status}</p>
+            <p className={`text-xs font-semibold ${qr.enabled && !isClosed ? 'text-turquesa-700' : 'text-tinta-600'}`}>{status}</p>
             <p className="text-[11px] text-tinta-600">
-              Cada integrante lo escanea con la cámara de su celular y su sesión de DÍAS iniciada. Llega a tiempo hasta {e.lateAfterMinutes ?? 15} min después del inicio.
+              Muéstralo al final del evento. Cada integrante lo escanea con la cámara de su celular y su sesión de DÍAS iniciada. No tiene límite de tiempo: sigue abierto hasta que toques <b>Cerrar QR</b>.
             </p>
             {!isClosed && (
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">

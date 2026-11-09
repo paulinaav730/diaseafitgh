@@ -782,10 +782,8 @@ BEGIN
   END IF;
   IF e.status <> 'activo' THEN PERFORM _fail('EVENTO_CANCELADO', 'Este evento fue cancelado.'); END IF;
   IF _attendance_locked(e.id) THEN PERFORM _fail('ASISTENCIA_CERRADA', 'La asistencia de este evento ya fue cerrada.'); END IF;
-  IF now() < e.starts_at - make_interval(mins => e.checkin_opens_minutes) OR now() > e.ends_at THEN
-    PERFORM _log_scan('evento', e.id, s, s.person_id, 'fuera_de_horario');
-    PERFORM _fail('FUERA_DE_HORARIO', format('El registro abre %s minutos antes del inicio y cierra al terminar el evento.', e.checkin_opens_minutes));
-  END IF;
+  -- Sin límite de horario: el QR se muestra al final y la administración lo
+  -- cierra a mano (Cerrar QR). Mientras esté abierto, registra.
   SELECT * INTO p FROM people WHERE id = s.person_id;
   IF NOT _in_audience(p, e.audience) THEN
     PERFORM _log_scan('evento', e.id, s, s.person_id, 'no_invitado');
@@ -795,7 +793,8 @@ BEGIN
     PERFORM _log_scan('evento', e.id, s, s.person_id, 'bloqueado_' || a.status);
     PERFORM _fail('YA_GESTIONADO', 'Tu asistencia ya fue gestionada por el administrador. Consúltale si hay un error.');
   END IF;
-  v_status := CASE WHEN now() > e.starts_at + make_interval(mins => e.late_after_minutes) THEN 'llego_tarde' ELSE 'llego' END;
+  -- Escanear el QR cuenta como "llegó"; "llegó tarde" lo marca la administración a mano.
+  v_status := 'llego';
   INSERT INTO event_attendances (id, event_id, person_id, status, source, checked_in_at, updated_by, updated_at)
   VALUES (v_id, e.id, s.person_id, v_status, 'qr', now(), s.display_name, now())
   ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, source = 'qr', checked_in_at = EXCLUDED.checked_in_at,

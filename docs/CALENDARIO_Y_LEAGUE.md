@@ -55,8 +55,9 @@ el código se guarda y se procesa apenas ingrese.
 ## Asistencia
 
 - Mientras el evento está abierto, quien no ha escaneado aparece **PENDIENTE**.
-- El QR funciona desde los minutos configurados antes del inicio hasta el final
-  del evento. Después de la tolerancia, el registro queda como LLEGÓ TARDE.
+- El QR de asistencia **no tiene horario**: se muestra al final del evento y
+  registra mientras esté abierto, hasta que la administración toca **Cerrar QR**.
+  Escanear cuenta como LLEGÓ; LLEGÓ TARDE se marca a mano si hace falta.
 - **Cerrar asistencia** muestra el cálculo para revisarlo. Al confirmar, los
   pendientes pasan a NO ASISTIÓ, se congelan los resultados y (en CONECTADOS)
   se entregan los DÍAS POINTS. Para corregir: **Reabrir** (anula los puntos con
