@@ -1,7 +1,7 @@
 import { Person } from '../types';
 import { api } from './leagueApi';
 import { getCurrentSession } from './session';
-import { getPushPermission, registerServiceWorker } from './pushService';
+import { notificationsOn, registerServiceWorker } from './pushService';
 import { BirthdayPerson, dueBirthdayReminders } from '../../supabase/functions/_shared/birthdays';
 
 export * from '../../supabase/functions/_shared/birthdays';
@@ -59,7 +59,7 @@ const SHOWN_KEY = 'dias_eafit_birthday_reminders_shown';
  */
 export function startBirthdayReminders(): () => void {
   const tick = async () => {
-    if (getPushPermission() !== 'granted') return;
+    if (!notificationsOn()) return;
     let shown: Record<string, number> = {};
     try {
       shown = JSON.parse(localStorage.getItem(SHOWN_KEY) || '{}');

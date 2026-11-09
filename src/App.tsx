@@ -24,6 +24,7 @@ import {
   subscribeToBases,
 } from './services/storageService';
 import { Navbar, TabType } from './components/Navbar';
+import { NotificationPrompt } from './components/NotificationBell';
 import { DiasLogo } from './components/DiasLogo';
 import { DashboardView } from './components/DashboardView';
 import { PeopleView } from './components/PeopleView';
@@ -478,6 +479,9 @@ export default function App() {
       )}
 
       {/* Global Modals */}
+      {/* Primera vez en este dispositivo: invitar a activar las notificaciones */}
+      <NotificationPrompt currentUser={currentUser} />
+
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
