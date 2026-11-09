@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Info, Plus, XCircle, Zap, CalendarCheck, IdCard } from 'lucide-react';
 import { CurrentUser, Person } from '../types';
-import { calendarEvents, checkinWindow, formatClock, personPrimaryGt } from '../services/calendarService';
+import { calendarEvents, checkinWindow, formatClock, personPrimaryGt, todayIso } from '../services/calendarService';
 import { pointActivities } from '../services/leagueService';
 import { api, errorMessage, PersonScan } from '../services/leagueApi';
 import { btnPrimary, btnSecondary, Modal, useCollection } from './league/ui';
@@ -140,7 +140,7 @@ const AdminPersonScan: React.FC<{ person: Person; people: Person[]; onClose: () 
   const [fullProfile, setFullProfile] = useState(false);
   const [busy, run] = useBusy();
   const openEvents = useMemo(
-    () => events.filter((e) => e.status === 'activo' && (e.attendanceEnabled || e.type === 'conectados') && checkinWindow(e) === 'abierta' && !api.isClosed(e.id)),
+    () => events.filter((e) => e.status === 'activo' && (e.attendanceEnabled || e.type === 'conectados') && (e.date === todayIso() || checkinWindow(e) === 'abierta') && !api.isClosed(e.id)),
     [events]
   );
   const activeActs = acts.filter((a) => a.status === 'activa' && a.mechanism !== 'qr_actividad');
@@ -167,7 +167,7 @@ const AdminPersonScan: React.FC<{ person: Person; people: Person[]; onClose: () 
         {openEvents.length > 0 && (
           <div className="rounded-2xl border border-tinta-200 p-3 space-y-2">
             <p className="text-xs font-semibold text-tinta-700 flex items-center gap-1.5">
-              <CalendarCheck className="w-4 h-4" /> Registrar llegada a un evento en curso
+              <CalendarCheck className="w-4 h-4" /> Registrar llegada a un evento de hoy
             </p>
             {openEvents.map((e) => (
               <button

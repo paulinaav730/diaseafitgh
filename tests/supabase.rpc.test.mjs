@@ -249,13 +249,17 @@ await rpc('admin_reopen_attendance', { p_session: A, p_event_id: ev.id, p_reason
 await rpc('admin_close_attendance', { p_session: A, p_event_id: ev.id });
 ok('Reabrir anula con trazabilidad y se puede volver a cerrar');
 
-// Fuera de horario
+// Sin horario: el QR se muestra al final (incluso después de la hora de fin)
+// y registra como "llegó" hasta que la administración lo cierra a mano.
 const past = await rpc('admin_save_calendar_event', { p_session: A, p_event: { title: 'Pasado', date: '2020-01-01', startTime: '10:00', endTime: '11:00', type: 'conectados', audience: { all: true }, attendanceEnabled: true } });
 const pastQr = await rpc('admin_event_qr', { p_session: A, p_event_id: past.id, p_action: 'habilitar' });
-assert.match(await rpcErr('checkin_event', { p_session: S, p_token: pastQr.token }), /FUERA_DE_HORARIO/);
 await rpc('admin_event_qr', { p_session: A, p_event_id: past.id, p_action: 'cerrar' });
 assert.match(await rpcErr('checkin_event', { p_session: S, p_token: pastQr.token }), /QR_CERRADO/);
-ok('Valida horario permitido y QR cerrado');
+await rpc('admin_event_qr', { p_session: A, p_event_id: past.id, p_action: 'habilitar' });
+const late = await rpc('checkin_event', { p_session: S, p_token: pastQr.token });
+assert.equal(late.result, 'registrada');
+assert.equal(late.status, 'llego');
+ok('El QR no tiene horario (registra "llegó" aunque el evento ya terminó) y deja de registrar al cerrarlo');
 
 // ---------------------------------------------------------------------------
 // 7. Ranking (13) y persistencia (14)
