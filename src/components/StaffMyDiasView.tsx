@@ -177,7 +177,7 @@ export const StaffMyDiasView: React.FC<StaffMyDiasViewProps> = ({
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Portal de Staff • DÍAS EAFIT</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-tinta-900 font-display tracking-wider break-words [overflow-wrap:anywhere]">
+              <h1 className="text-tinta-900 font-subtitle text-lg sm:text-2xl leading-snug break-words" style={{ letterSpacing: '0.03em' }}>
                 HOLA, {person.name.toUpperCase()}
               </h1>
               <p className="text-xs sm:text-sm text-tinta-500 font-sans">

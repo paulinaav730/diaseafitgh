@@ -11,7 +11,6 @@ import {
   LogOut,
   Radio,
   Search,
-  Bell,
   RefreshCw,
   ChevronDown,
   Menu,
@@ -27,6 +26,7 @@ import {
 } from 'lucide-react';
 import { CurrentUser } from '../types';
 import { DiasLogo } from './DiasLogo';
+import { NotificationBell } from './NotificationBell';
 
 export type TabType =
   | 'dashboard'
@@ -161,16 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </form>
 
               {/* Notificaciones */}
-              <button
-                onClick={() => onTabChange('attendance')}
-                title="Notificaciones y Alertas"
-                className="relative p-2 rounded-xl bg-white/8 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-coral-300 text-negro text-[9px] font-bold rounded-full flex items-center justify-center">
-                  1
-                </span>
-              </button>
+              <NotificationBell currentUser={currentUser} />
 
               {/* Usuario */}
               {currentUser ? (

@@ -11,7 +11,7 @@ import {
   bogotaToday,
   formatBirthdayDate,
 } from '../services/birthdayService';
-import { enablePushNotifications, getPushPermission, isPushSupported, PushPermission } from '../services/pushService';
+import { enablePushNotifications, getPushPermission, isPushSupported, notificationsOn, PushPermission } from '../services/pushService';
 import { btnPrimary, btnSecondary, Modal, useCollection } from './league/ui';
 import { PersonProfile } from './PersonProfile';
 
@@ -229,7 +229,8 @@ export const BirthdayModal: React.FC<{ o: BirthdayOccurrence; people: Person[]; 
 export const AdminBirthdayPushBanner: React.FC = () => {
   const [perm, setPerm] = useState<PushPermission>(getPushPermission());
   useEffect(() => {
-    if (perm === 'granted') void enablePushNotifications();
+    // Renueva la suscripción en silencio, salvo que la haya desactivado con la campanita
+    if (perm === 'granted' && notificationsOn()) void enablePushNotifications();
   }, [perm]);
   if (!isPushSupported() || perm === 'granted') return null;
   return (
