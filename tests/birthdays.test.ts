@@ -167,6 +167,17 @@ console.log('\nCarga masiva OK.');
   for (const h of ['F. Nac', 'Fecha Nac.', 'DOB', 'FECHA DE NACIMIENTO']) assert.equal(identifyColumns([h]).birthDateKey, h);
   const sinColumna = await parseExcelMaestroFile(new File(['Nombre,Documento de identidad\nAna,43111222\n'], 'x.csv'), [], []);
   assert.equal(sinColumna.birthDateColumn, undefined);
+  // Columnas con las fechas nuevas (4 al 8 de octubre) se reconocen como días del evento
+  const { MAESTRO_COLUMNS } = await import('../src/services/excelService');
+  const cols = identifyColumns(MAESTRO_COLUMNS);
+  assert.deepEqual(Object.entries(cols.eventDayKeys).sort(), [
+    ['jueves', 'THE GAMES JUEVES 7 de octubre'],
+    ['lunes', 'THE SHOW LUNES 4 de octubre'],
+    ['martes', 'THE ZONE MARTES 5 de octubre'],
+    ['miercoles', 'CARNIVAL MIÉRCOLES 6 de octubre'],
+    ['viernes', 'THE GAMES VIERNES 8 de octubre'],
+  ]);
+  assert.equal(cols.birthDateKey, 'Fecha de nacimiento');
   ok('En CSV 06/11/2003 es 6 de noviembre (no 11 de junio); reconoce "F. Nac" y "DOB"; avisa si no hay columna');
 }
 

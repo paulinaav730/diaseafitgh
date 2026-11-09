@@ -147,32 +147,63 @@ export const EVENT_DAY_COLUMNS: Array<{
     dayId: 'lunes',
     dayName: 'Lunes',
     eventName: 'THE SHOW',
-    headerPatterns: ['the show', 'show lunes', 'lunes', '28 de septiembre'],
+    headerPatterns: ['the show', 'show lunes', 'lunes', '4 de octubre', '28 de septiembre'],
   },
   {
     dayId: 'martes',
     dayName: 'Martes',
     eventName: 'THE ZONE',
-    headerPatterns: ['the zone', 'zone martes', 'martes', '29 de septiembre'],
+    headerPatterns: ['the zone', 'zone martes', 'martes', '5 de octubre', '29 de septiembre'],
   },
   {
     dayId: 'miercoles',
     dayName: 'Miércoles',
     eventName: 'CARNIVAL',
-    headerPatterns: ['carnival', 'carnaval', 'miercoles', '30 de septiembre'],
+    headerPatterns: ['carnival', 'carnaval', 'miercoles', '6 de octubre', '30 de septiembre'],
   },
   {
     dayId: 'jueves',
     dayName: 'Jueves',
     eventName: 'THE CHALLENGE & THE GAMES',
-    headerPatterns: ['the challenge', 'challenge', 'the games jueves', 'jueves', '1 de octubre'],
+    headerPatterns: ['the challenge', 'challenge', 'the games jueves', 'jueves', '7 de octubre', '1 de octubre'],
   },
   {
     dayId: 'viernes',
     dayName: 'Viernes',
     eventName: 'THE GAMES',
-    headerPatterns: ['the games viernes', 'viernes', '2 de octubre'],
+    headerPatterns: ['the games viernes', 'viernes', '8 de octubre', '2 de octubre'],
   },
+];
+
+/** Títulos oficiales de las columnas de cada día en el Excel Maestro (DÍAS EAFIT 2027). */
+export const MAESTRO_DAY_HEADERS: Record<string, string> = {
+  lunes: 'THE SHOW LUNES 4 de octubre',
+  martes: 'THE ZONE MARTES 5 de octubre',
+  miercoles: 'CARNIVAL MIÉRCOLES 6 de octubre',
+  jueves: 'THE GAMES JUEVES 7 de octubre',
+  viernes: 'THE GAMES VIERNES 8 de octubre',
+};
+
+/** Columnas del Excel Maestro, en orden. */
+export const MAESTRO_COLUMNS: string[] = [
+  'ID',
+  'Hora de inicio',
+  'Hora de finalización',
+  'Correo electrónico',
+  'Nombre',
+  'Nombre completo (Nombre y documento/identificación)',
+  'Número de celular',
+  'Documento de identidad',
+  'Usuario',
+  'Correo institucional',
+  'ID de EPIK',
+  '¿A qué GT pertenece?',
+  'Talla de camiseta',
+  'Alergias alimentarias',
+  'Restricción de comidas',
+  'Enfermedad o condición médica',
+  'Fecha de nacimiento',
+  ...Object.values(MAESTRO_DAY_HEADERS),
 ];
 
 /**
@@ -946,107 +977,15 @@ export async function parseExcelMaestroFile(
 
 /**
  * GENERATES OFFICIAL EXCEL MAESTRO TEMPLATE
- * Contains the 17 official columns + realistic sample rows using the EXACT
- * hours of the currently configured active shifts in the system.
+ * Plantilla vacía con las columnas oficiales (incluye Fecha de nacimiento) y,
+ * en otra hoja, la guía de los turnos configurados en el sistema.
  */
 export function downloadOfficialExcelMaestroTemplate(configuredShifts: ConfigurableShift[]): void {
-  // Find sample hours per day from configured shifts
-  const getDaySampleHours = (dayId: string): string => {
-    const dayShifts = configuredShifts.filter((s) => s.dayId === dayId && s.isActive);
-    if (dayShifts.length === 0) return '';
-    // Format first shift or two shifts
-    if (dayShifts.length >= 2) {
-      return `${dayShifts[0].label}; ${dayShifts[1].label}`;
-    }
-    return dayShifts[0].label;
-  };
-
-  const lunesSample = getDaySampleHours('lunes') || '4:00 PM – 7:30 PM; 7:30 PM – 10:30 PM';
-  const martesSample = getDaySampleHours('martes') || '8:30 AM – 12:30 PM';
-  const miercolesSample = getDaySampleHours('miercoles') || '8:50 AM – 12:10 PM; 12:00 PM – 3:10 PM';
-  const juevesSample = getDaySampleHours('jueves') || '6:00 AM – 12:00 PM';
-  const viernesSample = getDaySampleHours('viernes') || '6:00 AM – 9:30 PM';
-
-  const templateRows = [
-    {
-      ID: '1001',
-      'Hora de inicio': '06:00 AM',
-      'Hora de finalización': '10:30 PM',
-      'Correo electrónico': 'juan.perez@gmail.com',
-      Nombre: 'Juan Pérez',
-      'Nombre completo (Nombre y documento/identificación)': 'Juan Camilo Pérez Gómez 1017123456',
-      'Número de celular': '3001234567',
-      'Documento de identidad': '1017123456',
-      Usuario: 'jperez',
-      'Correo institucional': 'jperez@eafit.edu.co',
-      'ID de EPIK': 'EPIK-00129',
-      '¿A qué GT pertenece?': 'Logística, Montaje',
-      'Talla de camiseta': 'M',
-      'Alergias alimentarias': 'Ninguna',
-      'Restricción de comidas': 'Vegetariana',
-      'Enfermedad o condición médica': 'Ninguna',
-      'Fecha de nacimiento': '06/11/2003',
-      'THE SHOW LUNES 28 de septiembre': lunesSample,
-      'THE ZONE MARTES 29 de septiembre': martesSample,
-      'CARNIVAL MIÉRCOLES 30 de septiembre': miercolesSample,
-      'THE GAMES JUEVES 1 de octubre': juevesSample,
-      'THE GAMES VIERNES 2 de octubre': viernesSample,
-    },
-    {
-      ID: '1002',
-      'Hora de inicio': '08:00 AM',
-      'Hora de finalización': '06:00 PM',
-      'Correo electrónico': 'maria.gomez@gmail.com',
-      Nombre: 'María Gómez',
-      'Nombre completo (Nombre y documento/identificación)': 'María José Gómez López 1020304050',
-      'Número de celular': '3017654321',
-      'Documento de identidad': '1020304050',
-      Usuario: 'mgomez',
-      'Correo institucional': 'mgomez@eafit.edu.co',
-      'ID de EPIK': 'EPIK-00245',
-      '¿A qué GT pertenece?': 'GAP',
-      'Talla de camiseta': 'S',
-      'Alergias alimentarias': 'Maní, mariscos',
-      'Restricción de comidas': 'Sin gluten / Celíaca',
-      'Enfermedad o condición médica': 'Asma leve',
-      'Fecha de nacimiento': '15/03/2004',
-      'THE SHOW LUNES 28 de septiembre': '',
-      'THE ZONE MARTES 29 de septiembre': '',
-      'CARNIVAL MIÉRCOLES 30 de septiembre': '8:50 AM – 12:10 PM; 12:00 PM – 3:10 PM',
-      'THE GAMES JUEVES 1 de octubre': '1:00 PM – 9:00 PM',
-      'THE GAMES VIERNES 2 de octubre': '7:00 AM – 9:00 PM',
-    },
-    {
-      ID: '1003',
-      'Hora de inicio': '07:00 AM',
-      'Hora de finalización': '05:00 PM',
-      'Correo electrónico': 'carlos.restrepo@gmail.com',
-      Nombre: 'Carlos Restrepo',
-      'Nombre completo (Nombre y documento/identificación)': 'Carlos Mario Restrepo Ruiz 1033445566',
-      'Número de celular': '3129876543',
-      'Documento de identidad': '1033445566',
-      Usuario: 'crestrepo',
-      'Correo institucional': 'crestrepo@eafit.edu.co',
-      'ID de EPIK': 'EPIK-00388',
-      '¿A qué GT pertenece?': 'RRPP',
-      'Talla de camiseta': 'L',
-      'Alergias alimentarias': 'Lactosa',
-      'Restricción de comidas': 'Ninguna',
-      'Enfermedad o condición médica': 'Diabetes tipo 1',
-      'Fecha de nacimiento': '28/07/2002',
-      'THE SHOW LUNES 28 de septiembre': '6:00 AM – 8:00 AM',
-      'THE ZONE MARTES 29 de septiembre': '7:00 AM – 12:30 PM',
-      'CARNIVAL MIÉRCOLES 30 de septiembre': '',
-      'THE GAMES JUEVES 1 de octubre': '6:00 AM – 12:00 PM',
-      'THE GAMES VIERNES 2 de octubre': '6:00 AM – 9:30 PM',
-    },
-  ];
-
-  // Create workbook
+  // Plantilla VACÍA: solo los títulos, lista para llenar e importar.
   const workbook = XLSX.utils.book_new();
 
   // Sheet 1: Plantilla Oficial
-  const worksheet = XLSX.utils.json_to_sheet(templateRows);
+  const worksheet = XLSX.utils.aoa_to_sheet([MAESTRO_COLUMNS]);
   // Auto column widths
   worksheet['!cols'] = [
     { wch: 8 }, // ID
@@ -1106,12 +1045,14 @@ export function downloadOfficialExcelMaestroTemplate(configuredShifts: Configura
 }
 
 /**
- * EXPORT PEOPLE & AVAILABILITY TO OFFICIAL 18-COLUMN EXCEL MAESTRO
+ * EXPORT PEOPLE & AVAILABILITY TO OFFICIAL EXCEL MAESTRO (MAESTRO_COLUMNS)
  */
 export function exportPeopleToOfficialExcel(
   people: Person[],
   availabilities: AvailabilityRecord[],
-  configuredShifts: ConfigurableShift[]
+  configuredShifts: ConfigurableShift[],
+  /** personId -> AAAA-MM-DD (solo administración; privada). */
+  birthDates?: Map<string, string>
 ): void {
   const shiftsMap = new Map(configuredShifts.map((s) => [s.id, s]));
 
@@ -1148,11 +1089,12 @@ export function exportPeopleToOfficialExcel(
       'Alergias alimentarias': p.foodAllergies || 'Ninguna',
       'Restricción de comidas': p.dietaryRestrictions || 'Ninguna',
       'Enfermedad o condición médica': p.medicalConditions || 'Ninguna',
-      'THE SHOW LUNES 28 de septiembre': formatDayShifts('lunes'),
-      'THE ZONE MARTES 29 de septiembre': formatDayShifts('martes'),
-      'CARNIVAL MIÉRCOLES 30 de septiembre': formatDayShifts('miercoles'),
-      'THE GAMES JUEVES 1 de octubre': formatDayShifts('jueves'),
-      'THE GAMES VIERNES 2 de octubre': formatDayShifts('viernes'),
+      'Fecha de nacimiento': birthDates?.get(p.id)?.split('-').reverse().join('/') || '',
+      [MAESTRO_DAY_HEADERS.lunes]: formatDayShifts('lunes'),
+      [MAESTRO_DAY_HEADERS.martes]: formatDayShifts('martes'),
+      [MAESTRO_DAY_HEADERS.miercoles]: formatDayShifts('miercoles'),
+      [MAESTRO_DAY_HEADERS.jueves]: formatDayShifts('jueves'),
+      [MAESTRO_DAY_HEADERS.viernes]: formatDayShifts('viernes'),
     };
   });
 

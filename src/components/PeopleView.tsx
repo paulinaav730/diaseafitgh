@@ -13,6 +13,7 @@ import {
 } from '../services/storageService';
 import { exportPeopleToOfficialExcel, downloadOfficialExcelMaestroTemplate } from '../services/excelService';
 import { ExcelImportModal } from './ExcelImportModal';
+import { birthdays } from '../services/birthdayService';
 import { GT_SUBTEAMS, getFilteredFunctions } from '../data/functionsCatalog';
 import { isSupabaseConfigured, getSupabase } from '../services/supabaseClient';
 import { syncAllToSupabase, pushPeopleToSupabase } from '../services/supabaseSync';
@@ -646,9 +647,16 @@ export const PeopleView: React.FC<PeopleViewProps> = ({
 
           {/* Botón Exportar */}
           <button
-            onClick={() => exportPeopleToOfficialExcel(people, availabilities, shifts)}
+            onClick={() =>
+              exportPeopleToOfficialExcel(
+                people,
+                availabilities,
+                shifts,
+                new Map(birthdays.get().map((b) => [b.personId, b.birthDate]))
+              )
+            }
             className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-tinta-50 hover:bg-tinta-100 text-tinta-700 border border-tinta-200 font-bold text-xs flex items-center gap-1.5 transition-colors font-sans shadow-2xs"
-            title="Exportar archivo oficial Excel Maestro (17 columnas)"
+            title="Exportar archivo oficial Excel Maestro (22 columnas)"
           >
             <Download className="w-4 h-4 text-lila-600" />
             <span className="hidden sm:inline">Exportar Excel Maestro</span>
