@@ -100,6 +100,9 @@ las notificaciones web requieren agregar DÍAS a la pantalla de inicio.
   y fecha). Cada fila se une al integrante existente; no se crean personas.
   También se puede editar una por una en Perfil DÍAS → *Fecha de nacimiento*.
   Sin fecha registrada no se muestra ningún cumpleaños.
+- **Todo el año:** arriba del calendario, el bloque *Cumpleaños* tiene dos
+  pestañas: *Próximos 30 días* y *Todo el año* (los próximos 12 meses, mes por
+  mes, con el día, la edad que cumple y el GT).
 - **Calendario:** la administración ve `🎂 CUMPLEAÑOS — Nombre` con color propio,
   la edad que cumple y el GT; al tocarlo abre el cumpleaños y el Perfil DÍAS.
   No se crean eventos: se calculan cada año a partir de la fecha, así que se

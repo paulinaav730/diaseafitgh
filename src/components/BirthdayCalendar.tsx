@@ -73,34 +73,115 @@ export const BirthdayListItem: React.FC<{ o: BirthdayOccurrence; onOpen: (o: Bir
   </button>
 );
 
-/** Próximos cumpleaños (30 días) para la parte de arriba del calendario. */
+const MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+const daysUntil = (date: string, today: string) => Math.round((Date.parse(date) - Date.parse(today)) / 86400_000);
+const whenText = (days: number) => (days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`);
+
+/**
+ * Cumpleaños arriba del calendario: los próximos 30 días y, con un toque,
+ * los de todo el año (los próximos 12 meses, mes por mes).
+ */
 export const UpcomingBirthdays: React.FC<{ onOpen: (o: BirthdayOccurrence) => void }> = ({ onOpen }) => {
   const list = useCollection(birthdays.subscribe);
   const today = bogotaToday();
-  const upcoming = useMemo(() => birthdaysInRange(list, today, addDaysIso(today, 30)).slice(0, 6), [list, today]);
-  if (upcoming.length === 0) return null;
+  const year = useMemo(() => birthdaysInRange(list, today, addDaysIso(today, 364)), [list, today]);
+  const upcoming = useMemo(() => year.filter((o) => daysUntil(o.date, today) <= 30), [year, today]);
+  const [mode, setMode] = useState<'proximos' | 'anio' | null>(null);
+  if (year.length === 0) return null;
+  const view = mode ?? (upcoming.length > 0 ? 'proximos' : 'anio');
+
+  // Agrupado por mes, empezando por el mes actual
+  const byMonth: { key: string; label: string; items: BirthdayOccurrence[] }[] = [];
+  year.forEach((o) => {
+    const key = o.date.slice(0, 7);
+    let g = byMonth.find((x) => x.key === key);
+    if (!g) {
+      const m = MONTH_NAMES[Number(o.date.slice(5, 7)) - 1];
+      g = { key, label: `${m[0].toUpperCase()}${m.slice(1)} ${o.date.slice(0, 4)}`, items: [] };
+      byMonth.push(g);
+    }
+    g.items.push(o);
+  });
+
+  const tab = (id: 'proximos' | 'anio', label: string) => (
+    <button
+      onClick={() => setMode(id)}
+      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+        view === id ? 'bg-coral-500 text-white' : 'bg-surface border border-coral-200 text-coral-900 hover:border-coral-400'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="rounded-2xl border border-coral-200 bg-coral-50/60 p-3.5">
-      <p className="text-xs font-semibold text-coral-900 flex items-center gap-1.5 mb-2">
-        <Cake className="w-4 h-4" /> Próximos cumpleaños
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {upcoming.map((o) => {
-          const days = Math.round((Date.parse(o.date) - Date.parse(today)) / 86400_000);
-          return (
-            <button
-              key={o.personId + o.date}
-              onClick={() => onOpen(o)}
-              className="text-left rounded-xl bg-surface border border-coral-200 hover:border-coral-400 px-3 py-2 transition-colors"
-            >
-              <p className="text-sm font-semibold text-tinta-900">🎂 {o.name}</p>
-              <p className="text-[11px] text-tinta-600">
-                {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`} · {formatBirthdayDate(o.date)} · cumple {o.age}
-              </p>
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+        <p className="text-xs font-semibold text-coral-900 flex items-center gap-1.5">
+          <Cake className="w-4 h-4" /> Cumpleaños
+        </p>
+        <div className="flex gap-1.5">
+          {tab('proximos', `Próximos 30 días (${upcoming.length})`)}
+          {tab('anio', `Todo el año (${year.length})`)}
+        </div>
       </div>
+
+      {view === 'proximos' ? (
+        upcoming.length === 0 ? (
+          <p className="text-xs text-tinta-600">No hay cumpleaños en los próximos 30 días.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {upcoming.map((o) => (
+              <button
+                key={o.personId + o.date}
+                onClick={() => onOpen(o)}
+                className="text-left rounded-xl bg-surface border border-coral-200 hover:border-coral-400 px-3 py-2 transition-colors"
+              >
+                <p className="text-sm font-semibold text-tinta-900">🎂 {o.name}</p>
+                <p className="text-[11px] text-tinta-600">
+                  {whenText(daysUntil(o.date, today))} · {formatBirthdayDate(o.date)} · cumple {o.age}
+                </p>
+              </button>
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 max-h-[28rem] overflow-y-auto pr-1">
+          {byMonth.map((g) => (
+            <div key={g.key} className="rounded-xl bg-surface border border-coral-200 p-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-coral-700 mb-1.5">
+                {g.label} · {g.items.length}
+              </p>
+              <ul className="space-y-1">
+                {g.items.map((o) => {
+                  const days = daysUntil(o.date, today);
+                  return (
+                    <li key={o.personId + o.date}>
+                      <button
+                        onClick={() => onOpen(o)}
+                        className="w-full text-left flex items-baseline gap-2 rounded-lg px-1.5 py-1 hover:bg-coral-50 transition-colors"
+                      >
+                        <span className="w-6 shrink-0 text-right font-mono text-xs font-bold text-coral-700">
+                          {Number(o.date.slice(8, 10))}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-tinta-900 truncate">🎂 {o.name}</span>
+                          <span className="block text-[11px] text-tinta-600">
+                            cumple {o.age}
+                            {o.gt ? ` · GT ${o.gt}` : ''}
+                            {days <= 1 ? ` · ${whenText(days)}` : ''}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
