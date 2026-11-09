@@ -386,3 +386,16 @@ body {
   background: var(--color-lila-200);
   color: var(--color-tinta-900);
 }
+
+/* Ventanas emergentes (fondo oscuro a pantalla completa, centradas).
+   Si la ventana es más alta que la pantalla, centrarla dejaba la parte de
+   arriba fuera de la vista y no se podía subir. Así se centra cuando cabe y,
+   cuando no, empieza arriba y se desplaza normalmente. */
+.fixed.inset-0.items-center {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-items: flex-start;
+}
+.fixed.inset-0.items-center > * {
+  margin-block: auto;
+}
