@@ -113,7 +113,7 @@ export const PersonProfile: React.FC<Props> = ({ person, people, mode }) => {
             <Avatar name={person.name} photoUrl={profile?.photoUrl} size="w-20 h-20 text-2xl" />
             <div className="min-w-0 space-y-1.5">
               <p className="text-[10px] font-subtitle text-lila-700">Perfil DÍAS</p>
-              <h2 className="text-xl sm:text-2xl font-display text-tinta-900 leading-tight">{person.fullName || person.name}</h2>
+              <h2 className="text-lg sm:text-2xl font-subtitle text-tinta-900 leading-snug break-words" style={{ letterSpacing: '0.03em' }}>{person.fullName || person.name}</h2>
               <div className="flex flex-wrap gap-1.5 text-[11px]">
                 <span className={`px-2 py-0.5 rounded-full font-semibold ${isActive ? 'bg-turquesa-100 text-turquesa-800' : 'bg-tinta-200 text-tinta-700'}`}>
                   {isActive ? 'Activo' : 'Inactivo'}
