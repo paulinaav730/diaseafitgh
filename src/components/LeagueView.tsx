@@ -47,7 +47,7 @@ import { QrScanner } from './league/QrScanner';
 import { emitQr } from './league/QrCode';
 import { LeagueChallenges } from './LeagueChallenges';
 import { LeagueMovements } from './LeagueMovements';
-import { GtRankingBoard, MyGtRankCard, RankingConfigPanel, RankingHistoryPanel, useLeagueRanking } from './LeagueRanking';
+import { GtRankingBoard, MyGtRankCard, RankingConfigPanel, RankingExplainer, RankingHistoryPanel, useLeagueRanking } from './LeagueRanking';
 import { LeagueRanking } from '../services/leagueRanking';
 
 type LeagueTab = 'ranking' | 'individual' | 'conectados' | 'retos' | 'actividades' | 'perfiles' | 'movimientos' | 'config';
@@ -136,6 +136,8 @@ export const LeagueView: React.FC<LeagueViewProps> = ({ mode, people, person, au
           <LeagueSettingsPanel />
         </div>
       )}
+      {/* Al final de la página, antes del pie: cómo se calcula el ranking */}
+      <RankingExplainer ranking={ranking} />
       {scanning && (
         <QrScanner
           title="Escanear QR personal"
